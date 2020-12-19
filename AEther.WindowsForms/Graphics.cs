@@ -64,7 +64,7 @@ namespace AEther.WindowsForms
 
             Handle = handle;
 
-            CreateDevice(out Device, out Chain);
+            (Device, Chain) = CreateDevice();
             Context = Device.ImmediateContext;
 
             var channels = Enumerable.Range(0, 2);
@@ -235,7 +235,7 @@ namespace AEther.WindowsForms
                  Usage = usage,
              }));
 
-        void CreateDevice(out Device device, out SwapChain chain, Format? format = default)
+        (Device, SwapChain) CreateDevice(Format? format = default)
         {
 
             var modeFormat = format ?? Format.R8G8B8A8_UNorm;
@@ -271,10 +271,12 @@ namespace AEther.WindowsForms
             Device.CreateWithSwapChain(
                 DriverType.Hardware,
                 deviceFlags,
-                new[] { FeatureLevel.Level_11_0 },
+                new[] { FeatureLevel.Level_9_3 },
                 desc,
-                out device,
-                out chain);
+                out var device,
+                out var chain);
+
+            return (device, chain);
 
         }
 

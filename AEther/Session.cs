@@ -70,7 +70,6 @@ namespace AEther
                     }
                     input.Reader.AdvanceTo(input.Data.GetPosition(offset * format.Size), input.Data.End);
                 }
-                Debug.WriteLine("Batcher finished");
             }
 
             return RunAsync;
@@ -120,7 +119,6 @@ namespace AEther
                     input.Return();
                     yield return new DFTEvent(output, domain.Count, input.Time);
                 }
-                Debug.WriteLine("DFT finished");
             }
 
             return RunAsync;
@@ -154,7 +152,6 @@ namespace AEther
                     input.Return();
                     yield return new SplitterEvent(output, input.Length, input.Time);
                 }
-                Debug.WriteLine("Splitter finished");
             }
 
             return RunAsync;

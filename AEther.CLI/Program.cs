@@ -17,20 +17,22 @@ namespace AEther.CLI
 {
     class Program
     {
-        static async Task<int> Main(string? address = null, int? device = null)
+        static async Task<int> Main(string? path = null)
         {
 
             var configuration = new Configuration();
-            var sampleSource = new CSCore.Listener(device);
+            // var sampleSource = new CSCore.Listener(device);
+            
+            Stream input;
+            if (path == null)
+                input = Console.OpenStandardInput();
+            else
+                input = File.OpenRead(path);
+
+            var sampleSource = new SampleReader(input);
 
             var domain = configuration.Domain;
             var format = sampleSource.Format;
-            //using var sampleSource = new SampleReader(Console.OpenStandardInput(), new byte[1 << 10]);
-
-            var port = 1100;
-            using var client = string.IsNullOrEmpty(address)
-                ? null
-                : new UdpClient(address, port);
 
             var pipe = new System.IO.Pipelines.Pipe();
             var session = new Session(configuration, sampleSource.Format);

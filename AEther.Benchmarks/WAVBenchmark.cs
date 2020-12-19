@@ -16,21 +16,22 @@ namespace AEther.Benchmarks
     {
 
         [Benchmark]
-        public static Task RunA() => RunAsync(cfg => { });
+        public Task RunA() => RunAsync(new Configuration());
 
         [Benchmark]
-        public static Task RunB() => RunAsync(cfg => cfg.UseParallelization = false);
+        public Task RunB() => RunAsync(new Configuration
+        {
+            UseParallelization = false,
+        });
 
-        public static async Task RunAsync(Action<Configuration> configCallback)
+        public static async Task RunAsync(Configuration configuration)
         {
 
-            var inputStream = File.OpenRead("test_sine.wav");
+            var inputStream = File.OpenRead("../TestFiles/test_sine.wav");
             var outputStream = new MemoryStream();
 
             var header = WAVHeader.FromStream(inputStream);
             var format = header.GetSampleFormat();
-            var configuration = new Configuration();
-            configCallback(configuration);
             var sampleSource = new SampleReader(inputStream);
 
             var pipe = new System.IO.Pipelines.Pipe();
