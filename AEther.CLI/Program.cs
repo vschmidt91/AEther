@@ -21,15 +21,13 @@ namespace AEther.CLI
         {
 
             var configuration = new Configuration();
-            // var sampleSource = new CSCore.Listener(device);
+            // var sampleSource = 
             
-            Stream input;
+            SampleSource sampleSource;
             if (path == null)
-                input = Console.OpenStandardInput();
+                sampleSource = new CSCore.Listener();
             else
-                input = File.OpenRead(path);
-
-            var sampleSource = new SampleReader(input);
+                sampleSource = new SampleReader(File.OpenRead(path));
 
             var domain = configuration.Domain;
             var format = sampleSource.Format;

@@ -37,7 +37,7 @@ namespace AEther
                 ? WindowCandidates.First(w => 2 * w.Length - 1 <= Vector<float>.Count)
                 : HannWindow;
 
-            cosines = HannWindow;
+            cosines = RectWindow;
 
             Filters = new IDFTFilter[domain.Count];
             UseParallelization = useParallelization;
@@ -100,7 +100,7 @@ namespace AEther
                 }
                 else
                 {
-                    var scaled = 2 * bin * Math.Pow(filter.Length, -1);
+                    var scaled = 2 * bin / filter.Length;
                     dst[k] = (float)Math.Max(-10, Math.Log(scaled));
                 }
             }
