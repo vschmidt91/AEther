@@ -24,8 +24,6 @@ namespace AEther
         
         public Memory<float> this[int c] => Channels[c].AsMemory(0, 4 * Length);
 
-        public Memory<float> this[int c, int i] => Channels[c].AsMemory(4 * i, 4);
-
         public SplitterEvent(SplitterEvent other, int length, DateTime time)
         {
             Channels = other.Channels;
