@@ -27,7 +27,8 @@ namespace AEther.Benchmarks
         public static async Task RunAsync(Configuration configuration)
         {
 
-            var inputStream = File.OpenRead("../TestFiles/test_sine.wav");
+            var path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "..", "..", "..", "..", "TestFiles", "test_sine.wav");
+            var inputStream = File.OpenRead(path);
             var outputStream = new MemoryStream();
 
             var header = WAVHeader.FromStream(inputStream);
