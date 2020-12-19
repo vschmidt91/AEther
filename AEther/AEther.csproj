@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <LangVersion>8.0</LangVersion>
+    <Platforms>AnyCPU;x64</Platforms>
+    <Nullable>enable</Nullable>
+    <FileUpgradeFlags>40</FileUpgradeFlags>
+    <UpgradeBackupLocation>C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\Backup1\</UpgradeBackupLocation>
+    <OldToolsVersion>Current</OldToolsVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Session - Copy.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="System.IO.Pipelines" Version="5.0.1" />
+  </ItemGroup>
+</Project>

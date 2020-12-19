@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="lib\**" />
+    <EmbeddedResource Remove="lib\**" />
+    <None Remove="lib\**" />
+    <Page Remove="lib\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="data\fx\test.hlsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="data\fx\fxc.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\test.hlsl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AEther.CSCore\AEther.CSCore.csproj" />
+    <ProjectReference Include="..\AEther\AEther.csproj" />
+  </ItemGroup>
+
+</Project>

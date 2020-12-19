@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<Configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <MinFrequency>30</MinFrequency>
+  <MaxFrequency>12000</MaxFrequency>
+  <FrequencyResolution>12</FrequencyResolution>
+  <Damping>0.01</Damping>
+  <TimeResolution>1024</TimeResolution>
+  <SampleBufferSize>32768</SampleBufferSize>
+  <SampleBufferCount>8</SampleBufferCount>
+  <SampleChannelCapacity>1</SampleChannelCapacity>
+</Configuration>

@@ -1,0 +1,792 @@
+//
+// FX Version: fx_5_0
+//
+// 2 local buffer(s)
+//
+cbuffer RuntimeConstants : register(b0)
+{
+    float4  Emission;                   // Offset:    0, size:   16
+    float4  Scattering;                 // Offset:   16, size:   16
+    float4  Absorption;                 // Offset:   32, size:   16
+}
+
+cbuffer FrameConstants : register(b1)
+{
+    float   T;                          // Offset:    0, size:    4
+    float   DT;                         // Offset:    4, size:    4
+    float   S;                          // Offset:    8, size:    4
+    float   DS;                         // Offset:   12, size:    4
+    float   HistogramShift;             // Offset:   16, size:    4
+    float3  Dummy;                      // Offset:   20, size:   12
+}
+
+//
+// 15 local object(s)
+//
+RasterizerState RasterizerDefault
+{
+    FillMode = uint(SOLID /* 3 */);
+    CullMode = uint(BACK /* 3 */);
+};
+RasterizerState RasterizerBoth
+{
+    FillMode = uint(SOLID /* 3 */);
+    CullMode = uint(NONE /* 1 */);
+};
+RasterizerState RasterizerBack
+{
+    FillMode = uint(SOLID /* 3 */);
+    CullMode = uint(FRONT /* 2 */);
+};
+DepthStencilState DepthStencilNone
+{
+    DepthEnable = bool(FALSE /* 0 */);
+    StencilEnable = bool(FALSE /* 0 */);
+};
+DepthStencilState DepthStencilDefault
+{
+    DepthEnable = bool(TRUE /* 1 */);
+    DepthFunc = uint(LESS /* 2 */);
+    DepthWriteMask = uint(ALL /* 1 */);
+    StencilEnable = bool(FALSE /* 0 */);
+};
+DepthStencilState DepthStencilDefaultReadOnly
+{
+    DepthEnable = bool(TRUE /* 1 */);
+    DepthFunc = uint(LESS /* 2 */);
+    DepthWriteMask = uint(ZERO /* 0 */);
+    StencilEnable = bool(FALSE /* 0 */);
+};
+BlendState BlendAdditive
+{
+    SrcBlend[0] = uint(ONE /* 2 */);
+    SrcBlend[1] = uint(ONE /* 2 */);
+    SrcBlend[2] = uint(ONE /* 2 */);
+    SrcBlend[3] = uint(ONE /* 2 */);
+    SrcBlend[4] = uint(ONE /* 2 */);
+    SrcBlend[5] = uint(ONE /* 2 */);
+    SrcBlend[6] = uint(ONE /* 2 */);
+    SrcBlend[7] = uint(ONE /* 2 */);
+    DestBlend[0] = uint(ONE /* 2 */);
+    DestBlend[1] = uint(ONE /* 2 */);
+    DestBlend[2] = uint(ONE /* 2 */);
+    DestBlend[3] = uint(ONE /* 2 */);
+    DestBlend[4] = uint(ONE /* 2 */);
+    DestBlend[5] = uint(ONE /* 2 */);
+    DestBlend[6] = uint(ONE /* 2 */);
+    DestBlend[7] = uint(ONE /* 2 */);
+    BlendOp[0] = uint(ADD /* 1 */);
+    BlendOp[1] = uint(ADD /* 1 */);
+    BlendOp[2] = uint(ADD /* 1 */);
+    BlendOp[3] = uint(ADD /* 1 */);
+    BlendOp[4] = uint(ADD /* 1 */);
+    BlendOp[5] = uint(ADD /* 1 */);
+    BlendOp[6] = uint(ADD /* 1 */);
+    BlendOp[7] = uint(ADD /* 1 */);
+    SrcBlendAlpha[0] = uint(ONE /* 2 */);
+    SrcBlendAlpha[1] = uint(ONE /* 2 */);
+    SrcBlendAlpha[2] = uint(ONE /* 2 */);
+    SrcBlendAlpha[3] = uint(ONE /* 2 */);
+    SrcBlendAlpha[4] = uint(ONE /* 2 */);
+    SrcBlendAlpha[5] = uint(ONE /* 2 */);
+    SrcBlendAlpha[6] = uint(ONE /* 2 */);
+    SrcBlendAlpha[7] = uint(ONE /* 2 */);
+    DestBlendAlpha[0] = uint(ONE /* 2 */);
+    DestBlendAlpha[1] = uint(ONE /* 2 */);
+    DestBlendAlpha[2] = uint(ONE /* 2 */);
+    DestBlendAlpha[3] = uint(ONE /* 2 */);
+    DestBlendAlpha[4] = uint(ONE /* 2 */);
+    DestBlendAlpha[5] = uint(ONE /* 2 */);
+    DestBlendAlpha[6] = uint(ONE /* 2 */);
+    DestBlendAlpha[7] = uint(ONE /* 2 */);
+    BlendOpAlpha[0] = uint(ADD /* 1 */);
+    BlendOpAlpha[1] = uint(ADD /* 1 */);
+    BlendOpAlpha[2] = uint(ADD /* 1 */);
+    BlendOpAlpha[3] = uint(ADD /* 1 */);
+    BlendOpAlpha[4] = uint(ADD /* 1 */);
+    BlendOpAlpha[5] = uint(ADD /* 1 */);
+    BlendOpAlpha[6] = uint(ADD /* 1 */);
+    BlendOpAlpha[7] = uint(ADD /* 1 */);
+    BlendEnable[0] = bool(TRUE /* true */);
+    BlendEnable[1] = bool(TRUE /* true */);
+    BlendEnable[2] = bool(TRUE /* true */);
+    BlendEnable[3] = bool(TRUE /* true */);
+    BlendEnable[4] = bool(TRUE /* true */);
+    BlendEnable[5] = bool(TRUE /* true */);
+    BlendEnable[6] = bool(TRUE /* true */);
+    BlendEnable[7] = bool(TRUE /* true */);
+};
+BlendState BlendNone
+{
+    BlendEnable[0] = bool(FALSE /* false */);
+    BlendEnable[1] = bool(FALSE /* false */);
+    BlendEnable[2] = bool(FALSE /* false */);
+    BlendEnable[3] = bool(FALSE /* false */);
+    BlendEnable[4] = bool(FALSE /* false */);
+    BlendEnable[5] = bool(FALSE /* false */);
+    BlendEnable[6] = bool(FALSE /* false */);
+    BlendEnable[7] = bool(FALSE /* false */);
+};
+SamplerState Linear
+{
+    Filter   = uint(MIN_MAG_MIP_LINEAR /* 21 */);
+    AddressU = uint(WRAP /* 1 */);
+    AddressV = uint(WRAP /* 1 */);
+};
+SamplerState Point
+{
+    Filter   = uint(MIN_MAG_MIP_POINT /* 0 */);
+    AddressU = uint(WRAP /* 1 */);
+    AddressV = uint(WRAP /* 1 */);
+};
+SamplerState Anisotropic
+{
+    Filter   = uint(ANISOTROPIC /* 85 */);
+    AddressU = uint(WRAP /* 1 */);
+    AddressV = uint(WRAP /* 1 */);
+};
+Texture2D HistogramLeft;
+Texture2D HistogramRight;
+Texture2D SpectrumLeft;
+Texture2D SpectrumRight;
+
+//
+// 1 groups(s)
+//
+fxgroup
+{
+    //
+    // 1 technique(s)
+    //
+    technique11 t0
+    {
+        pass p0
+        {
+            RasterizerState = RasterizerDefault;
+            DS_StencilRef = uint(0);
+            DepthStencilState = DepthStencilNone;
+            AB_BlendFactor = float4(0, 0, 0, 0);
+            AB_SampleMask = uint(0xffffffff);
+            BlendState = BlendNone;
+            VertexShader = asm {
+                //
+                // Generated by Microsoft (R) HLSL Shader Compiler 10.1
+                //
+                //
+                //
+                // Input signature:
+                //
+                // Name                 Index   Mask Register SysValue  Format   Used
+                // -------------------- ----- ------ -------- -------- ------- ------
+                // POSITION                 0   xyz         0     NONE   float   xy  
+                //
+                //
+                // Output signature:
+                //
+                // Name                 Index   Mask Register SysValue  Format   Used
+                // -------------------- ----- ------ -------- -------- ------- ------
+                // SV_POSITION              0   xyzw        0      POS   float   xyzw
+                // TEXCOORDS                0   xy          1     NONE   float   xy  
+                //
+                //
+                // Runtime generated constant mappings:
+                //
+                // Target Reg                               Constant Description
+                // ---------- --------------------------------------------------
+                // c0                              Vertex Shader position offset
+                //
+                //
+                // Level9 shader bytecode:
+                //
+                    vs_2_x
+                    def c1, 0.5, 0, 1, 0
+                    dcl_texcoord v0  // IN<0,1,2>
+                
+                #line 27 "C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\AEther.WindowsForms\bin\Debug\netcoreapp3.1\mandelbox.fx"
+                    mad oT0.xy, v0, c1.x, c1.x  // ::VS<4,5>
+                
+                #line 21
+                    add oPos.xy, v0, c0  // ::VS<0,1>
+                    mov oPos.zw, c1.xyyz  // ::VS<2,3>
+                
+                // approximately 3 instruction slots used
+                vs_4_0
+                dcl_input v0.xy
+                dcl_output_siv o0.xyzw, position
+                dcl_output o1.xy
+                //
+                // Initial variable locations:
+                //   v0.x <- IN.Position.x; v0.y <- IN.Position.y; v0.z <- IN.Position.z; 
+                //   o1.x <- <VS return value>.UV.x; o1.y <- <VS return value>.UV.y; 
+                //   o0.x <- <VS return value>.Position.x; o0.y <- <VS return value>.Position.y; o0.z <- <VS return value>.Position.z; o0.w <- <VS return value>.Position.w
+                //
+                #line 29 "C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\AEther.WindowsForms\bin\Debug\netcoreapp3.1\mandelbox.fx"
+                mov o0.xy, v0.xyxx
+                mov o0.zw, l(0,0,0,1.000000)
+                
+                #line 27
+                mad o1.xy, v0.xyxx, l(0.500000, 0.500000, 0.000000, 0.000000), l(0.500000, 0.500000, 0.000000, 0.000000)
+                
+                #line 29
+                ret 
+                // Approximately 4 instruction slots used
+                            
+            };
+            GeometryShader = NULL;
+            PixelShader = asm {
+                //
+                // Generated by Microsoft (R) HLSL Shader Compiler 10.1
+                //
+                //
+                // Buffer Definitions: 
+                //
+                // cbuffer FrameConstants
+                // {
+                //
+                //   float T;                           // Offset:    0 Size:     4 [unused]
+                //   float DT;                          // Offset:    4 Size:     4 [unused]
+                //   float S;                           // Offset:    8 Size:     4
+                //   float DS;                          // Offset:   12 Size:     4
+                //   float HistogramShift;              // Offset:   16 Size:     4 [unused]
+                //   float3 Dummy;                      // Offset:   20 Size:    12 [unused]
+                //
+                // }
+                //
+                //
+                // Resource Bindings:
+                //
+                // Name                                 Type  Format         Dim      HLSL Bind  Count
+                // ------------------------------ ---------- ------- ----------- -------------- ------
+                // Linear                            sampler      NA          NA             s0      1 
+                // SpectrumLeft                      texture  float4          2d             t2      1 
+                // SpectrumRight                     texture  float4          2d             t3      1 
+                // FrameConstants                    cbuffer      NA          NA            cb1      1 
+                //
+                //
+                //
+                // Input signature:
+                //
+                // Name                 Index   Mask Register SysValue  Format   Used
+                // -------------------- ----- ------ -------- -------- ------- ------
+                // SV_POSITION              0   xyzw        0      POS   float       
+                // TEXCOORDS                0   xy          1     NONE   float   xy  
+                //
+                //
+                // Output signature:
+                //
+                // Name                 Index   Mask Register SysValue  Format   Used
+                // -------------------- ----- ------ -------- -------- ------- ------
+                // SV_Target                0   xyzw        0   TARGET   float   xyzw
+                //
+                //
+                // Constant buffer to DX9 shader constant mappings:
+                //
+                // Target Reg Buffer  Start Reg # of Regs        Data Conversion
+                // ---------- ------- --------- --------- ----------------------
+                // c0         cb1             0         1  ( FLT, FLT, FLT, FLT)
+                //
+                //
+                // Sampler/Resource to DX9 shader sampler mappings:
+                //
+                // Target Sampler Source Sampler  Source Resource
+                // -------------- --------------- ----------------
+                // s0             s0              t2               
+                // s1             s0              t3               
+                //
+                //
+                // Level9 shader bytecode:
+                //
+                    ps_2_x
+                    def c1, 6.28318548, -3.14159274, -1, 1
+                    def c2, 1, 0.5, 0.159154937, 0
+                    def c3, 4, 1, 2, 0.25
+                    def c4, 0.0208350997, -0.0851330012, 0.180141002, -0.330299497
+                    def c5, 0.999866009, -2, 1.57079637, -7.21347523
+                    def c6, -0, -3.14159274, 0.159235656, 0.5
+                    def c7, 2, 0, -1, 0.200000003
+                    def c8, 0.800000012, 0.300000012, -0.5, 0.699999988
+                    def c9, -1.55009923e-006, -2.17013894e-005, 0.00260416674, 0.00026041668
+                    def c10, -0.020833334, -0.125, 1, 0.5
+                    dcl t0.xy  // IN<4,5>
+                    dcl_2d s0
+                    dcl_2d s1
+                
+                #line 43 "C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\AEther.WindowsForms\bin\Debug\netcoreapp3.1\mandelbox.fx"
+                    add r0.xy, t0, -c2.y
+                    add r0.zw, r0.xyxy, r0.xyxy  // ::z0<0,1>
+                
+                #line 53
+                    max r1.xy, r0.zwzw, -c2.x
+                    add r0.zw, r1.xyxy, -c2.x
+                    add r1.xy, r1, r1
+                    cmp r0.zw, r0, c3.z, r1.xyxy
+                    mad r0.xy, r0, -c3.z, r0.zwzw  // ::z<0,1>
+                
+                #line 56
+                    dp2add r0.z, r0, r0, c2.w
+                    max r1.x, r0.z, c3.w
+                    add r0.z, r1.x, -c3.x
+                    rcp r0.w, r1.x
+                    cmp r0.z, r0.z, c3.w, r0.w  // ::a<0>
+                    mul r0.xy, r0.z, r0  // ::z<0,1>
+                
+                #line 40
+                    mov r1.zw, c0  // FrameConstants::S<0>, FrameConstants::DS<0>
+                    mul r2, r1.zwzz, c8
+                    mad r0.w, r1.w, -c2.y, r2.w  // ::a3<0>
+                    add r1.xy, r2.y, r2.xzzw  // ::a1<0>, ::a2<0>
+                
+                #line 92 "globals.fxi"
+                    mad r1.xy, r1, c2.z, c2.y
+                    frc r1.xy, r1
+                    mad r1.xy, r1, c1.x, c1.y
+                
+                #line 97
+                    mad r0.w, r0.w, c2.z, c2.y
+                    frc r0.w, r0.w
+                    mad r0.w, r0.w, c1.x, c1.y
+                    sincos r2.xy, r0.w, c9, c10  // ::Rz<0>
+                
+                #line 41 "C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\AEther.WindowsForms\bin\Debug\netcoreapp3.1\mandelbox.fx"
+                    mul r2.zw, r2.xyyx, c1
+                
+                #line 87 "globals.fxi"
+                    sincos r3.xy, r1.x, c9, c10  // ::Rx<4>
+                
+                #line 92
+                    sincos r4.xy, r1.y, c9, c10  // ::Ry<0>
+                
+                #line 41 "C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\AEther.WindowsForms\bin\Debug\netcoreapp3.1\mandelbox.fx"
+                    mov r1.y, r3.y
+                    mul r1.x, r3.x, -r4.y
+                    dp2add r5.y, r1, r2.zwzw, c2.w  // ::A<7>
+                    dp2add r5.x, r1, r2, c2.w  // ::A<6>
+                
+                #line 61
+                    dp2add r1.z, r5, r0, c2.w
+                
+                #line 36
+                    add r0.w, r1.w, c2.x  // ::scale<0>
+                
+                #line 61
+                    mul r6.w, r1.z, r0.w
+                
+                #line 41
+                    mul r7.x, r2.x, r4.x  // ::A<0>
+                    mul r7.y, -r2.y, r4.x  // ::A<1>
+                
+                #line 61
+                    dp2add r1.x, r7, r0, c2.w
+                
+                #line 41
+                    mov r8.z, r3.x
+                    mul r8.xy, r3.yxzw, r4.yxzw
+                    mul r3.z, -r3.y, r4.x
+                
+                #line 61
+                    mov r7.z, r4.y
+                
+                #line 41
+                    dp2add r3.x, r8.xzzw, r2, c2.w  // ::A<3>
+                    dp2add r3.y, r8.xzzw, r2.zwzw, c2.w  // ::A<4>
+                
+                #line 61
+                    mov r5.z, r8.y
+                    dp2add r1.y, r3, r0, c2.w
+                    mad r2.xyz, t0.xyxw, c7.xxyw, c7.zzyw
+                    mad r6.xyz, r0.w, r1, r2  // ::z<0,1,2>
+                
+                #line 53
+                    add r1.xyz, r6.xyww, c2.x
+                    cmp r1.xyz, r1, r6, -c2.x
+                    add r4.xyz, r1, -c2.x
+                    add r1.xyz, r1, r1
+                    cmp r1.xyz, r4, c3.z, r1
+                    add r1.xyz, -r6, r1  // ::z<0,1,2>
+                
+                #line 56
+                    dp3 r1.w, r1, r1
+                    max r2.w, r1.w, c3.w
+                    add r1.w, r2.w, -c3.x
+                    rcp r2.w, r2.w
+                    cmp r1.w, r1.w, c3.w, r2.w  // ::a<0>
+                    mul r1.xyz, r1.w, r1  // ::z<0,1,2>
+                
+                #line 61
+                    dp3 r4.y, r3, r1
+                    dp3 r4.x, r7, r1
+                    dp3 r4.z, r5, r1
+                    mad r6.xyz, r0.w, r4, r2  // ::z<0,1,2>
+                    mul r6.w, r0.w, r4.z
+                
+                #line 53
+                    add r1.xyz, r6.xyww, c2.x
+                    cmp r1.xyz, r1, r6, -c2.x
+                    add r4.xyz, r1, -c2.x
+                    add r1.xyz, r1, r1
+                    cmp r1.xyz, r4, c3.z, r1
+                    add r1.xyz, -r6, r1  // ::z<0,1,2>
+                
+                #line 56
+                    dp3 r2.w, r1, r1
+                    max r3.w, r2.w, c3.w
+                    add r2.w, r3.w, -c3.x
+                    rcp r3.w, r3.w
+                    cmp r2.w, r2.w, c3.w, r3.w  // ::a<0>
+                    mul r1.xyz, r1, r2.w  // ::z<0,1,2>
+                
+                #line 61
+                    dp3 r4.x, r7, r1
+                    dp3 r4.y, r3, r1
+                    dp3 r4.z, r5, r1
+                    mad r6.xyz, r0.w, r4, r2  // ::z<0,1,2>
+                    mul r6.w, r0.w, r4.z
+                
+                #line 53
+                    add r1.xyz, r6.xyww, c2.x
+                    cmp r1.xyz, r1, r6, -c2.x
+                    add r4.xyz, r1, -c2.x
+                    add r1.xyz, r1, r1
+                    cmp r1.xyz, r4, c3.z, r1
+                    add r1.xyz, -r6, r1  // ::z<0,1,2>
+                
+                #line 56
+                    dp3 r3.w, r1, r1
+                    max r5.w, r3.w, c3.w
+                    add r3.w, r5.w, -c3.x
+                    rcp r5.w, r5.w
+                    cmp r3.w, r3.w, c3.w, r5.w  // ::a<0>
+                    mul r1.xyz, r1, r3.w  // ::z<0,1,2>
+                
+                #line 61
+                    dp3 r4.x, r7, r1
+                    dp3 r4.y, r3, r1
+                    dp3 r4.z, r5, r1
+                    mad r6.xyz, r0.w, r4, r2  // ::z<0,1,2>
+                    mul r6.w, r0.w, r4.z
+                
+                #line 53
+                    add r1.xyz, r6.xyww, c2.x
+                    cmp r1.xyz, r1, r6, -c2.x
+                    add r4.xyz, r1, -c2.x
+                    add r1.xyz, r1, r1
+                    cmp r1.xyz, r4, c3.z, r1
+                    add r1.xyz, -r6, r1  // ::z<0,1,2>
+                
+                #line 56
+                    dp3 r5.w, r1, r1
+                    max r7.w, r5.w, c3.w
+                    add r5.w, r7.w, -c3.x
+                    rcp r7.w, r7.w
+                    cmp r5.w, r5.w, c3.w, r7.w  // ::a<0>
+                    mul r1.xyz, r1, r5.w  // ::z<0,1,2>
+                
+                #line 61
+                    dp3 r4.x, r7, r1
+                    dp3 r4.y, r3, r1
+                    dp3 r4.z, r5, r1
+                    mad r6.xyz, r0.w, r4, r2  // ::z<0,1,2>
+                    mul r6.w, r0.w, r4.z
+                
+                #line 53
+                    add r1.xyz, r6.xyww, c2.x
+                    cmp r1.xyz, r1, r6, -c2.x
+                    add r4.xyz, r1, -c2.x
+                    add r1.xyz, r1, r1
+                    cmp r1.xyz, r4, c3.z, r1
+                    add r1.xyz, -r6, r1  // ::z<0,1,2>
+                
+                #line 56
+                    dp3 r7.w, r1, r1
+                    max r0.x, r7.w, c3.w
+                    add r7.w, r0.x, -c3.x
+                    rcp r0.x, r0.x
+                    cmp r7.w, r7.w, c3.w, r0.x  // ::a<0>
+                
+                #line 62
+                    mad r0.x, r0.w, c3.x, c3.y  // ::dz<0>
+                
+                #line 58
+                    mul r0.x, r0.z, r0.x  // ::dz<0>
+                
+                #line 62
+                    mad r0.x, r0.w, r0.x, c2.x  // ::dz<0>
+                
+                #line 58
+                    mul r1.w, r1.w, r0.x  // ::dz<0>
+                
+                #line 62
+                    mad r1.w, r0.w, r1.w, c2.x  // ::dz<0>
+                
+                #line 58
+                    mul r1.w, r2.w, r1.w  // ::dz<0>
+                
+                #line 62
+                    mad r1.w, r0.w, r1.w, c2.x  // ::dz<0>
+                
+                #line 58
+                    mul r1.w, r3.w, r1.w  // ::dz<0>
+                
+                #line 62
+                    mad r1.w, r0.w, r1.w, c2.x  // ::dz<0>
+                
+                #line 58
+                    mul r1.w, r5.w, r1.w  // ::dz<0>
+                
+                #line 62
+                    mad r1.w, r0.w, r1.w, c2.x  // ::dz<0>
+                
+                #line 58
+                    mul r1.w, r7.w, r1.w  // ::dz<0>
+                    mul r0.xyz, r1, r7.w  // ::z<0,1,2>
+                
+                #line 62
+                    mad r2.w, r0.w, r1.w, c2.x  // ::dz<0>
+                    dp3 r1.x, r7, r0
+                    dp3 r1.y, r3, r0
+                    dp3 r1.z, r5, r0
+                    mad r4.xyz, r0.w, r1, r2  // ::z<0,1,2>
+                    mul r4.w, r0.w, r1.z
+                
+                #line 53
+                    add r0.xyz, r4.xyww, c2.x
+                    cmp r0.xyz, r0, r4, -c2.x
+                    add r1.xyz, r0, -c2.x
+                    add r0.xyz, r0, r0
+                    cmp r0.xyz, r1, c3.z, r0
+                    add r0.xyz, -r4, r0  // ::z<0,1,2>
+                
+                #line 56
+                    dp3 r3.w, r0, r0
+                    max r5.w, r3.w, c3.w
+                    add r3.w, r5.w, -c3.x
+                    rcp r5.w, r5.w
+                    cmp r3.w, r3.w, c3.w, r5.w  // ::a<0>
+                    mul r2.w, r2.w, r3.w  // ::dz<0>
+                    mul r0.xyz, r0, r3.w  // ::z<0,1,2>
+                
+                #line 62
+                    mad r2.w, r0.w, r2.w, c2.x  // ::dz<0>
+                
+                #line 66
+                    abs r2.w, r2.w
+                    rcp r2.w, r2.w
+                
+                #line 61
+                    dp3 r1.x, r7, r0
+                    dp3 r1.y, r3, r0
+                    dp3 r1.z, r5, r0
+                    mad r0.xyz, r0.w, r1, r2  // ::z<0,1,2>
+                
+                #line 66
+                    dp3 r0.z, r0, r0
+                    rsq r0.z, r0.z
+                    rcp r0.z, r0.z
+                    mul r0.z, r2.w, r0.z  // ::d<0>
+                    pow r1.x, r0.z, c7.w  // ::d<0>
+                
+                #line 71
+                    add r0.z, -r0.y, r0.x
+                    cmp r0.zw, r0.z, r0.xyyx, r0.xyxy
+                    cmp r0.w, r0.w, c2.x, c2.w
+                    cmp r0.z, r0.z, c2.w, r0.w
+                    abs r0.xw, r0.yyzx
+                    cmp r0.y, r0.y, c6.x, c6.y
+                    add r1.yz, -r0.xxww, r0.xwxw
+                    cmp r0.xw, r1.y, r0, r0.wyzx
+                    cmp r1.y, r1.z, c2.w, c2.x
+                    rcp r0.w, r0.w
+                    mul r0.x, r0.w, r0.x
+                    mul r0.w, r0.x, r0.x
+                    mad r1.z, r0.w, c4.x, c4.y
+                    mad r1.z, r0.w, r1.z, c4.z
+                    mad r1.z, r0.w, r1.z, c4.w
+                    mad r0.w, r0.w, r1.z, c5.x
+                    mul r0.x, r0.w, r0.x
+                    mad r0.w, r0.x, c5.y, c5.z
+                    mad r0.x, r0.w, r1.y, r0.x
+                    add r0.x, r0.y, r0.x
+                    add r0.y, r0.x, r0.x
+                    mad r0.x, r0.z, -r0.y, r0.x
+                    mad r0.x, r0.x, c6.z, c6.w  // ::b<0>
+                
+                #line 74
+                    mov r0.y, c2.w
+                    texld r2, r0, s1  // ::r<0,1,2>
+                    texld r3, r0, s0  // ::l<0,1,2>
+                    lrp r1.yzw, r0.x, r2.xxyz, r3.xxyz  // ::v<0,1,2>
+                
+                #line 82
+                    mul r0.xyz, r1.yzww, r1.x
+                    mul r0.xyz, r0, c5.w
+                    exp r1.x, r0.x
+                    exp r1.y, r0.y
+                    exp r1.z, r0.z
+                    add r0.xyz, -r1, c2.x  // ::rgb<0,1,2>
+                
+                #line 86
+                    max r1.xyz, r0, c2.w  // ::PS<0,1,2>
+                    mov r1.w, c2.x
+                    mov oC0, r1  // ::PS<0,1,2,3>
+                
+                // approximately 237 instruction slots used (2 texture, 235 arithmetic)
+                ps_4_0
+                dcl_constantbuffer CB1[1], immediateIndexed
+                dcl_sampler s0, mode_default
+                dcl_resource_texture2d (float,float,float,float) t2
+                dcl_resource_texture2d (float,float,float,float) t3
+                dcl_input_ps linear v1.xy
+                dcl_output o0.xyzw
+                dcl_temps 10
+                //
+                // Initial variable locations:
+                //   v0.x <- IN.Position.x; v0.y <- IN.Position.y; v0.z <- IN.Position.z; v0.w <- IN.Position.w; 
+                //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
+                //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z; o0.w <- <PS return value>.w
+                //
+                #line 36 "C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\AEther.WindowsForms\bin\Debug\netcoreapp3.1\mandelbox.fx"
+                add r0.x, cb1[0].w, l(1.000000)  // r0.x <- scale
+                
+                #line 40
+                mul r1.xyzw, cb1[0].zwzz, l(0.800000, 0.300000, -0.500000, 0.700000)
+                
+                #line 39
+                add r0.yz, r1.yyyy, r1.xxzx  // r0.y <- a1; r0.z <- a2
+                
+                #line 40
+                mad r0.w, -cb1[0].w, l(0.500000), r1.w  // r0.w <- a3
+                
+                #line 92 "globals.fxi"
+                sincos r1.xy, r2.xy, r0.yzyy  // r1.y <- <Ry return value>._m02; r2.y <- <Ry return value>._m00
+                sincos r0.yz, null, -r0.yyzy  // r0.z <- <Ry return value>._m20
+                
+                #line 41 "C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\AEther.WindowsForms\bin\Debug\netcoreapp3.1\mandelbox.fx"
+                mul r3.x, r0.z, r0.y
+                mul r4.xy, r2.yxyy, r0.yzyy
+                mul r5.z, r2.y, r2.x
+                
+                #line 97 "globals.fxi"
+                sincos r6.x, r7.x, r0.w  // r6.x <- <Rz return value>._m10; r7.x <- <Rz return value>._m00
+                sincos r8.x, null, -r0.w  // r8.x <- <Rz return value>._m01
+                
+                #line 41 "C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\AEther.WindowsForms\bin\Debug\netcoreapp3.1\mandelbox.fx"
+                mul r9.x, r2.y, r7.x  // r9.x <- A._m00
+                mul r9.y, r2.y, r8.x  // r9.y <- A._m01
+                mov r3.y, r2.x
+                mov r8.y, r7.x
+                mov r8.z, r6.x
+                dp2 r2.x, r3.xyxx, r8.yzyy  // r2.x <- A._m10
+                dp2 r2.y, r3.xyxx, r8.xyxx  // r2.y <- A._m11
+                mov r4.z, r1.x
+                dp2 r5.x, r4.yzyy, r8.yzyy  // r5.x <- A._m20
+                dp2 r5.y, r4.yzyy, r8.xyxx  // r5.y <- A._m21
+                
+                #line 61
+                mov r9.z, r1.y
+                mov r2.z, r4.x
+                mad r1.xy, v1.xyxx, l(2.000000, 2.000000, 0.000000, 0.000000), l(-1.000000, -1.000000, 0.000000, 0.000000)
+                mov r1.z, l(0)
+                
+                #line 49
+                mov r3.xyz, l(0,0,0,0)  // r3.x <- z.x; r3.y <- z.y; r3.z <- z.z
+                mov r0.yz, l(0,1.000000,0,0)  // r0.y <- dz; r0.z <- i
+                loop 
+                  ige r0.w, r0.z, l(8)
+                  breakc_nz r0.w
+                
+                #line 53
+                  max r4.xyz, r3.xyzx, l(-1.000000, -1.000000, -1.000000, 0.000000)
+                  min r4.xyz, r4.xyzx, l(1.000000, 1.000000, 1.000000, 0.000000)
+                  mad r4.xyz, r4.xyzx, l(2.000000, 2.000000, 2.000000, 0.000000), -r3.xyzx  // r4.x <- z.x; r4.y <- z.y; r4.z <- z.z
+                
+                #line 56
+                  dp3 r0.w, r4.xyzx, r4.xyzx
+                  max r0.w, r0.w, l(0.250000)
+                  min r0.w, r0.w, l(4.000000)
+                  div r0.w, l(1.000000, 1.000000, 1.000000, 1.000000), r0.w  // r0.w <- a
+                
+                #line 57
+                  mul r4.xyz, r0.wwww, r4.xyzx
+                
+                #line 58
+                  mul r0.w, r0.w, r0.y  // r0.w <- dz
+                
+                #line 61
+                  dp3 r6.x, r9.xyzx, r4.xyzx
+                  dp3 r6.y, r2.xyzx, r4.xyzx
+                  dp3 r6.z, r5.xyzx, r4.xyzx
+                  mad r3.xyz, r0.xxxx, r6.xyzx, r1.xyzx  // r3.x <- z.x; r3.y <- z.y; r3.z <- z.z
+                
+                #line 62
+                  mad r0.y, r0.x, r0.w, l(1.000000)  // r0.y <- dz
+                
+                #line 64
+                  iadd r0.z, r0.z, l(1)
+                endloop 
+                
+                #line 66
+                dp3 r0.x, r3.xyzx, r3.xyzx
+                sqrt r0.x, r0.x
+                div r0.x, r0.x, |r0.y|  // r0.x <- d
+                
+                #line 67
+                log r0.x, r0.x
+                mul r0.x, r0.x, l(0.200000)
+                exp r0.x, r0.x  // r0.x <- d
+                
+                #line 71
+                min r0.y, |r3.y|, |r3.x|
+                max r0.z, |r3.y|, |r3.x|
+                div r0.z, l(1.000000, 1.000000, 1.000000, 1.000000), r0.z
+                mul r0.y, r0.z, r0.y
+                mul r0.z, r0.y, r0.y
+                mad r0.w, r0.z, l(0.020835), l(-0.085133)
+                mad r0.w, r0.z, r0.w, l(0.180141)
+                mad r0.w, r0.z, r0.w, l(-0.330299)
+                mad r0.z, r0.z, r0.w, l(0.999866)
+                mul r0.w, r0.z, r0.y
+                lt r1.x, |r3.y|, |r3.x|
+                mad r0.w, r0.w, l(-2.000000), l(1.570796)
+                and r0.w, r1.x, r0.w
+                mad r0.y, r0.y, r0.z, r0.w
+                lt r0.z, r3.y, -r3.y
+                and r0.z, r0.z, l(0xc0490fdb)
+                add r0.y, r0.z, r0.y
+                min r0.z, r3.y, r3.x
+                max r0.w, r3.y, r3.x
+                lt r0.z, r0.z, -r0.z
+                ge r0.w, r0.w, -r0.w
+                and r0.z, r0.w, r0.z
+                movc r0.y, r0.z, -r0.y, r0.y
+                mad r1.x, r0.y, l(0.159236), l(0.500000)  // r1.x <- b
+                
+                #line 74
+                mov r1.y, l(0)
+                sample r2.xyzw, r1.xyxx, t2.xyzw, s0  // r2.x <- l.x; r2.y <- l.y; r2.z <- l.z
+                
+                #line 75
+                sample r3.xyzw, r1.xyxx, t3.xyzw, s0  // r3.x <- r.x; r3.y <- r.y; r3.z <- r.z
+                
+                #line 76
+                add r0.yzw, -r2.xxyz, r3.xxyz
+                mad r0.yzw, r1.xxxx, r0.yyzw, r2.xxyz  // r0.y <- v.x; r0.z <- v.y; r0.w <- v.z
+                
+                #line 82
+                mul r0.xyz, r0.yzwy, r0.xxxx
+                mul r0.xyz, r0.xyzx, l(-7.213475, -7.213475, -7.213475, 0.000000)
+                exp r0.xyz, r0.xyzx
+                add r0.xyz, -r0.xyzx, l(1.000000, 1.000000, 1.000000, 0.000000)  // r0.x <- rgb.x; r0.y <- rgb.y; r0.z <- rgb.z
+                
+                #line 86
+                max o0.xyz, r0.xyzx, l(0.000000, 0.000000, 0.000000, 0.000000)
+                mov o0.w, l(1.000000)
+                ret 
+                // Approximately 88 instruction slots used
+                            
+            };
+        }
+
+    }
+
+}
+

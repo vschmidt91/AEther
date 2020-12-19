@@ -1,0 +1,260 @@
+﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <FileUpgradeFlags>40</FileUpgradeFlags>
+    <UpgradeBackupLocation>C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\Backup\AEther.WindowsForms\</UpgradeBackupLocation>
+    <OldToolsVersion>2.0</OldToolsVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="data\fx\add.fx" />
+    <None Remove="data\fx\copy.fx" />
+    <None Remove="data\fx\fluid-advect.fx" />
+    <None Remove="data\fx\fluid-diffuse.fx" />
+    <None Remove="data\fx\fluid-divergence.fx" />
+    <None Remove="data\fx\fluid-input.fx" />
+    <None Remove="data\fx\fluid-mg-relax.fx" />
+    <None Remove="data\fx\fluid-mg-residual.fx" />
+    <None Remove="data\fx\fluid-output.fx" />
+    <None Remove="data\fx\fluid-project.fx" />
+    <None Remove="data\fx\include\complex.fxi" />
+    <None Remove="data\fx\mg-2x2.fx" />
+    <None Remove="data\fx\mg-residual.fx" />
+    <None Remove="data\fx\newton.fx" />
+    <None Remove="data\fx\poisson-gs.fx" />
+    <None Remove="lib\sox.exe" />
+    <None Remove="lib\sox.pdf" />
+    <None Remove="lib\soxformat.pdf" />
+    <None Remove="lib\soxi.pdf" />
+    <None Remove="lib\sox\batch-example.bat" />
+    <None Remove="lib\sox\ChangeLog.txt" />
+    <None Remove="lib\sox\libflac-8.dll" />
+    <None Remove="lib\sox\libgcc_s_sjlj-1.dll" />
+    <None Remove="lib\sox\libgomp-1.dll" />
+    <None Remove="lib\sox\libid3tag-0.dll" />
+    <None Remove="lib\sox\libogg-0.dll" />
+    <None Remove="lib\sox\libpng16-16.dll" />
+    <None Remove="lib\sox\libsox-3.dll" />
+    <None Remove="lib\sox\libssp-0.dll" />
+    <None Remove="lib\sox\libvorbis-0.dll" />
+    <None Remove="lib\sox\libvorbisenc-2.dll" />
+    <None Remove="lib\sox\libvorbisfile-3.dll" />
+    <None Remove="lib\sox\libwavpack-1.dll" />
+    <None Remove="lib\sox\libwinpthread-1.dll" />
+    <None Remove="lib\sox\LICENSE.GPL.txt" />
+    <None Remove="lib\sox\out.wav" />
+    <None Remove="lib\sox\README.txt" />
+    <None Remove="lib\sox\README.win32.txt" />
+    <None Remove="lib\sox\sox.exe" />
+    <None Remove="lib\sox\sox.pdf" />
+    <None Remove="lib\sox\soxformat.pdf" />
+    <None Remove="lib\sox\soxi.pdf" />
+    <None Remove="lib\sox\Uninstall sox-14.4.2.exe" />
+    <None Remove="lib\sox\wget.exe" />
+    <None Remove="lib\sox\wget.ini" />
+    <None Remove="lib\sox\zlib1.dll" />
+    <None Remove="lib\Uninstall sox-14.4.2.exe" />
+    <None Remove="lib\wget.exe" />
+    <None Remove="lib\wget.ini" />
+    <None Remove="lib\zlib1.dll" />
+    <None Remove="sharpdx_direct3d11_1_effects_arm.dll" />
+    <None Remove="sharpdx_direct3d11_1_effects_x64.dll" />
+    <None Remove="sharpdx_direct3d11_1_effects_x86.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="data\fx\add.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\fluid-advect.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\fluid-project.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\poisson-gs.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\fluid-divergence.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\fluid-diffuse.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\fluid-input.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\copy.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\geometry.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-affine.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-output.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-sqrt.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-rcp.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-polar.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-hyperbolic.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-sphere-inversion.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-fisheye.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-input.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\ifs-swirl.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\include\complex.fxi">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\mg-2x2.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\mg-residual.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\newton.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\fluid-output.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\spectrum.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\histogram.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\include\globals.fxi">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\include\states.fxi">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\mandelbox.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\batch-example.bat">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\ChangeLog.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libflac-8.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libgcc_s_sjlj-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libgomp-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libid3tag-0.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libogg-0.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libpng16-16.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libsox-3.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libssp-0.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libvorbis-0.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libvorbisenc-2.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libvorbisfile-3.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libwavpack-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\libwinpthread-1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\LICENSE.GPL.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\out.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\README.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\README.win32.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\sox.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\sox.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\soxformat.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\soxi.pdf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\Uninstall sox-14.4.2.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\wget.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\wget.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="lib\sox\zlib1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sharpdx_direct3d11_1_effects_arm.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sharpdx_direct3d11_1_effects_x64.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="sharpdx_direct3d11_1_effects_x86.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AssimpNet" Version="5.0.0-beta1" />
+    <PackageReference Include="SharpDX" Version="4.2.0" />
+    <PackageReference Include="SharpDX.D3DCompiler" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Desktop" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct3D11" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Direct3D11.Effects" Version="4.2.0" />
+    <PackageReference Include="SharpDX.DXGI" Version="4.2.0" />
+    <PackageReference Include="SharpDX.Mathematics" Version="4.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AEther.CSCore\AEther.CSCore.csproj" />
+    <ProjectReference Include="..\AEther.NAudio\AEther.NAudio.csproj" />
+    <ProjectReference Include="..\AEther\AEther.csproj" />
+  </ItemGroup>
+</Project>

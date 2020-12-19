@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AEther.WindowsForms": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

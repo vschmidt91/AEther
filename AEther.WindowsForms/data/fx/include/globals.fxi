@@ -1,0 +1,199 @@
+﻿
+#define PI 3.1415
+#define PHI 1.61803398874989484820459
+#define EPSILON 1e-2
+
+/*
+#define Compress(x) (log(1 + (x)) / log(1 + 1 / EPSILON))
+#define Uncompress(x) (exp(x) + 1 / EPSILON)
+*/
+
+#define Compress(x) (x)
+#define Uncompress(x) (x)
+
+#define Squash(x) (1 / (1 + exp(-(x))))
+#define Stretch(x) log((x) / (1 - (x)))
+#define srcp(x) (sign(x) * rcp(max(EPSILON, abs(x))))
+
+SamplerState Linear
+{
+	Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = WRAP;
+    AddressV = WRAP;
+};
+
+SamplerState Point
+{
+	Filter = MIN_MAG_MIP_POINT;
+    AddressU = WRAP;
+    AddressV = WRAP;
+	/*
+    AddressU = BORDER;
+    AddressV = BORDER;
+	BorderColor = float4(0, 0, 0, 0);
+	*/
+};
+
+SamplerState Anisotropic
+{
+	Filter = ANISOTROPIC;
+    AddressU = WRAP;
+    AddressV = WRAP;
+};
+
+cbuffer RuntimeConstants : register(b0)
+{
+	float4 Emission;
+	float4 Scattering;
+	float4 Absorption;
+};
+
+cbuffer FrameConstants : register(b1)
+{
+	float4x4 View;
+	float4x4 Projection;
+	float T;
+	float DT;
+	float S;
+	float DS;
+	float HistogramShift;
+	float AspectRatio;
+};
+
+cbuffer DrawConstants : register(b2)
+{
+	float4x4 World;
+	float3 Color;
+}
+
+struct Instance
+{
+	float4x4 World;
+	float3 Color;
+	float _;
+};
+
+static const float3x3 M_XYZtoRGB = float3x3
+(
+	+3.2406, -1.5372, -0.4986,
+	-0.9689, +1.8758, +0.0415,
+	+0.0557, -0.2040, +1.0570
+) / 2.55;
+
+float3 XYZtoRGB(float3 xyz)
+{
+
+	return mul(M_XYZtoRGB, xyz);
+
+}
+
+static const float LABDelta = 6 / 29;
+float LAB(float x)
+{
+	return x < LABDelta
+		? 3 * LABDelta * LABDelta * (x - 4 / 29)
+		: pow(x, 3);
+}
+
+float3 LABtoXYZ(float3 lab)
+{
+
+	float l = (lab.x + .16) / 1.16;
+
+	return float3
+	(
+		.950 * LAB(l + .2 * lab.y),
+		1.00 * LAB(l),
+		1.05 * LAB(l - .5 * lab.z)
+	);
+
+}
+
+float Get(Texture2D<float> tex, int2 p, int size)
+{
+	if (any(p < 0))
+		return 0;
+	if (any(p >= size))
+		return 0;
+	return tex[p];
+}
+
+float4 Get(Texture2D<float4> tex, int2 p, int size)
+{
+	if (any(p < 0))
+		return 0;
+	if (any(p >= size))
+		return 0;
+	return tex[p];
+}
+
+static const float3 BBFrequencies = float3(.440, .565, .650);
+
+float2x2 Rot2(float a)
+{
+	float c = cos(a);
+	float s = sin(a);
+	return float2x2(c, -s, s, c);
+}
+
+float det(float2x2 A)
+{
+	return A[0][0] * A[1][1] - A[0][1] * A[1][0];
+}
+
+float3 BBRadiation(float t)
+{
+	return BBFrequencies * BBFrequencies * BBFrequencies / (exp(BBFrequencies / t) - 1);
+}
+
+float3x3 Rx(float a)
+{
+	return float3x3(1, 0, 0, 0, cos(a), -sin(a), 0, sin(a), cos(a));
+}
+
+float3x3 Ry(float a)
+{
+	return float3x3(cos(a), 0, sin(a), 0, 1, 0, -sin(a), 0, cos(a));
+}
+
+float3x3 Rz(float a)
+{
+	return float3x3(cos(a), -sin(a), 0, sin(a), cos(a), 0, 0, 0, 1);
+}
+
+struct VSDefaultin
+{
+	float3 Position : POSITION;
+};
+
+struct PSDefaultin
+{
+	float4 Position : SV_POSITION;
+	float2 UV : TEXCOORDS;
+};
+
+float Dither2(float2 v)
+{
+	return frac(sin(dot(v, float2(12.9898,78.233))) * 43758.5453);
+}
+
+float4 Dither4(float4 v)
+{
+	return float4(
+		Dither2(v.xy),
+		Dither2(v.yz),
+		Dither2(v.zw),
+		Dither2(v.wx));
+}
+
+PSDefaultin VSDefault(const VSDefaultin IN)
+{
+
+	PSDefaultin OUT = (PSDefaultin)0;
+
+	OUT.Position = float4(IN.Position.xy, 0, 1);
+	OUT.UV = float2(.5 + .5 * IN.Position.x, .5 - .5 * IN.Position.y);
+
+	return OUT;
+
+}

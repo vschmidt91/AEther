@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "AEther.CLI": {
+      "commandName": "Project"
+    }
+  }
+}
