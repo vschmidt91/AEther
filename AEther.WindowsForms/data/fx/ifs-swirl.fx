@@ -28,8 +28,8 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	float4 v = Source.Sample(Linear, Squash(q));
 	float4 rgba = det(A) * j * Weight * v;
 	rgba = abs(rgba);
-	
-	return clamp(rgba, -rcp(EPSILON), +rcp(EPSILON));
+
+	return clamp(rgba, -1e3, +1e3);
 
 }
 
@@ -42,9 +42,9 @@ technique11 t0
 		SetDepthStencilState(DepthStencilNone, 0);
 		SetBlendState(BlendAdditive, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
-		SetVertexShader(CompileShader(vs_4_0_level_9_3, VSDefault()));
+		SetVertexShader(CompileShader(vs_4_0, VSDefault()));
 		SetGeometryShader(0);
-		SetPixelShader(CompileShader(ps_4_0_level_9_3, PS()));
+		SetPixelShader(CompileShader(ps_4_0, PS()));
 
 	}
 }

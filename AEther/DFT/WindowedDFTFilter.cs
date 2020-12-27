@@ -63,5 +63,19 @@ namespace AEther
             }
         }
 
+        public void Process(ReadOnlyMemory<float> samples)
+        {
+            foreach (var (src, dst) in Buffer.Add(samples))
+            {
+                for (var i = 0; i < src.Length; ++i)
+                {
+                    var input = src.Span[i] - dst.Span[i];
+                    for (int j = 0; j < Window.Length; ++j)
+                    {
+                        States[j] = Coefficients[j] * States[j] + input;
+                    }
+                }
+            }
+        }
     }
 }

@@ -16,21 +16,20 @@ cbuffer EffectConstants : register(b3)
 float PS(const PSDefaultin IN) : SV_Target
 {
 
-	uint2 idx = (uint2)IN.Position.xy;
+	float p = Solution.Sample(Point, IN.UV);
+	float p2 = Target.Sample(Point, IN.UV);
 
-	float p = Solution[idx];
-
-	float p2 = Scale * Scale * Target[idx];
-
-	p2 -= Solution[idx + int2(-1, 0)];
-	p2 -= Solution[idx + int2(+1, 0)];
-	p2 -= Solution[idx + int2(0, -1)];
-	p2 -= Solution[idx + int2(0, +1)];
+	p2 *= Scale * Scale;
+	p2 -= Solution.Sample(Point, IN.UV, int2(-1, 0));
+	p2 -= Solution.Sample(Point, IN.UV, int2(+1, 0));
+	p2 -= Solution.Sample(Point, IN.UV, int2(0, -1));
+	p2 -= Solution.Sample(Point, IN.UV, int2(0, +1));
 
 	p2 *= -Omega / 4.0;
 
 	p2 += (1 - Omega) * p;
-
+	
+	int2 idx = IN.Position.xy;
 	uint parity = (idx.x + idx.y) & 1;
 	if (parity == 0 & UpdateEven)
 		p = p2;
@@ -50,9 +49,9 @@ technique11 t0
 		SetDepthStencilState(DepthStencilNone, 0);
 		SetBlendState(BlendNone, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
-		SetVertexShader(CompileShader(vs_5_0, VSDefault()));
+		SetVertexShader(CompileShader(vs_4_0, VSDefault()));
 		SetGeometryShader(0);
-		SetPixelShader(CompileShader(ps_5_0, PS()));
+		SetPixelShader(CompileShader(ps_4_0, PS()));
 
 	}
 }

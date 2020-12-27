@@ -90,14 +90,13 @@ namespace AEther
         }
 
         public Pipe<SampleEvent, DFTEvent> CreateDFT()
-            => CreateDFT(Configuration.Domain, Format, Configuration.UseParallelization);
+            => CreateDFT(Configuration.Domain, Format, Configuration.UseSIMD, Configuration.MaxParallelization);
 
-        public static Pipe<SampleEvent, DFTEvent> CreateDFT(Domain domain, SampleFormat format, bool useParallelization = true)
+        public static Pipe<SampleEvent, DFTEvent> CreateDFT(Domain domain, SampleFormat format, bool useSIMD = true, int maxParallelism = -1)
         {
 
-            var useSIMD = Vector.IsHardwareAccelerated;
             var dft = Enumerable.Range(0, format.ChannelCount)
-                .Select(c => new DFTProcessor(domain, format.SampleRate, useSIMD, useParallelization))
+                .Select(c => new DFTProcessor(domain, format.SampleRate, useSIMD, maxParallelism))
                 .ToArray();
 
             async IAsyncEnumerable<DFTEvent> RunAsync(IAsyncEnumerable<SampleEvent> inputs)

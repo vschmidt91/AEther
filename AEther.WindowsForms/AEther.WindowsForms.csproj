@@ -9,6 +9,11 @@
     <OldToolsVersion>2.0</OldToolsVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="lib\**" />
+    <EmbeddedResource Remove="lib\**" />
+    <None Remove="lib\**" />
+  </ItemGroup>
+  <ItemGroup>
     <None Remove="data\fx\add.fx" />
     <None Remove="data\fx\copy.fx" />
     <None Remove="data\fx\fluid-advect.fx" />
@@ -24,41 +29,6 @@
     <None Remove="data\fx\mg-residual.fx" />
     <None Remove="data\fx\newton.fx" />
     <None Remove="data\fx\poisson-gs.fx" />
-    <None Remove="lib\sox.exe" />
-    <None Remove="lib\sox.pdf" />
-    <None Remove="lib\soxformat.pdf" />
-    <None Remove="lib\soxi.pdf" />
-    <None Remove="lib\sox\batch-example.bat" />
-    <None Remove="lib\sox\ChangeLog.txt" />
-    <None Remove="lib\sox\libflac-8.dll" />
-    <None Remove="lib\sox\libgcc_s_sjlj-1.dll" />
-    <None Remove="lib\sox\libgomp-1.dll" />
-    <None Remove="lib\sox\libid3tag-0.dll" />
-    <None Remove="lib\sox\libogg-0.dll" />
-    <None Remove="lib\sox\libpng16-16.dll" />
-    <None Remove="lib\sox\libsox-3.dll" />
-    <None Remove="lib\sox\libssp-0.dll" />
-    <None Remove="lib\sox\libvorbis-0.dll" />
-    <None Remove="lib\sox\libvorbisenc-2.dll" />
-    <None Remove="lib\sox\libvorbisfile-3.dll" />
-    <None Remove="lib\sox\libwavpack-1.dll" />
-    <None Remove="lib\sox\libwinpthread-1.dll" />
-    <None Remove="lib\sox\LICENSE.GPL.txt" />
-    <None Remove="lib\sox\out.wav" />
-    <None Remove="lib\sox\README.txt" />
-    <None Remove="lib\sox\README.win32.txt" />
-    <None Remove="lib\sox\sox.exe" />
-    <None Remove="lib\sox\sox.pdf" />
-    <None Remove="lib\sox\soxformat.pdf" />
-    <None Remove="lib\sox\soxi.pdf" />
-    <None Remove="lib\sox\Uninstall sox-14.4.2.exe" />
-    <None Remove="lib\sox\wget.exe" />
-    <None Remove="lib\sox\wget.ini" />
-    <None Remove="lib\sox\zlib1.dll" />
-    <None Remove="lib\Uninstall sox-14.4.2.exe" />
-    <None Remove="lib\wget.exe" />
-    <None Remove="lib\wget.ini" />
-    <None Remove="lib\zlib1.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_arm.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x64.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x86.dll" />
@@ -149,87 +119,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\mandelbox.fx">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\batch-example.bat">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\ChangeLog.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libflac-8.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libgcc_s_sjlj-1.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libgomp-1.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libid3tag-0.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libogg-0.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libpng16-16.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libsox-3.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libssp-0.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libvorbis-0.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libvorbisenc-2.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libvorbisfile-3.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libwavpack-1.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\libwinpthread-1.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\LICENSE.GPL.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\out.wav">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\README.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\README.win32.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\sox.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\sox.pdf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\soxformat.pdf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\soxi.pdf">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\Uninstall sox-14.4.2.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\wget.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\wget.ini">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="lib\sox\zlib1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="sharpdx_direct3d11_1_effects_arm.dll">

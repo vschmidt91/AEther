@@ -9,12 +9,10 @@ Texture2D<float4> Spectrum1 : register(t2);
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
-	int2 idx = (int2)IN.Position.xy;
-
-	float4 v = Velocity[idx];
+	float4 v = Velocity.Sample(Point, IN.UV);
 
 	float speed = .25;
-	if (.8 < IN.UV.x & abs(IN.UV.y - .5) < .03)
+	if ((.8 < IN.UV.x) & (abs(IN.UV.y - .5) < .03))
 		v = float4(speed * float2(-1, cos(.7534 * T)), .5 + .5 * float2(sin(T), cos(T)));
 
 	float2 c1 = float2(.5, .5);
@@ -42,9 +40,9 @@ technique11 t0
 		SetDepthStencilState(DepthStencilNone, 0);
 		SetBlendState(BlendNone, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
-		SetVertexShader(CompileShader(vs_5_0, VSDefault()));
+		SetVertexShader(CompileShader(vs_4_0, VSDefault()));
 		SetGeometryShader(0);
-		SetPixelShader(CompileShader(ps_5_0, PS()));
+		SetPixelShader(CompileShader(ps_4_0, PS()));
 
 	}
 }

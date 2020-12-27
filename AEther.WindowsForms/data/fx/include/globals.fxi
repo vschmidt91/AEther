@@ -1,19 +1,10 @@
 ﻿
 #define PI 3.1415
 #define PHI 1.61803398874989484820459
-#define EPSILON 1e-2
-
-/*
-#define Compress(x) (log(1 + (x)) / log(1 + 1 / EPSILON))
-#define Uncompress(x) (exp(x) + 1 / EPSILON)
-*/
-
-#define Compress(x) (x)
-#define Uncompress(x) (x)
 
 #define Squash(x) (1 / (1 + exp(-(x))))
 #define Stretch(x) log((x) / (1 - (x)))
-#define srcp(x) (sign(x) * rcp(max(EPSILON, abs(x))))
+#define srcp(x) (sign(x) * rcp(max(1e-3, abs(x))))
 
 SamplerState Linear
 {

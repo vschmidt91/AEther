@@ -49,5 +49,17 @@ namespace AEther
             State = Coefficient * State + input;
         }
 
+        public void Process(ReadOnlyMemory<float> samples)
+        {
+            foreach(var (src, dst) in Buffer.Add(samples))
+            {
+                for(var i = 0; i < src.Length; ++i)
+                {
+                    var input = src.Span[i] - dst.Span[i];
+                    State = Coefficient * State + input;
+                }
+            }
+        }
+
     }
 }

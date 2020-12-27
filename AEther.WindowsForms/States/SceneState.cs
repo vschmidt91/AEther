@@ -87,9 +87,7 @@ namespace AEther.WindowsForms
         public override void Render()
         {
 
-            var aspectRatio = (float)Graphics.BackBuffer.Width / Graphics.BackBuffer.Height;
-            Camera.AspectRatio = aspectRatio;
-            Graphics.FrameConstants.Value.AspectRatio = aspectRatio;
+            Camera.AspectRatio = Graphics.FrameConstants.Value.AspectRatio;
             Graphics.FrameConstants.Value.View = Camera.View;
             Graphics.FrameConstants.Value.Projection = Camera.Projection;
 

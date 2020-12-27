@@ -15,6 +15,8 @@ namespace AEther
 
         void Process(float newSample);
 
+        void Process(ReadOnlyMemory<float> samples);
+
     }
 
 }

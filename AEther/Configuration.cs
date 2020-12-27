@@ -28,10 +28,13 @@ namespace AEther
 
 
         [Category("DFT")]
-        public int TimeResolution { get; set; } = 1 << 8;
+        public int TimeResolution { get; set; } = 1 << 6;
 
         [Category("DFT")]
-        public bool UseParallelization { get; set; } = true;
+        public int MaxParallelization { get; set; } = -1;
+
+        [Category("DFT")]
+        public bool UseSIMD { get; set; } = true;
 
         [Category("Splitter")]
         public float FrequencyWindow { get; set; } = 1f;
@@ -40,7 +43,7 @@ namespace AEther
         public float TimeWindow { get; set; } = .1f;
 
         [Category("Normalizer")]
-        public float NormalizerFloorRoom { get; set; } = .05f;
+        public float NormalizerFloorRoom { get; set; } = 0f;
 
         [Category("Normalizer")]
         public float NormalizerHeadRoom { get; set; } = .05f;
@@ -50,7 +53,7 @@ namespace AEther
         public bool UseFloatTextures { get; set; } = false;
 
         [Category("Graphics")]
-        public bool UseMapping { get; set; } = false;
+        public bool UseMapping { get; set; } = true;
 
         [Category("Pipeline")]
         public int ChannelCapacity { get; set; } = 10;

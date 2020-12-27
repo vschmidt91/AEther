@@ -40,5 +40,23 @@ namespace AEther
             return oldValue;
         }
 
+        public IEnumerable<(ReadOnlyMemory<T>, ReadOnlyMemory<T>)> Add(ReadOnlyMemory<T> values)
+        {
+            while (0 < values.Length)
+            {
+                var count = Math.Min(Data.Length - Position, values.Length);
+                var src = values.Slice(0, count);
+                var dst = Data.AsMemory(Position, count);
+                yield return (src, dst);
+                src.CopyTo(dst);
+                values = values.Slice(count);
+                Position += count;
+                if (Data.Length <= Position)
+                {
+                    Position = 0;
+                }
+            }
+        }
+
     }
 }

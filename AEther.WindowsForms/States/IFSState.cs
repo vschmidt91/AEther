@@ -43,13 +43,13 @@ namespace AEther.WindowsForms
             Elements = new IFSElement[]
             {
                 new IFSElement(Graphics.Shader["ifs-input.fx"]),
-                new IFSAffine(Graphics.Shader["ifs-fisheye.fx"]) {  Speed = -.687f },
+                new IFSAffine(Graphics.Shader["ifs-fisheye.fx"]) {  Speed = -.0687f },
                 //new IFSAffine(Graphics.Shader["ifs-rcp.fx"]) {  Speed = +.0535f },
-                //new IFSAffine(Graphics.Shader["ifs-hyperbolic.fx"]) { Speed = +.335f },
-                new IFSAffine(Graphics.Shader["ifs-sphere-inversion.fx"]) {  Speed = +.58684f },
-                new IFSAffine(Graphics.Shader["ifs-sqrt.fx"]) {  Speed = -.435f },
+                new IFSAffine(Graphics.Shader["ifs-hyperbolic.fx"]) { Speed = +.335f },
+                //new IFSAffine(Graphics.Shader["ifs-sphere-inversion.fx"]) {  Speed = +.58684f },
+                new IFSAffine(Graphics.Shader["ifs-sqrt.fx"]) {  Speed = -.0435f },
                 //new IFSAffine(Graphics.Shader["ifs-polar.fx"]) {  Speed = -.4935f },
-                new IFSAffine(Graphics.Shader) {  Speed = +.535f },
+                //new IFSAffine(Graphics.Shader) {  Speed = +.1535f },
                 //new IFSAffine(Graphics.Shader) {  Speed = -.0256f },
                 //new IFSAffine(Graphics.Shader) {  Speed = .2125f },
                 //new IFSAffine(Graphics.Shader) { Speed = -.04f },
@@ -81,6 +81,8 @@ namespace AEther.WindowsForms
             {
                 element.Shader.ShaderResources["Spectrum0"].SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
                 element.Shader.ShaderResources["Spectrum1"].SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
+                //element.Shader.ShaderResources["Spectrum0"].SetResource(Graphics.Histogram[0].Texture.GetShaderResourceView());
+                //element.Shader.ShaderResources["Spectrum1"].SetResource(Graphics.Histogram[1].Texture.GetShaderResourceView());
             }
 
             Graphics.SetModel(null);
@@ -89,8 +91,8 @@ namespace AEther.WindowsForms
             UpdateIFS(t);
             NormalizeIFS();
 
-            Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), new Color4(SharpDX.Vector4.Zero));
-            for (int n = 0; n < 8; ++n)
+            //Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), new Color4(SharpDX.Vector4.Zero));
+            //for (int n = 0; n < 5; ++n)
             {
 
                 Graphics.Context.ClearRenderTargetView(Target.GetRenderTargetView(), new Color4(SharpDX.Vector4.Zero));
@@ -127,8 +129,8 @@ namespace AEther.WindowsForms
             {
                 var element = Elements[i];
                 element.Weight = Enumerable.Range(0, 4)
-                    .Select(k => Math.Sin((1 + .173475645 * k) * (t + i)))
-                    .Select(x => (float)Math.Pow(x, 2))
+                    .Select(k => 1 + Math.Sin((1 + .173475645 * k) * (t + i)))
+                    .Select(x => (float)x)
                     .ToArray()
                     .ToVector4();
             }
@@ -145,7 +147,7 @@ namespace AEther.WindowsForms
                 }
                 foreach (var element in Elements)
                 {
-                    element.Weight *= Vector4.One / sum;
+                    element.Weight *= .1f * Vector4.One / sum;
                 }
             }
         }

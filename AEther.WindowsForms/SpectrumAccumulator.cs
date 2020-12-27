@@ -52,7 +52,7 @@ namespace AEther.WindowsForms
 
         public void Clear()
         {
-            Buffer.AsSpan().Clear();
+            Array.Clear(Buffer, 0, Buffer.Length);
         }
 
         protected abstract T Combine(float src, T dst);

@@ -77,9 +77,9 @@ technique11 t0
 		SetDepthStencilState(DepthStencilNone, 0);
 		SetBlendState(BlendNone, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
-		SetVertexShader(CompileShader(vs_4_0_level_9_3, VSDefault()));
+		SetVertexShader(CompileShader(vs_4_0, VSDefault()));
 		SetGeometryShader(0);
-		SetPixelShader(CompileShader(ps_4_0_level_9_3, PS()));
+		SetPixelShader(CompileShader(ps_4_0, PS()));
 
 	}
 }

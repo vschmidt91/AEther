@@ -21,7 +21,7 @@ namespace AEther.Benchmarks
         [Benchmark]
         public Task RunB() => RunAsync(new Configuration
         {
-            UseParallelization = false,
+            MaxParallelization = 1,
         });
 
         public static async Task RunAsync(Configuration configuration)

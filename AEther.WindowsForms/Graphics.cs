@@ -4,8 +4,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
-
+using System.Windows.Forms;
 using SharpDX;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
@@ -59,6 +60,8 @@ namespace AEther.WindowsForms
         readonly IntPtr Handle;
         readonly object InputLock = new();
 
+        int InputCounter = 0;
+
         public Graphics(Domain domain, IntPtr handle, int histogramLength, bool useFloatTextures, bool useMapping)
         {
 
@@ -97,26 +100,6 @@ namespace AEther.WindowsForms
             GeometryConstants = new ConstantBuffer<GeometryConstants>(Device);
 
             Shader = CreateShader();
-
-            foreach (var key in Shader.Keys)
-            {
-                var shader = Shader[key];
-                for (var c = 0; c < Spectrum.Length; ++c)
-                {
-                    if (shader.ShaderResources.TryGetValue("Spectrum" + c, out var spectrumVariable))
-                    {
-                        spectrumVariable.SetResource(Spectrum[c].Texture.GetShaderResourceView());
-                    }
-                    if (shader.ShaderResources.TryGetValue("Histogram" + c, out var histogramVariable))
-                    {
-                        histogramVariable.SetResource(Histogram[c].Texture.GetShaderResourceView());
-                    }
-                }
-                shader.ConstantBuffers[0].SetConstantBuffer(RuntimeConstants.Buffer);
-                shader.ConstantBuffers[1].SetConstantBuffer(FrameConstants.Buffer);
-                shader.ConstantBuffers[2].SetConstantBuffer(GeometryConstants.Buffer);
-            }
-
             Quad = new Model(Device, new Grid(2, 2));
 
         }
@@ -181,6 +164,7 @@ namespace AEther.WindowsForms
                     Histogram[c].Add(src);
                     Spectrum[c].Add(src);
                 }
+                InputCounter++;
             }
 
         }
@@ -258,7 +242,7 @@ namespace AEther.WindowsForms
                 IsWindowed = true,
                 OutputHandle = Handle,
                 SampleDescription = new SampleDescription(1, 0),
-                SwapEffect = SwapEffect.Sequential,
+                SwapEffect = SwapEffect.Discard,
                 Usage = Usage.RenderTargetOutput,
                 Flags = SwapChainFlags.AllowModeSwitch,
             };
@@ -271,7 +255,7 @@ namespace AEther.WindowsForms
             Device.CreateWithSwapChain(
                 DriverType.Hardware,
                 deviceFlags,
-                new[] { FeatureLevel.Level_9_3 },
+                new[] { FeatureLevel.Level_10_0 },
                 desc,
                 out var device,
                 out var chain);
@@ -283,17 +267,33 @@ namespace AEther.WindowsForms
         ShaderManager CreateShader()
         {
 
-            var shaderDir = Directory.GetCurrentDirectory();
+            var assemblyPath = Assembly.GetExecutingAssembly().Location;
+            var shaderDir = Path.GetDirectoryName(assemblyPath);
 
 #if DEBUG
-            shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
-            shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
-            shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
-            shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
-            shaderDir = Path.Join(shaderDir, "AEther.WindowsForms");
+            shaderDir = Path.Join(shaderDir, "..", "..", "..");
+            //shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
+            //shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
+            //shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
 #endif
             var shaderPath = Path.Join(shaderDir, "data", "fx");
-            var shader = new ShaderManager(Device, shaderPath, true);
+            ShaderManager shader = null;
+            bool preload = false;
+#if DEBUG
+            preload = true;
+#endif
+            try
+            {
+                shader = new ShaderManager(this, shaderPath, true, preload);
+            }
+            catch (CompilationException exc)
+            {
+#if DEBUG
+                MessageBox.Show(null, exc.Message, string.Empty);
+#else
+                System.Diagnostics.Debug.WriteLine(exc.Message);
+#endif
+            }
             return shader;
         }
 
@@ -311,26 +311,28 @@ namespace AEther.WindowsForms
         public void Render()
         {
 
-            foreach (var spectrum in Spectrum)
+            lock(InputLock)
             {
-                lock(spectrum)
+                if (0 < InputCounter)
                 {
-                    spectrum.Update(Context);
-                    spectrum.Clear();
+                    foreach (var spectrum in Spectrum)
+                    {
+                        spectrum.Update(Context);
+                        spectrum.Clear();
+                    }
                 }
-            }
-
-            foreach (var histogram in Histogram)
-            {
-                lock(histogram)
+                foreach (var histogram in Histogram)
                 {
                     histogram.Update(Context);
                 }
+                InputCounter = 0;
             }
+
 
             var dt = .01f;
             var t = (float)DateTime.Now.TimeOfDay.TotalSeconds;
 
+            FrameConstants.Value.AspectRatio = BackBuffer.Width / (float)BackBuffer.Height;
             FrameConstants.Value.Time.X = t;
             FrameConstants.Value.Time.Y = dt;
             FrameConstants.Value.HistogramShift = (Histogram[0].Position - .1f) / (float)Histogram[0].Texture.Height;

@@ -34,8 +34,9 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
+            PoissonSolver = new Jacobi(graphics, Size, Size, 8);
             //PoissonSolver = new GaussSeidelRB(graphics, Size, Size, 256);
-            PoissonSolver = new Multigrid(graphics, SizeLog);
+            //PoissonSolver = new Multigrid(graphics, SizeLog);
 
             Velocity = Graphics.CreateTexture(Size, Size, Format.R32G32B32A32_Float);
             VelocityNew = Graphics.CreateTexture(Size, Size, Format.R32G32B32A32_Float);
@@ -52,18 +53,16 @@ namespace AEther.WindowsForms
             RenderInput();
             RenderAdvect();
             RenderDiffuse();
-            RenderOutput(RenderProject());
+            var pressure = RenderProject();
+            RenderOutput(pressure);
 
         }
 
         void RenderInput()
         {
 
-            //IFS.Render();
-
             Graphics.SetFullscreenTarget(VelocityNew);
             Input.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
-            //Input.ShaderResources["Fractal"].AsShaderResource().SetResource(IFS.Source.GetShaderResourceView());
             Input.ShaderResources["Spectrum0"].AsShaderResource().SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
             Input.ShaderResources["Spectrum1"].AsShaderResource().SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
             Graphics.Draw(Input);

@@ -28,33 +28,41 @@ namespace AEther
 
         readonly IDFTFilter[] Filters;
         readonly float[] AWeighting;
-        readonly bool UseParallelization;
+        readonly ParallelOptions Options;
 
-        public DFTProcessor(Domain domain, float sampleRate, bool useSIMD, bool useParallelization)
+        public DFTProcessor(Domain domain, float sampleRate, bool useSIMD = true, int maxParallelism = -1)
         {
 
             var cosines = useSIMD
                 ? WindowCandidates.First(w => 2 * w.Length - 1 <= Vector<float>.Count)
                 : HannWindow;
 
-            cosines = RectWindow;
+            cosines = HannWindow;
 
-            Filters = new IDFTFilter[domain.Count];
-            UseParallelization = useParallelization;
-            for(int k = 0; k < domain.Count; ++k)
+            var window = CreateWindow(cosines);
+
+            Options = new ParallelOptions
             {
-                if(cosines.Length == 1)
-                {
-                    Filters[k] = new DFTFilter(domain[k], domain.Resolution, sampleRate);
-                }
-                else if(useSIMD)
-                {
-                    Filters[k] = new WindowedDFTFilterSIMD(domain[k], domain.Resolution, sampleRate, CreateWindow(cosines));
-                }
-                else
-                {
-                    Filters[k] = new WindowedDFTFilter(domain[k], domain.Resolution, sampleRate, CreateWindow(cosines));
-                }
+                MaxDegreeOfParallelism = maxParallelism,
+            };
+
+            if(cosines.Length == 1)
+            {
+                Filters = Enumerable.Range(0, domain.Count)
+                    .Select(k => new DFTFilter(domain[k], domain.Resolution, sampleRate))
+                    .ToArray();
+            }
+            else if (useSIMD)
+            {
+                Filters = Enumerable.Range(0, domain.Count)
+                    .Select(k => new WindowedDFTFilterSIMD(domain[k], domain.Resolution, sampleRate, window))
+                    .ToArray();
+            }
+            else
+            {
+                Filters = Enumerable.Range(0, domain.Count)
+                    .Select(k => new WindowedDFTFilter(domain[k], domain.Resolution, sampleRate, window))
+                    .ToArray();
             }
 
             var a1k = GetAWeighting(1000);
@@ -92,7 +100,7 @@ namespace AEther
             for (int k = 0; k < Filters.Length; ++k)
             {
                 var filter = Filters[k];
-                var bin = filter.GetOutput().Magnitude;
+                var bin = (float)filter.GetOutput().Magnitude;
 
                 if (bin == 0)
                 {
@@ -101,7 +109,8 @@ namespace AEther
                 else
                 {
                     var scaled = 2 * bin / filter.Length;
-                    dst[k] = (float)Math.Max(-10, Math.Log(scaled));
+                    //dst[k] = (float)Math.Max(-10, Math.Log(scaled));
+                    dst[k] = scaled;
                 }
             }
         }
@@ -109,26 +118,12 @@ namespace AEther
         public void Process(ReadOnlyMemory<float> samples)
         {
 
-            if (UseParallelization)
+            void ProcessFilter(IDFTFilter filter)
             {
-                Parallel.ForEach(Filters, filter =>
-                {
-                    for (int i = 0; i < samples.Length; ++i)
-                    {
-                        filter.Process(samples.Span[i]);
-                    }
-                });
+                filter.Process(samples);
             }
-            else
-            {
-                for (int k = 0; k < Filters.Length; ++k)
-                {
-                    for (int i = 0; i < samples.Length; ++i)
-                    {
-                        Filters[k].Process(samples.Span[i]);
-                    }
-                }
-            }
+
+            Parallel.ForEach(Filters, Options, ProcessFilter);
 
         }
 

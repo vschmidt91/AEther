@@ -14,9 +14,7 @@ cbuffer EffectConstants : register(b3)
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
-	uint2 idx = (uint2)IN.Position.xy;
-
-	float o = .1;
+	float o = 0.1;
 	float _o2 = 1.0 / (o * o);
 
 	float4 v = 0;
@@ -27,7 +25,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 		{
 			float f = dx * dx + dy * dy;
 			f = exp(-.5 * f * _o2);
-			v += f * Get(Velocity, idx + int2(dx, dy), Size);
+			v += f * Velocity.Sample(Point, IN.UV, int2(dx, dy));
 			w += f;
 		}
 	}
@@ -47,9 +45,9 @@ technique11 t0
 		SetDepthStencilState(DepthStencilNone, 0);
 		SetBlendState(BlendNone, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
-		SetVertexShader(CompileShader(vs_5_0, VSDefault()));
+		SetVertexShader(CompileShader(vs_4_0, VSDefault()));
 		SetGeometryShader(0);
-		SetPixelShader(CompileShader(ps_5_0, PS()));
+		SetPixelShader(CompileShader(ps_4_0, PS()));
 
 	}
 }

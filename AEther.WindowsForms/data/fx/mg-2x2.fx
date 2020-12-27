@@ -12,14 +12,14 @@ cbuffer EffectConstants : register(b3)
 float PS(const PSDefaultin IN) : SV_Target
 {
 
-	uint2 q = (uint2)IN.Position.xy;
+	int2 q = IN.Position.xy;
 
 	float y = 0;
-	for (uint i = 0; i < 2; ++i)
+	for (int i = 0; i < 2; ++i)
 	{
-		for (uint j = 0; j < 2; ++j)
+		for (int j = 0; j < 2; ++j)
 		{
-			uint2 p = uint2(i, j);
+			int2 p = int2(i, j);
 			bool2 pq = p == q;
 			float w = -1 - dot(pq, 1) - 4 * pq.x * pq.y;
 			y += w * Target[p];
@@ -41,9 +41,9 @@ technique11 t0
 		SetDepthStencilState(DepthStencilNone, 0);
 		SetBlendState(BlendNone, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
-		SetVertexShader(CompileShader(vs_5_0, VSDefault()));
+		SetVertexShader(CompileShader(vs_4_0, VSDefault()));
 		SetGeometryShader(0);
-		SetPixelShader(CompileShader(ps_5_0, PS()));
+		SetPixelShader(CompileShader(ps_4_0, PS()));
 
 	}
 }

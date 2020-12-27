@@ -11,7 +11,6 @@ namespace AEther.WindowsForms
         public Shader Shader;
 
         public Vector4 Weight { get; set; }
-        public Vector4 Weight2 { get; set; }
 
         public IFSElement(Shader shader)
         {

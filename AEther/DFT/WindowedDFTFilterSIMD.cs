@@ -69,5 +69,16 @@ namespace AEther
             States = Coefficients * States + input;
         }
 
+        public void Process(ReadOnlyMemory<float> samples)
+        {
+            foreach (var (src, dst) in Buffer.Add(samples))
+            {
+                for (var i = 0; i < src.Length; ++i)
+                {
+                    var input = new Vector<float>(src.Span[i] - dst.Span[i]);
+                    States = Coefficients * States + input;
+                }
+            }
+        }
     }
 }

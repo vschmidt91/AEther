@@ -18,31 +18,39 @@ using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {
-    public class ShaderManager : IDisposable
+    public class ShaderManager : GraphicsComponent, IDisposable
     {
 
-        public Shader this[string key] => Shaders[key];
-        public IEnumerable<string> Keys => Shaders.Keys;
+        public Shader this[string key] => GetShader(key);
 
         readonly Dictionary<string, Shader> Shaders = new Dictionary<string, Shader>();
+        readonly IncludeHandler Includes;
+        readonly FileSystemWatcher? Watcher;
+        readonly string BasePath;
 
-        IncludeHandler Includes;
-        FileSystemWatcher? Watcher;
-
-        public ShaderManager(Device device, string basePath, bool watch)
+        public ShaderManager(Graphics graphics, string basePath, bool watch = false, bool preload = false)
+            : base(graphics)
         {
 
-            if (!Directory.Exists(basePath)) throw new DirectoryNotFoundException();
+            if (!Directory.Exists(basePath))
+            {
+                throw new DirectoryNotFoundException();
+            }
+
+            BasePath = basePath;
 
             var includes = Directory.EnumerateFiles(basePath, "*.fxi", SearchOption.AllDirectories)
                 .ToDictionary(path => new FileInfo(path).Name, File.ReadAllText);
             Includes = new IncludeHandler(includes);
 
-            var effects = Directory.EnumerateFiles(basePath, "*.fx", SearchOption.AllDirectories);
-
-            foreach (var effect in effects)
+            if(preload)
             {
-                LoadShader(device, effect);
+                var effects = Directory.EnumerateFiles(basePath, "*.fx", SearchOption.AllDirectories);
+                foreach (var effect in effects)
+                {
+                    var path = new FileInfo(effect);
+                    Shaders[path.Name] = LoadShader(path.FullName);
+                }
             }
 
             if (watch)
@@ -56,13 +64,53 @@ namespace AEther.WindowsForms
                     | NotifyFilters.LastWrite
                     | NotifyFilters.Security
                     | NotifyFilters.Size;
-                Watcher.Changed += (o, e) => LoadShader(device, e.FullPath);
+                Watcher.Changed += Watcher_Changed;
                 Watcher.EnableRaisingEvents = true;
             }
 
         }
 
-        private void LoadShader(Device device, string path)
+        private void Watcher_Changed(object sender, FileSystemEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.Name))
+                return;
+            for(int i = 0; i < 10; ++i)
+            {
+                try
+                {
+                    Shaders[e.Name] = LoadShader(e.FullPath);
+                }
+                catch(IOException)
+                {
+                    Thread.Sleep(100);
+                    continue;
+                }
+                catch(CompilationException exc)
+                {
+#if DEBUG
+                    MessageBox.Show(null, exc.Message, string.Empty);
+#else
+                    Debug.WriteLine(exc.Message);
+#endif
+                }
+                return;
+            }
+        }
+
+        private Shader GetShader(string key)
+        {
+            if(Shaders.TryGetValue(key, out var shader))
+            {
+                return shader;
+            }
+            else
+            {
+                var path = Path.Join(BasePath, key);
+                return Shaders[key] = LoadShader(path);
+            }
+        }
+
+        private Shader LoadShader(string path)
         {
 
             FileInfo file = new FileInfo(path);
@@ -76,52 +124,39 @@ namespace AEther.WindowsForms
             shaderFlags |= ShaderFlags.OptimizationLevel3;
 #endif
 
-            string sourceCode;
-            while (true)
+            var sourceCode = File.ReadAllText(file.FullName);
+            var macros = Array.Empty<ShaderMacro>();
+
+            using var compiled = ShaderBytecode.Compile(sourceCode, "fx_5_0", shaderFlags, effectFlags, macros, Includes, file.Name);
+
+            if (compiled.Bytecode is null)
             {
-                try
-                {
-                    sourceCode = File.ReadAllText(file.FullName);
-                    break;
-                }
-                catch(FileNotFoundException)
-                {
-                    return;
-                }
-                catch(IOException)
-                {
-                    Thread.Sleep(10);
-                }
+                throw new CompilationException(compiled.Message);
             }
-
-            try
-            {
-                using (var compiled = ShaderBytecode.Compile(sourceCode, "fx_5_0", shaderFlags, effectFlags, new ShaderMacro[] { }, Includes, file.Name))
-                {
-
-                    if (compiled.Bytecode is null)
-                    {
-                        throw new CompilationException(compiled.Message);
-                    }
 
 #if DEBUG
-                    //File.WriteAllText(file.FullName + ".txt", compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering));
+            //File.WriteAllText(file.FullName + ".txt", compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering));
 #endif
 
-                    Shaders[file.Name] = new Shader(device, compiled.Bytecode);
+            var shader = new Shader(Graphics.Device, compiled.Bytecode);
 
-                }
-
-            }
-            catch(CompilationException exc)
+            for (var c = 0; c < Graphics.Spectrum.Length; ++c)
             {
-#if DEBUG
-                MessageBox.Show(null, exc.Message, file.Name);
-#else
-                Debug.WriteLine("ERROR compiling " + file.Name);
-                Debug.WriteLine(exc.Message);
-#endif
+                if (shader.ShaderResources.TryGetValue("Spectrum" + c, out var spectrumVariable))
+                {
+                    spectrumVariable.SetResource(Graphics.Spectrum[c].Texture.GetShaderResourceView());
+                }
+                if (shader.ShaderResources.TryGetValue("Histogram" + c, out var histogramVariable))
+                {
+                    histogramVariable.SetResource(Graphics.Histogram[c].Texture.GetShaderResourceView());
+                }
             }
+            shader.ConstantBuffers[0].SetConstantBuffer(Graphics.RuntimeConstants.Buffer);
+            shader.ConstantBuffers[1].SetConstantBuffer(Graphics.FrameConstants.Buffer);
+            shader.ConstantBuffers[2].SetConstantBuffer(Graphics.GeometryConstants.Buffer);
+
+            return shader;
+
         }
 
         public void Dispose()
@@ -132,8 +167,8 @@ namespace AEther.WindowsForms
                 shader.Dispose();
             }
 
-            Utilities.Dispose(ref Includes);
-            Watcher?.Dispose();
+            Includes.Dispose();
+            Watcher.Dispose();
 
         }
     }
