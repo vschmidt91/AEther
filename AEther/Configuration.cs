@@ -34,7 +34,7 @@ namespace AEther
         public int MaxParallelization { get; set; } = -1;
 
         [Category("DFT")]
-        public bool UseSIMD { get; set; } = true;
+        public bool UseSIMD { get; set; } = false;
 
         [Category("Splitter")]
         public float FrequencyWindow { get; set; } = 1f;
@@ -53,10 +53,10 @@ namespace AEther
         public bool UseFloatTextures { get; set; } = false;
 
         [Category("Graphics")]
-        public bool UseMapping { get; set; } = true;
+        public bool UseMapping { get; set; } = false;
 
         [Category("Pipeline")]
-        public int ChannelCapacity { get; set; } = 10;
+        public int ChannelCapacity { get; set; } = 8;
 
         public static Configuration? ReadFromFile(string path)
         {

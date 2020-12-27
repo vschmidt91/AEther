@@ -73,10 +73,10 @@ namespace AEther.CSCore
 
             var stopTask = new TaskCompletionSource<bool>();
 
-            void dataAvailable(object? sender, DataAvailableEventArgs evt)
+            async void dataAvailable(object? sender, DataAvailableEventArgs evt)
             {
-                var offset = 0;
-                while (offset < evt.ByteCount)
+                
+                for (var offset = 0; offset < evt.ByteCount;)
                 {
 
                     var target = writer.GetMemory(evt.ByteCount);
@@ -87,14 +87,23 @@ namespace AEther.CSCore
                     writer.Advance(count);
                     offset += count;
 
-                    var task = Task.Run(() => writer.FlushAsync());
-
                 }
+
+                await writer.FlushAsync(cancel);
+                //var task = Task.Run(() => writer.FlushAsync(cancel));
+
             }
 
             void stopped(object? sender, RecordingStoppedEventArgs evt)
             {
-                stopTask.SetResult(true);
+                if(evt.HasError)
+                {
+                    stopTask.TrySetException(evt.Exception);
+                }
+                else
+                {
+                    stopTask.SetResult(true);
+                }
             }
 
             Input.DataAvailable += dataAvailable;
@@ -109,12 +118,12 @@ namespace AEther.CSCore
             Input.DataAvailable -= dataAvailable;
             Input.Stopped -= stopped;
 
-            await writer.CompleteAsync();
+            await writer.CompleteAsync(stopTask.Task.Exception);
 
-            while (Input.RecordingState != RecordingState.Stopped)
-            {
-                await Task.Delay(1);
-            }
+            //while (Input.RecordingState != RecordingState.Stopped)
+            //{
+            //    await Task.Delay(1);
+            //}
 
         }
 
