@@ -9,23 +9,27 @@ Texture2D<float4> Spectrum1 : register(t2);
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
+	float2 source = float2(.8, .5);
+	float2 obstacle = float2(.5, .5);
+
 	float4 v = Velocity.Sample(Point, IN.UV);
 
-	float speed = .25;
-	if ((.8 < IN.UV.x) & (abs(IN.UV.y - .5) < .03))
-		v = float4(speed * float2(-1, cos(.7534 * T)), .5 + .5 * float2(sin(T), cos(T)));
-
-	float2 c1 = float2(.5, .5);
-	float2 d1 = normalize(IN.UV - c1);
-	if (distance(IN.UV, c1) < .1)
+	if (distance(IN.UV, source) < .01)
 	{
+		float speed = .25;
+		v = float4(speed * float2(-1, cos(.7534 * T)), .5 + .5 * float2(sin(T), cos(T)));
+	}
+
+	if (distance(IN.UV, obstacle) < .1)
+	{
+		float2 d1 = normalize(IN.UV - obstacle);
 		v.xy -= dot(d1, v.xy) * d1;
 		v.zw = 0;
 	}
 
-	//if (any(IN.UV < .1) | any(.9 < IN.UV))
+	//if (any(IN.UV < .05) | any(.95 < IN.UV))
 	//	v = 0;
-	//	v.xy = abs(v.xy) * sign(.5 - IN.UV);
+		//v.xy = abs(v.xy) * sign(.5 - IN.UV);
 
 	return v;
 

@@ -90,7 +90,6 @@ namespace AEther.CSCore
                 }
 
                 await writer.FlushAsync(cancel);
-                //var task = Task.Run(() => writer.FlushAsync(cancel));
 
             }
 

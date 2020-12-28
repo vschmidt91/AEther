@@ -28,7 +28,8 @@
     <None Remove="data\fx\mg-2x2.fx" />
     <None Remove="data\fx\mg-residual.fx" />
     <None Remove="data\fx\newton.fx" />
-    <None Remove="data\fx\poisson-gs.fx" />
+    <None Remove="data\fx\poisson-sor-zero.fx" />
+    <None Remove="data\fx\poisson-sor.fx" />
     <None Remove="sharpdx_direct3d11_1_effects_arm.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x64.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x86.dll" />
@@ -43,7 +44,10 @@
     <Content Include="data\fx\fluid-project.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\fx\poisson-gs.fx">
+    <Content Include="data\fx\poisson-sor-zero.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\poisson-sor.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\fluid-divergence.fx">

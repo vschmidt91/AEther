@@ -9,7 +9,7 @@ namespace AEther.WindowsForms
     interface IPoissonSolver
     {
 
-        Texture2D Solve(Texture2D target);
+        void Solve(Texture2D target, Texture2D solution);
 
     }
 }

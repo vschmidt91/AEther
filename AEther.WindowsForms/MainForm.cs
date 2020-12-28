@@ -148,25 +148,29 @@ namespace AEther.WindowsForms
 
             var latencyCounter = 0;
             var inputs = sampleSource.ReadAllAsync(Cancel.Token);
-            await foreach (var output in chain(inputs))
+            try
             {
-                var latency = (DateTime.Now - output.Time).TotalMilliseconds;
-                latencyMean += latencyMix * (latency - latencyMean);
-                latencyDev += latencyMix * (Math.Abs(latency - latencyMean) - latencyDev);
-                if(++latencyCounter == latencyWindow)
+                await foreach (var output in chain(inputs))
                 {
-                    try
+                    var latency = (DateTime.Now - output.Time).TotalMilliseconds;
+                    latencyMean += latencyMix * (latency - latencyMean);
+                    latencyDev += latencyMix * (Math.Abs(latency - latencyMean) - latencyDev);
+                    if (++latencyCounter == latencyWindow)
                     {
-                        Invoke(new MethodInvoker(() =>
+                        try
                         {
-                            Text = $"Latency: {Math.Round(latencyMean, 1)} \u00B1 {Math.Round(latencyDev, 1)} ms";
-                        }));
+                            Invoke(new MethodInvoker(() =>
+                            {
+                                Text = $"Latency: {Math.Round(latencyMean, 1)} \u00B1 {Math.Round(latencyDev, 1)} ms";
+                            }));
+                        }
+                        catch (InvalidOperationException) { }
+                        latencyCounter = 0;
                     }
-                    catch (InvalidOperationException) { }
-                    latencyCounter = 0;
+                    Graphics?.ProcessInput(output);
                 }
-                Graphics?.ProcessInput(output);
             }
+            catch (TaskCanceledException) { }
 
         }
 

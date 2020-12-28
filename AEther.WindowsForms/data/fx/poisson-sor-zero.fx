@@ -2,17 +2,18 @@
 #include "states.fxi"
 #include "globals.fxi"
 
-Texture2D<float4> Velocity : register(t0);
+Texture2D<float> Target : register(t0);
 
-float4 PS(const PSDefaultin IN) : SV_Target
+cbuffer EffectConstants : register(b3)
+{
+	float Scale;
+	float Omega;
+};
+
+float PS(const PSDefaultin IN) : SV_Target
 {
 
-	float4 v = Velocity.Sample(Point, IN.UV);
-
-	float2 uv = IN.UV - DT * v.xy;
-	float4 v2 = Velocity.Sample(Linear, uv);
-
-	return v2;
+	return -.25 * Omega * Scale * Scale * Target.Sample(Point, IN.UV);
 
 }
 
