@@ -14,7 +14,7 @@ namespace AEther.WindowsForms
     public class FluidState : GraphicsState
     {
 
-        public const int SizeLog = 10;
+        public const int SizeLog = 9;
         public const int Size = 1 << SizeLog;
 
         Texture2D Velocity;

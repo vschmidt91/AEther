@@ -81,7 +81,7 @@ namespace AEther.WindowsForms
                 Coarse = null;
             }
 
-            Residual = Graphics.CreateTexture(Size, Size, Format.R32_Float);
+            Residual = Graphics.CreateTexture(Size, Size, Format.R16_Float);
 
         }
 
