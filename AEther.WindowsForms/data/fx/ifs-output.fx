@@ -3,29 +3,21 @@
 #include "globals.fxi"
 
 Texture2D<float4> Source : register(t0);
-Texture2D<float4> Spectrum0 : register(t1);
-Texture2D<float4> Spectrum1 : register(t2);
 
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
 	float2 p = 2 * IN.UV - 1;
-	float2 q = 2 * p * float2(1, 1 / AspectRatio);
+	float2 q = 5 * p * float2(1, 1 / AspectRatio);
 
 	float4 v = Source.Sample(Linear, Squash(q));
-	
-	float4 d = v;
-	float lr = IN.UV.x;
-
-	float4 l = Spectrum0.Sample(Linear, float2(d.x, 0));
-	float4 r = Spectrum1.Sample(Linear, float2(d.x, 0));
-	float4 s = lerp(l, r, lr);
+	//v = Source.Sample(Linear, IN.UV);
 
 	float4 dither = Dither4(float4(IN.UV, IN.UV + 1) + frac(T));
 
-	float4 rgba = d + dither / 256;
-	rgba.a = 1;
-	return rgba;
+	float3 rgb = .1 * v.xyz * log(1 + v.w) + dither.rgb / 256;
+
+	return float4(rgb, 1);
 
 }
 

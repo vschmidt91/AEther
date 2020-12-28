@@ -25,6 +25,30 @@ SamplerState Point
 	*/
 };
 
+SamplerState LinearBorder
+{
+	Filter = MIN_MAG_MIP_LINEAR;
+    AddressU = WRAP;
+    AddressV = WRAP;
+	/*
+    AddressU = BORDER;
+    AddressV = BORDER;
+	BorderColor = float4(0, 0, 0, 0);
+	*/
+};
+
+SamplerState PointBorder
+{
+	Filter = MIN_MAG_MIP_POINT;
+    AddressU = WRAP;
+    AddressV = WRAP;
+	/*
+    AddressU = BORDER;
+    AddressV = BORDER;
+	BorderColor = float4(0, 0, 0, 0);
+	*/
+};
+
 SamplerState Anisotropic
 {
 	Filter = ANISOTROPIC;

@@ -7,12 +7,12 @@ Texture2D<float4> Velocity : register(t0);
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
-	float dx = Velocity.Sample(Point, IN.UV, int2(+1, 0)).x - Velocity.Sample(Point, IN.UV, int2(-1, 0)).x;
-	float dy = Velocity.Sample(Point, IN.UV, int2(0, +1)).y - Velocity.Sample(Point, IN.UV, int2(0, -1)).y;
+	float dx = Velocity.Sample(PointBorder, IN.UV, int2(+1, 0)).x - Velocity.Sample(PointBorder, IN.UV, int2(-1, 0)).x;
+	float dy = Velocity.Sample(PointBorder, IN.UV, int2(0, +1)).y - Velocity.Sample(PointBorder, IN.UV, int2(0, -1)).y;
 
 	float div = .5 * (dx + dy);
 
-	return float4(div, 0, 0, 0);
+	return div;
 
 }
 

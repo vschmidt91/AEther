@@ -11,7 +11,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	float4 v = Velocity.Sample(Linear, IN.UV);
 	float p = Velocity.Sample(Linear, IN.UV);
 
-	return .5 + 2.5 * p;
+	//return .5 + 2.5 * p;
 	return float4(v.z, v.w, 0, 1);
 
 }

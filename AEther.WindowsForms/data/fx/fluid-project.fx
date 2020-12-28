@@ -8,14 +8,14 @@ Texture2D<float> Pressure : register(t1);
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
-	float px = Pressure.Sample(Point, IN.UV, int2(+1, 0)) - Pressure.Sample(Point, IN.UV, int2(-1, 0));
-	float py = Pressure.Sample(Point, IN.UV, int2(0, +1)) - Pressure.Sample(Point, IN.UV, int2(0, -1));
+	float px = Pressure.Sample(PointBorder, IN.UV, int2(+1, 0)) - Pressure.Sample(PointBorder, IN.UV, int2(-1, 0));
+	float py = Pressure.Sample(PointBorder, IN.UV, int2(0, +1)) - Pressure.Sample(PointBorder, IN.UV, int2(0, -1));
 
 	float2 pg = 0.5 * float2(px, py);
 
 	float4 v = Velocity.Sample(Point, IN.UV);
 	
-	//v.xy -= pg;
+	v.xy -= pg;
 
 	return v;
 

@@ -14,7 +14,6 @@ namespace AEther.WindowsForms
         public EffectVectorVariable Transform;
         public EffectVectorVariable Offset;
 
-        public float Speed;
         public float Scale;
         public float OffsetScale;
 
@@ -41,6 +40,7 @@ namespace AEther.WindowsForms
 
         public override void Update(float t)
         {
+            base.Update(t);
             float a = Speed * t;
             Transform.Set(new[]
             {
@@ -55,6 +55,10 @@ namespace AEther.WindowsForms
                 OffsetScale * (float)Math.Cos(b),
                 OffsetScale * (float)Math.Sin(b)
             });
+
+            //Transform.Set(new[] { 1, .5f, -.5f, 1 });
+            //Offset.Set(new[] { 1f, -.3f });
+
         }
 
     }

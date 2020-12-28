@@ -14,7 +14,7 @@ cbuffer EffectConstants : register(b3)
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
-	float o = 0.1;
+	float o = 0.5;
 	float _o2 = 1.0 / (o * o);
 
 	float4 v = 0;
@@ -25,14 +25,12 @@ float4 PS(const PSDefaultin IN) : SV_Target
 		{
 			float f = dx * dx + dy * dy;
 			f = exp(-.5 * f * _o2);
-			v += f * Velocity.Sample(Point, IN.UV, int2(dx, dy));
+			v += f * Velocity.Sample(PointBorder, IN.UV, int2(dx, dy));
 			w += f;
 		}
 	}
 
-	v /= w;
-
-	return v;
+	return v / w;
 
 }
 

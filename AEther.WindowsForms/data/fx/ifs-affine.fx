@@ -3,8 +3,6 @@
 #include "globals.fxi"
 
 Texture2D<float4> Source : register(t0);
-Texture2D<float4> Spectrum0 : register(t1);
-Texture2D<float4> Spectrum1 : register(t2);
 
 cbuffer Effect : register(b2)
 {
@@ -15,17 +13,16 @@ cbuffer Effect : register(b2)
 
 float4 PS(const PSDefaultin IN) : SV_Target
 {
-	
+
 	float2 p = Stretch(IN.UV);
 
 	float2x2 A = (float2x2)Transform;
-	float2 q = mul(A, p + Offset);
 	float j = det(A);
+	float2 q = mul(A, p + Offset);
 	float4 v = Source.Sample(Point, Squash(q));
+	float4 w = v * float4(Weight.rgb, abs(j));
 
-	float4 rgba = abs(j) * Weight * v;
-
-	return clamp(rgba, -1e3, +1e3);
+	return w;
 
 }
 

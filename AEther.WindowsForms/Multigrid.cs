@@ -21,6 +21,8 @@ namespace AEther.WindowsForms
         readonly Texture2D[] Solution;
         readonly Texture2D[] SolutionNew;
 
+        //IPoissonSolver Relaxation;
+
         Shader CoarseSolver => Graphics.Shader["mg-2x2.fx"];
         Shader RelaxationShader => Graphics.Shader["poisson-gs.fx"];
         Shader ResidualShader => Graphics.Shader["mg-residual.fx"];
@@ -32,6 +34,7 @@ namespace AEther.WindowsForms
         {
 
             SizeLog = sizeLog;
+            //Relaxation = new GaussSeidelRB(graphics, 1 << sizeLog, 1 << sizeLog, 1, true);
 
             var sizes = Enumerable.Range(0, SizeLog).Select(l => 2 << l).ToArray();
 
@@ -81,15 +84,19 @@ namespace AEther.WindowsForms
 
             if (sizeLog == 0)
             {
+
                 //for (int i = 0; i < 256; ++i)
                 //{
                 //    Smooth(sizeLog);
                 //}
-                Graphics.SetFullscreenTarget(Solution[sizeLog]);
-                CoarseSolver.Variables["Scale"].AsScalar().Set(scale);
-                CoarseSolver.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
-                Graphics.Draw(CoarseSolver);
+
+                //Graphics.SetFullscreenTarget(Solution[sizeLog]);
+                //CoarseSolver.Variables["Scale"].AsScalar().Set(scale);
+                //CoarseSolver.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
+                //Graphics.Draw(CoarseSolver);
+
                 return;
+
             }
 
             // Relaxation
@@ -129,7 +136,7 @@ namespace AEther.WindowsForms
 
             // Relaxation
 
-            for (int i = 0; i < 1; ++i)
+            for (int i = 0; i < 0; ++i)
             {
                 Smooth(sizeLog);
             }

@@ -9,9 +9,10 @@ float4 PS(const PSDefaultin IN) : SV_Target
 
 	float4 v = Velocity.Sample(Point, IN.UV);
 	
-	float2 dp = clamp(DT * v.xy, -1, +1);
+	float2 dp = DT * v.xy;
 
-	float4 v2 = Velocity.Sample(Linear, IN.UV - dp);
+	float2 uv = IN.UV - dp;
+	float4 v2 = Velocity.Sample(LinearBorder, uv);
 
 	return v2;
 

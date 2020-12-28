@@ -14,7 +14,7 @@ namespace AEther.WindowsForms
     public class FluidState : GraphicsState
     {
 
-        public const int SizeLog = 8;
+        public const int SizeLog = 10;
         public const int Size = 1 << SizeLog;
 
         Texture2D Velocity;
@@ -34,8 +34,7 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
-            PoissonSolver = new Jacobi(graphics, Size, Size, 8);
-            //PoissonSolver = new GaussSeidelRB(graphics, Size, Size, 256);
+            PoissonSolver = new GaussSeidelRB(graphics, Size, Size, 256);
             //PoissonSolver = new Multigrid(graphics, SizeLog);
 
             Velocity = Graphics.CreateTexture(Size, Size, Format.R32G32B32A32_Float);
