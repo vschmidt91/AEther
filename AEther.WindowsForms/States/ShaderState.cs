@@ -34,5 +34,10 @@ namespace AEther.WindowsForms
 
         }
 
+        public override string ToString()
+        {
+            return $"{ GetType().Name } { Shader.Name }";
+        }
+
     }
 }

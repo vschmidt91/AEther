@@ -23,7 +23,6 @@ namespace AEther.WindowsForms
         {
 
             var ifsSize = Math.Max(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
-            //ifsSize = 1 << 11;
 
             var ifsDescription = new Texture2DDescription
             {

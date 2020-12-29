@@ -138,7 +138,10 @@ namespace AEther.WindowsForms
             //File.WriteAllText(file.FullName + ".txt", compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering));
 #endif
 
-            var shader = new Shader(Graphics.Device, compiled.Bytecode);
+            var shader = new Shader(Graphics.Device, compiled.Bytecode)
+            {
+                Name = file.Name,
+            };
 
             for (var c = 0; c < Graphics.Spectrum.Length; ++c)
             {

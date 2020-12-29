@@ -17,5 +17,10 @@ namespace AEther.WindowsForms
 
         public abstract void Render();
 
+        public override string ToString()
+        {
+            return GetType().Name;
+        }
+
     }
 }

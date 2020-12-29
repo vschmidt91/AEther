@@ -17,7 +17,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AEther.Bass", "AEther.Bass\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AEther.Benchmarks", "AEther.Benchmarks\AEther.Benchmarks.csproj", "{4BE668EA-2163-40A4-BABC-18DE7EDFF4A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEther.Tests", "AEther.Tests\AEther.Tests.csproj", "{F7E3FE8C-8B2F-45A4-8542-1EFA073FEE30}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AEther.Tests", "AEther.Tests\AEther.Tests.csproj", "{F7E3FE8C-8B2F-45A4-8542-1EFA073FEE30}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1CE42BB0-DC9B-4521-BEAB-2BE83DA5166B}"
+	ProjectSection(SolutionItems) = preProject
+		TestFiles\test_input.wav = TestFiles\test_input.wav
+		TestFiles\test_sine.wav = TestFiles\test_sine.wav
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -91,6 +91,7 @@ namespace AEther.WindowsForms
 
         public ShaderTechnique this[int i] => Techniques[i];
         public int TechniqueCount => Techniques.Length;
+        public string Name { get; set; }
 
         public readonly Dictionary<string, EffectVariable> Variables;
         public readonly Dictionary<string, EffectShaderResourceVariable> ShaderResources;

@@ -89,7 +89,12 @@ namespace AEther.CSCore
 
                 }
 
-                await writer.FlushAsync(cancel);
+                try
+                {
+                    await writer.FlushAsync(cancel);
+                }
+                catch(OperationCanceledException)
+                { }
 
             }
 
