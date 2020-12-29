@@ -23,14 +23,14 @@ namespace AEther.WindowsForms
         {
 
             var ifsSize = Math.Max(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
-            ifsSize = 1 << 11;
+            //ifsSize = 1 << 11;
 
             var ifsDescription = new Texture2DDescription
             {
                 ArraySize = 1,
                 BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
                 CpuAccessFlags = CpuAccessFlags.None,
-                Format = Format.R32G32B32A32_Float,
+                Format = Format.R16G16B16A16_Float,
                 Width = ifsSize,
                 Height = ifsSize,
                 MipLevels = 1,
@@ -53,8 +53,8 @@ namespace AEther.WindowsForms
                 //new IFSElement(Graphics.Shader["ifs-swirl.fx"]),
                 new IFSElement(Graphics.Shader["ifs-hyperbolic.fx"]),
                 //new IFSElement(Graphics.Shader["ifs-sqrt.fx"]),
-                //new IFSAffine(Graphics.Shader) {  Scale = .7f, Speed = +.01535f, OffsetScale = 2f },
-                new IFSAffine(Graphics.Shader) {  Scale = .9f, Speed = -.08535f, OffsetScale = 2f },
+                new IFSAffine(Graphics.Shader) {  Scale = .7f, Speed = -.1535f, OffsetScale = 1f },
+                new IFSAffine(Graphics.Shader) {  Scale = .9f, OffsetScale = .8f },
                 //new IFSAffine(Graphics.Shader) {  Speed = -.0256f },
                 //new IFSAffine(Graphics.Shader) {  Speed = .2125f },
                 //new IFSAffine(Graphics.Shader) { Speed = -.04f },
@@ -81,12 +81,14 @@ namespace AEther.WindowsForms
             //sumWeight = .25f * Vector4.Dot(sumWeight, Vector4.One) * Vector4.One;
 
 
-            //Graphics.Context.Rasterizer.SetViewport(Source.ViewPort);
-            //Graphics.Context.OutputMerger.SetRenderTargets(null, Source.GetRenderTargetView());
-            //Graphics.Draw(Graphics.Shader["ifs-input.fx"]);
+            Graphics.Context.Rasterizer.SetViewport(Source.ViewPort);
+            Graphics.Shader["ifs-input.fx"].ShaderResources["Spectrum0"].SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
+            Graphics.Shader["ifs-input.fx"].ShaderResources["Spectrum1"].SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
+            Graphics.Context.OutputMerger.SetRenderTargets(null, Source.GetRenderTargetView());
+            Graphics.Draw(Graphics.Shader["ifs-input.fx"]);
 
-            Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), Color4.White);
-            for (int n = 0; n < 16; ++n)
+            //Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), Color4.White);
+            //for (int n = 0; n < 8; ++n)
             {
 
                 Graphics.Context.ClearRenderTargetView(Target.GetRenderTargetView(), new Color4(SharpDX.Vector4.Zero));

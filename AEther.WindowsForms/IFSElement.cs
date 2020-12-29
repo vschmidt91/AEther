@@ -18,7 +18,7 @@ namespace AEther.WindowsForms
         {
             Shader = shader;
             Weight = Vector4.One;
-            Speed = 1f;
+            Speed = .1f;
         }
 
         public virtual void Update(float t)

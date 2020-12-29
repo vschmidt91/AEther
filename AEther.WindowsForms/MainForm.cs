@@ -121,9 +121,9 @@ namespace AEther.WindowsForms
                     Graphics = new Graphics(configuration.Domain, Handle, configuration.TimeResolution, configuration.UseFloatTextures, configuration.UseMapping);
                     Graphics.Resize(ClientSize.Width, ClientSize.Height);
                     //var state = new FluidState(Graphics);
-                    var state = new ShaderState(Graphics, Graphics.Shader["histogram.fx"]);
+                    //var state = new ShaderState(Graphics, Graphics.Shader["histogram.fx"]);
                     //var state = new ShaderState(Graphics, Graphics.Shader["spectrum.fx"]);
-                    //var state = new IFSState(Graphics);
+                    var state = new IFSState(Graphics);
                     Graphics.OnRender += (obj, evt) => state.Render();
                     //Graphics.State = new SceneState(Graphics);
                 }));

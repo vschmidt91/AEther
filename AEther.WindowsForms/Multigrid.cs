@@ -16,9 +16,12 @@ namespace AEther.WindowsForms
         internal class CoarseGrid : GraphicsComponent
         {
 
-            internal Multigrid Solver;
-            internal Texture2D Residual;
-            internal Texture2D Solution;
+            Shader Copy => Graphics.Shader["copy.fx"];
+            Shader Add => Graphics.Shader["add.fx"];
+
+            readonly Multigrid Solver;
+            readonly Texture2D Residual;
+            readonly Texture2D Solution;
 
             internal CoarseGrid(Graphics graphics, int sizeLog, int scaleLog)
                 : base(graphics)
@@ -28,11 +31,26 @@ namespace AEther.WindowsForms
                 Solution = Graphics.CreateTexture(Solver.Size, Solver.Size, Format.R16_Float);
             }
 
-            internal void Solve()
+            internal void Solve(Texture2D residual, Texture2D solution)
             {
-                Solver.Solve(Residual, Solution);
-            }
 
+                // Projection
+
+                Graphics.SetFullscreenTarget(Residual);
+                Copy.ShaderResources["Source"].AsShaderResource().SetResource(residual.GetShaderResourceView());
+                Graphics.Draw(Copy);
+
+                // Recursion
+
+                Solver.Solve(Residual, Solution);
+
+                // Interpolation
+
+                Graphics.SetFullscreenTarget(solution);
+                Add.ShaderResources["Source"].AsShaderResource().SetResource(Solution.GetShaderResourceView());
+                Graphics.Draw(Add);
+
+            }
         }
 
         public const int MinSize = 32;
@@ -49,8 +67,6 @@ namespace AEther.WindowsForms
         readonly CoarseGrid? Coarse;
 
         Shader ResidualShader => Graphics.Shader["mg-residual.fx"];
-        Shader Copy => Graphics.Shader["copy.fx"];
-        Shader Add => Graphics.Shader["add.fx"];
 
         public Multigrid(Graphics graphics, int sizeLog, int scaleLog = 0)
             : base(graphics)
@@ -93,36 +109,22 @@ namespace AEther.WindowsForms
             Graphics.Context.ClearRenderTargetView(solution.GetRenderTargetView(), new Color4(0f));
             Relaxation.Solve(target, solution);
 
-            // Termination
-
-            if (Coarse == null)
-            {
-                return;
-            }
-
             // Residual
 
-            Graphics.SetFullscreenTarget(Residual);
-            ResidualShader.Variables["Scale"].AsScalar().Set(Scale);
-            ResidualShader.ShaderResources["Solution"].AsShaderResource().SetResource(solution.GetShaderResourceView());
-            ResidualShader.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
-            Graphics.Draw(ResidualShader);
+            if (Coarse != null)
+            {
 
-            // Projection
+                Graphics.SetFullscreenTarget(Residual);
+                ResidualShader.Variables["Scale"].AsScalar().Set(Scale);
+                ResidualShader.ShaderResources["Solution"].AsShaderResource().SetResource(solution.GetShaderResourceView());
+                ResidualShader.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
+                Graphics.Draw(ResidualShader);
 
-            Graphics.SetFullscreenTarget(Coarse.Residual);
-            Copy.ShaderResources["Source"].AsShaderResource().SetResource(Residual.GetShaderResourceView());
-            Graphics.Draw(Copy);
+                // Recursion
 
-            // Recursion
+                Coarse.Solve(Residual, solution);
 
-            Coarse.Solve();
-
-            // Interpolation
-
-            Graphics.SetFullscreenTarget(solution);
-            Add.ShaderResources["Source"].AsShaderResource().SetResource(Coarse.Solution.GetShaderResourceView());
-            Graphics.Draw(Add);
+            }
 
         }
 

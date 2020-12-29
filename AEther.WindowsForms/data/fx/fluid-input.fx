@@ -16,7 +16,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 
 	if (distance(IN.UV, source) < .01)
 	{
-		float speed = .25;
+		float speed = 1.0;
 		v = float4(speed * float2(-1, cos(.7534 * T)), .5 + .5 * float2(sin(T), cos(T)));
 	}
 
