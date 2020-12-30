@@ -94,8 +94,8 @@ namespace AEther.WindowsForms
             Relaxation = new SOR(graphics, Size, Size)
             {
                 Iterations = 4,
-                Jacobi = true,
-                Omega = .8f,
+                Jacobi = false,
+                Omega = 1.8f,
                 Scale = Scale,
             };
 
