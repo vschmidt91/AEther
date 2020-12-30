@@ -72,7 +72,7 @@ namespace AEther.WindowsForms
             }
         }
 
-        public const int MinSize = 8;
+        public const int MinSize = 16;
 
         public readonly int SizeLog;
         public int Size => 1 << SizeLog;
@@ -95,7 +95,7 @@ namespace AEther.WindowsForms
             {
                 Iterations = 2,
                 Jacobi = false,
-                Omega = 1.5f,
+                Omega = 1f,
                 Scale = Scale,
             };
 
