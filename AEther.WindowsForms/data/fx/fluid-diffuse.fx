@@ -1,6 +1,7 @@
 ﻿
 #include "states.fxi"
 #include "globals.fxi"
+#include "fluid-boundary.fxi"
 
 #define KERNEL_SIZE 3
 
@@ -29,8 +30,9 @@ float4 PS(const PSDefaultin IN) : SV_Target
 			w += f;
 		}
 	}
+	v /= w;
 
-	return v / w;
+	return setBoundary(IN.UV, v);
 
 }
 

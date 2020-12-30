@@ -1,6 +1,7 @@
 ﻿
 #include "states.fxi"
 #include "globals.fxi"
+#include "fluid-boundary.fxi"
 
 Texture2D<float4> Velocity : register(t0);
 
@@ -12,7 +13,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	float2 uv = IN.UV - DT * v.xy;
 	float4 v2 = Velocity.Sample(Linear, uv);
 
-	return v2;
+	return setBoundary(IN.UV, v2);
 
 }
 

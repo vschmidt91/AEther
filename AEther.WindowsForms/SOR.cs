@@ -18,73 +18,62 @@ namespace AEther.WindowsForms
         public bool Jacobi { get; set; } = false;
         public float Scale { get; set; } = 1f;
 
-        Texture2D Solution1;
-        Texture2D Solution2;
+        Texture2D SolutionBuffer;
 
-        readonly Shader Solver;
+        Shader Solver => Graphics.Shader["poisson-sor.fx"];
+        Shader SolverZero => Graphics.Shader["poisson-sor-zero.fx"];
 
         public SOR(Graphics graphics, int width, int height)
             : base(graphics)
         {
 
-            Solution1 = Graphics.CreateTexture(width, height, Format.R16_Float);
-            Solution2 = Graphics.CreateTexture(width, height, Format.R16_Float);
-
-            Solver = Graphics.Shader["poisson-sor.fx"];
+            SolutionBuffer = Graphics.CreateTexture(width, height, Format.R16_Float);
 
         }
 
-        public void Solve(Texture2D target, Texture2D solution)
+        public void Solve(Texture2D target, Texture2D destination)
         {
 
-            Solver.Variables["Scale"].AsScalar().Set(Scale);
-            Solver.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
-            Solver.Variables["Omega"].AsScalar().Set(Omega);
-            if (Jacobi)
+            Texture2D from = SolutionBuffer;
+            Texture2D to = destination;
+
+            if((Iterations % 2) == 0)
             {
-                Solver.Variables["UpdateEven"].AsScalar().Set(true);
-                Solver.Variables["UpdateOdd"].AsScalar().Set(true);
+                (from, to) = (to, from);
             }
 
-            for (var i = 0; i < Iterations; ++i)
+            SolverZero.Variables["Scale"].AsScalar().Set(Scale);
+            SolverZero.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
+            SolverZero.Variables["Omega"].AsScalar().Set(Omega);
+
+            Graphics.SetFullscreenTarget(to);
+            Graphics.Draw(SolverZero);
+
+            if (1 < Iterations)
+            {
+                Solver.Variables["Scale"].AsScalar().Set(Scale);
+                Solver.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
+                Solver.Variables["Omega"].AsScalar().Set(Omega);
+                if (Jacobi)
+                {
+                    Solver.Variables["UpdateEven"].AsScalar().Set(true);
+                    Solver.Variables["UpdateOdd"].AsScalar().Set(true);
+                }
+            }
+
+            for (var i = 1; i < Iterations; ++i)
             {
 
-                Texture2D source;
-                if (i == 0)
-                {
-                    source = solution;
-                }
-                else if ((i & 1) == 0)
-                {
-                    source = Solution1;
-                }
-                else
-                {
-                    source = Solution2;
-                }
+                (from, to) = (to, from);
 
-                Texture2D destination;
-                if (i == Iterations - 1)
-                {
-                    destination = solution;
-                }
-                else if ((i & 1) == 0)
-                {
-                    destination = Solution2;
-                }
-                else
-                {
-                    destination = Solution1;
-                }
-
+                Solver.ShaderResources["Solution"].AsShaderResource().SetResource(from.GetShaderResourceView());
                 if (!Jacobi)
                 {
                     Solver.Variables["UpdateEven"].AsScalar().Set((i & 1) == 0);
                     Solver.Variables["UpdateOdd"].AsScalar().Set((i & 1) == 1);
                 }
 
-                Graphics.SetFullscreenTarget(destination);
-                Solver.ShaderResources["Solution"].AsShaderResource().SetResource(source.GetShaderResourceView());
+                Graphics.SetFullscreenTarget(to);
                 Graphics.Draw(Solver);
 
             }

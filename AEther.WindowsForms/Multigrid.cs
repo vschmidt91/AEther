@@ -10,18 +10,28 @@ using SharpDX.DXGI;
 
 namespace AEther.WindowsForms
 {
+
+    public enum MultigridMode
+    {
+        VCycle,
+        FCycle,
+        WCycle,
+    }
+
     public class Multigrid : GraphicsComponent, IPoissonSolver
     {
 
         internal class CoarseGrid : GraphicsComponent
         {
 
+            Shader ResidualShader => Graphics.Shader["mg-residual.fx"];
             Shader Copy => Graphics.Shader["copy.fx"];
             Shader Add => Graphics.Shader["add.fx"];
 
-            readonly Multigrid Solver;
-            readonly Texture2D Residual;
-            readonly Texture2D Solution;
+            internal readonly Multigrid Solver;
+            internal readonly Texture2D Residual;
+            internal readonly Texture2D ResidualFine;
+            internal readonly Texture2D Solution;
 
             internal CoarseGrid(Graphics graphics, int sizeLog, int scaleLog)
                 : base(graphics)
@@ -29,20 +39,29 @@ namespace AEther.WindowsForms
                 Solver = new Multigrid(graphics, sizeLog, scaleLog);
                 Residual = Graphics.CreateTexture(Solver.Size, Solver.Size, Format.R16_Float);
                 Solution = Graphics.CreateTexture(Solver.Size, Solver.Size, Format.R16_Float);
+                ResidualFine = Graphics.CreateTexture(2 * Solver.Size, 2 * Solver.Size, Format.R16_Float);
             }
 
-            internal void Solve(Texture2D residual, Texture2D solution)
+            internal void Solve(Texture2D target, Texture2D solution, MultigridMode mode)
             {
+
+                // Residual
+
+                Graphics.SetFullscreenTarget(ResidualFine);
+                ResidualShader.Variables["Scale"].AsScalar().Set(Solver.Scale / 2);
+                ResidualShader.ShaderResources["Solution"].AsShaderResource().SetResource(solution.GetShaderResourceView());
+                ResidualShader.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
+                Graphics.Draw(ResidualShader);
 
                 // Projection
 
                 Graphics.SetFullscreenTarget(Residual);
-                Copy.ShaderResources["Source"].AsShaderResource().SetResource(residual.GetShaderResourceView());
+                Copy.ShaderResources["Source"].AsShaderResource().SetResource(ResidualFine.GetShaderResourceView());
                 Graphics.Draw(Copy);
 
                 // Recursion
 
-                Solver.Solve(Residual, Solution);
+                Solver.Solve(Residual, Solution, mode);
 
                 // Interpolation
 
@@ -53,7 +72,7 @@ namespace AEther.WindowsForms
             }
         }
 
-        public const int MinSize = 32;
+        public const int MinSize = 8;
 
         public readonly int SizeLog;
         public int Size => 1 << SizeLog;
@@ -61,12 +80,9 @@ namespace AEther.WindowsForms
         public readonly int ScaleLog;
         public int Scale => 1 << ScaleLog;
 
-
-        readonly Texture2D Residual;
         readonly IPoissonSolver Relaxation;
         readonly CoarseGrid? Coarse;
 
-        Shader ResidualShader => Graphics.Shader["mg-residual.fx"];
 
         public Multigrid(Graphics graphics, int sizeLog, int scaleLog = 0)
             : base(graphics)
@@ -75,15 +91,10 @@ namespace AEther.WindowsForms
             SizeLog = sizeLog;
             ScaleLog = scaleLog;
 
-            //Relaxation = new SOR(graphics, Size, Size)
-            //{
-            //    Iterations = 2,
-            //    Jacobi = true,
-            //    Omega = .8f,
-            //    Scale = Scale,
-            //};
-            Relaxation = new SORZero(graphics)
+            Relaxation = new SOR(graphics, Size, Size)
             {
+                Iterations = 4,
+                Jacobi = true,
                 Omega = .8f,
                 Scale = Scale,
             };
@@ -97,32 +108,38 @@ namespace AEther.WindowsForms
                 Coarse = null;
             }
 
-            Residual = Graphics.CreateTexture(Size, Size, Format.R16_Float);
 
         }
 
-        public void Solve(Texture2D target, Texture2D solution)
+        public void Solve(Texture2D target, Texture2D destination)
+            => Solve(target, destination, MultigridMode.FCycle);
+
+        public void Solve(Texture2D target, Texture2D destination, MultigridMode mode)
         {
 
             // Relaxation
 
-            Graphics.Context.ClearRenderTargetView(solution.GetRenderTargetView(), new Color4(0f));
-            Relaxation.Solve(target, solution);
-
-            // Residual
+            Graphics.Context.ClearRenderTargetView(destination.GetRenderTargetView(), new Color4(0f));
+            Relaxation.Solve(target, destination);
 
             if (Coarse != null)
             {
 
-                Graphics.SetFullscreenTarget(Residual);
-                ResidualShader.Variables["Scale"].AsScalar().Set(Scale);
-                ResidualShader.ShaderResources["Solution"].AsShaderResource().SetResource(solution.GetShaderResourceView());
-                ResidualShader.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
-                Graphics.Draw(ResidualShader);
-
                 // Recursion
-
-                Coarse.Solve(Residual, solution);
+                switch(mode)
+                {
+                    case MultigridMode.VCycle:
+                        Coarse.Solve(target, destination, MultigridMode.VCycle);
+                        break;
+                    case MultigridMode.FCycle:
+                        Coarse.Solve(target, destination, MultigridMode.FCycle);
+                        Coarse.Solve(target, destination, MultigridMode.VCycle);
+                        break;
+                    case MultigridMode.WCycle:
+                        Coarse.Solve(target, destination, MultigridMode.WCycle);
+                        Coarse.Solve(target, destination, MultigridMode.WCycle);
+                        break;
+                }
 
             }
 

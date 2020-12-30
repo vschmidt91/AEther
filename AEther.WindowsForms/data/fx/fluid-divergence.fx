@@ -1,10 +1,11 @@
 ﻿
 #include "states.fxi"
 #include "globals.fxi"
+#include "fluid-boundary.fxi"
 
 Texture2D<float4> Velocity : register(t0);
 
-float4 PS(const PSDefaultin IN) : SV_Target
+float PS(const PSDefaultin IN) : SV_Target
 {
 
 #ifdef FAST_DERIVATIVES

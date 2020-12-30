@@ -75,8 +75,9 @@ namespace AEther
                 var y = dst.Slice(4 * k, 4);
 
                 y[0] = Math.Max(0, buffer2[k] - buffer4[k]);
-                y[1] = Math.Max(0, buffer1[k] - buffer3[k]);
-                y[2] = Math.Max(0, src[k] - Math.Min(buffer3[k], buffer4[k]));
+                y[1] = 2 * Math.Max(0, buffer1[k] - buffer3[k]);
+                //y[2] = Math.Max(0, src[k] - Math.Max(y[0], y[1]))
+                y[2] = Math.Max(0, src[k] - y[0] - y[1]);
                 //y[3] = 0;
 
                 //y[0] = Math.Max(buffer2[k], buffer4[k]);

@@ -112,6 +112,7 @@ namespace AEther.WindowsForms
                         new ShaderState(Graphics, Graphics.Shader["histogram.fx"]),
                         new ShaderState(Graphics, Graphics.Shader["spectrum.fx"]),
                         new IFSState(Graphics),
+                        new SceneState(Graphics),
                     });
                     lbState.SelectedIndex = 0;
                     Graphics.OnRender += Graphics_OnRender;

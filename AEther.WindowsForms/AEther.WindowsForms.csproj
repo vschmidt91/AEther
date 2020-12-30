@@ -25,6 +25,7 @@
     <None Remove="data\fx\fluid-output.fx" />
     <None Remove="data\fx\fluid-project.fx" />
     <None Remove="data\fx\include\complex.fxi" />
+    <None Remove="data\fx\include\fluid-boundary.fxi" />
     <None Remove="data\fx\mg-2x2.fx" />
     <None Remove="data\fx\mg-residual.fx" />
     <None Remove="data\fx\newton.fx" />
@@ -42,6 +43,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\fluid-project.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\include\fluid-boundary.fxi">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\poisson-sor-zero.fx">

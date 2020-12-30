@@ -28,9 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.tlpPanel = new System.Windows.Forms.TableLayoutPanel();
             this.pgConfiguration = new System.Windows.Forms.PropertyGrid();
             this.lbState = new System.Windows.Forms.ListBox();
+            this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.tlpPanel.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -69,6 +71,11 @@
             this.lbState.Size = new System.Drawing.Size(234, 94);
             this.lbState.TabIndex = 2;
             // 
+            // notifyIcon1
+            // 
+            this.notifyIcon1.Text = "notifyIcon1";
+            this.notifyIcon1.Visible = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -90,5 +97,6 @@
         private System.Windows.Forms.TableLayoutPanel tlpPanel;
         private System.Windows.Forms.PropertyGrid pgConfiguration;
         private System.Windows.Forms.ListBox lbState;
+        private System.Windows.Forms.NotifyIcon notifyIcon1;
     }
 }

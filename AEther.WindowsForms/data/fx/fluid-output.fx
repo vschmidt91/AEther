@@ -3,13 +3,9 @@
 #include "globals.fxi"
 
 Texture2D<float4> Velocity : register(t0);
-Texture2D<float> Pressure : register(t1);
 
 float4 PS(const PSDefaultin IN) : SV_Target
 {
-
-	//float p = Velocity.Sample(Linear, IN.UV);
-	//return .5 + 2.5 * p;
 
 	float4 v = Velocity.Sample(Linear, IN.UV);
 	return float4(v.z, v.w, 0, 1);

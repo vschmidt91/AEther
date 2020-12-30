@@ -14,7 +14,7 @@ namespace AEther.WindowsForms
     public class FluidState : GraphicsState
     {
 
-        public const int SizeLog = 9;
+        public const int SizeLog = 10;
         public const int Size = 1 << SizeLog;
 
         Texture2D Velocity;
@@ -35,7 +35,7 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
-            //PoissonSolver = new GaussSeidelRB(graphics, Size, Size) { Iterations = 32, Omega = 1.8f };
+            //PoissonSolver = new SOR(graphics, Size, Size) { Iterations = 256, Omega = 1.8f };
             PoissonSolver = new Multigrid(graphics, SizeLog);
 
             Velocity = Graphics.CreateTexture(Size, Size, Format.R16G16B16A16_Float);
@@ -50,7 +50,7 @@ namespace AEther.WindowsForms
 
         public override void Render()
         {
-            
+
             RenderInput();
             RenderAdvect();
             //RenderDiffuse();
@@ -118,7 +118,6 @@ namespace AEther.WindowsForms
 
             Graphics.SetFullscreenTarget(Graphics.BackBuffer);
             Output.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
-            Output.ShaderResources["Pressure"].AsShaderResource().SetResource(Pressure.GetShaderResourceView());
             Graphics.Draw(Output);
 
         }

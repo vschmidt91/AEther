@@ -39,7 +39,7 @@ namespace AEther.WindowsForms
 
             var random = new Random();
 
-            var model = new Model(Graphics.Device, new Sphere(3, 3));
+            var model = new Model(Graphics.Device, new Sphere(7, 7));
             var scene = 0.UnfoldToTree(n =>
             {
                 AffineMomentum transform, momentum;
@@ -47,7 +47,7 @@ namespace AEther.WindowsForms
                 IEnumerable<int> children;
                 if (n < 2)
                 {
-                    var translationScale = 10 * (float)Math.Pow(.2, n);
+                    var translationScale = 10 * (float)Math.Pow(.5, n);
                     transform = random.NextMomentum(translationScale, 1, 0);
                     momentum = random.NextMomentum(0, 1, 0);
                     //acceleration = .1f * Random.NextMomentum(0f);
@@ -58,7 +58,7 @@ namespace AEther.WindowsForms
                 {
                     var color = random.NextVector3(Vector3.Zero, .1f * Vector3.One);
                     transform = random.NextMomentum(5, 0, 0);
-                    transform = new AffineMomentum(transform.Translation, transform.Rotation, -1);
+                    transform = new AffineMomentum(transform.Translation, transform.Rotation, 0);
                     //momentum = 5 * Random.NextMomentum(0f);
                     //var acceleration = .1f * Random.NextMomentum(0f);
                     node = new Geometry(model, color, transform, default, default);
@@ -102,7 +102,7 @@ namespace AEther.WindowsForms
             {
                 Graphics.SetModel(evt.Model);
                 InstanceBuffer.Update(Graphics.Context, evt.Instances);
-                //Draw(Shader[CurrentShader], evt.Instances.Count);
+                Graphics.Draw(Graphics.Shader["geometry.fx"], evt.Instances.Count);
             }
             RenderBuffer.BufferFinished += finishBuffer;
 
@@ -111,7 +111,7 @@ namespace AEther.WindowsForms
             var scene = Scene.WithWorldTransform().FlattenPreOrder();
             foreach (var (node, transform) in scene)
             {
-                node.Update(1f);
+                node.Update(.01f);
                 switch (node)
                 {
                     case Geometry geometry:

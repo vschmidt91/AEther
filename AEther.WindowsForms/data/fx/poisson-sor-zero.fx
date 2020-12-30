@@ -1,6 +1,7 @@
 ﻿
 #include "states.fxi"
 #include "globals.fxi"
+#include "fluid-boundary.fxi"
 
 Texture2D<float> Target : register(t0);
 
@@ -13,7 +14,9 @@ cbuffer EffectConstants : register(b3)
 float PS(const PSDefaultin IN) : SV_Target
 {
 
-	return -.25 * Omega * Scale * Scale * Target.Sample(Point, IN.UV);
+	float p = -.25 * Omega * Scale * Scale * Target.Sample(Point, IN.UV);
+
+	return p;
 
 }
 

@@ -1,6 +1,7 @@
 ﻿
 #include "states.fxi"
 #include "globals.fxi"
+#include "fluid-boundary.fxi"
 
 Texture2D<float> Solution : register(t0);
 Texture2D<float> Target : register(t1);

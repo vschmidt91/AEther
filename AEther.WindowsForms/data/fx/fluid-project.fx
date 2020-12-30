@@ -1,6 +1,7 @@
 ﻿
 #include "states.fxi"
 #include "globals.fxi"
+#include "fluid-boundary.fxi"
 
 Texture2D<float4> Velocity : register(t0);
 Texture2D<float> Pressure : register(t1);
@@ -22,7 +23,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	
 	v.xy -= pg;
 
-	return v;
+	return setBoundary(IN.UV, v);
 
 }
 

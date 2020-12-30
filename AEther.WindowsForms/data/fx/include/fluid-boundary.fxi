@@ -1,0 +1,16 @@
+﻿
+
+float4 setBoundary(float2 p, float4 v)
+{
+
+	float margin = .01;
+	v.xy *= (margin < p.xy);
+	v.xy *= (p.xy < 1 - margin);
+
+	float2 obstaclePosition = float2(.5, .5);
+	float obstacleSize = .1;
+	v *= (obstacleSize < distance(p, obstaclePosition));
+
+	return v;
+
+}

@@ -8,7 +8,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 {
 
 	float2 p = 2 * IN.UV - 1;
-	float2 q = 5 * p * float2(1, 1 / AspectRatio);
+	float2 q = 3 * p * float2(1, 1 / AspectRatio);
 
 	float4 v = Source.Sample(Linear, Squash(q));
 	//v = Source.Sample(Linear, IN.UV);

@@ -124,10 +124,11 @@ namespace AEther.WindowsForms
             shaderFlags |= ShaderFlags.OptimizationLevel3;
 #endif
 
+            var profile = "fx_5_0";
             var sourceCode = File.ReadAllText(file.FullName);
             var macros = Array.Empty<ShaderMacro>();
 
-            using var compiled = ShaderBytecode.Compile(sourceCode, "fx_5_0", shaderFlags, effectFlags, macros, Includes, file.Name);
+            using var compiled = ShaderBytecode.Compile(sourceCode, profile, shaderFlags, effectFlags, macros, Includes, file.Name);
 
             if (compiled.Bytecode is null)
             {

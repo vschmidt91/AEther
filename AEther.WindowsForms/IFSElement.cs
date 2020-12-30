@@ -23,11 +23,11 @@ namespace AEther.WindowsForms
 
         public virtual void Update(float t)
         {
-            Weight = Enumerable.Range(0, 4)
-                .Select(k => 1 + Math.Sin(Speed * t + k))
-                .Select(x => (float)x)
-                .ToArray()
-                .ToVector4();
+            //Weight = Enumerable.Range(0, 4)
+            //    .Select(k => 1 + Math.Sin(Speed * t + k))
+            //    .Select(x => (float)x)
+            //    .ToArray()
+            //    .ToVector4();
         }
 
         public virtual void Dispose()
