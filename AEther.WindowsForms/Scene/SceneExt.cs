@@ -11,7 +11,7 @@ namespace AEther.WindowsForms
 
         public static Tree<(SceneNode, AffineTransform)> WithWorldTransform(this Tree<SceneNode> scene, AffineTransform? parentTransform = default)
         {
-            return (scene, parentTransform ?? AffineTransform.Identity).UnfoldToTree(parent =>
+            return Tree<(SceneNode, AffineTransform)>.Unfold((scene, parentTransform ?? AffineTransform.Identity), parent =>
             {
                 var (node, transform) = parent;
                 var worldTransform = node.Item.Transform.ToTransform() * transform;

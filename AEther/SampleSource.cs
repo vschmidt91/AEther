@@ -11,7 +11,7 @@ using System.Runtime.CompilerServices;
 
 namespace AEther
 {
-    public abstract class SampleSource
+    public abstract class SampleSource : IDisposable
     {
 
         public abstract SampleFormat Format { get; }
@@ -34,6 +34,7 @@ namespace AEther
 
         }
 
+        public abstract void Dispose();
 
     }
 }

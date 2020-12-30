@@ -40,7 +40,7 @@ namespace AEther.WindowsForms
             var random = new Random();
 
             var model = new Model(Graphics.Device, new Sphere(7, 7));
-            var scene = 0.UnfoldToTree(n =>
+            var scene = Tree<SceneNode>.Unfold(0, n =>
             {
                 AffineMomentum transform, momentum;
                 SceneNode node;

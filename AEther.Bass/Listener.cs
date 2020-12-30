@@ -33,7 +33,7 @@ namespace AEther.Bass
             return devices;
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             ManagedBass.Bass.Free();
         }

@@ -26,7 +26,7 @@ namespace AEther.NAudio
                 ".mp3" => new Mp3FileReader(path),
                 _ => throw new Exception(),
             };
-            Format = Listener.ToSampleFormat(Input.WaveFormat);
+            Format = NAudio.Input.ToSampleFormat(Input.WaveFormat);
         }
 
         public override async Task WriteToAsync(PipeWriter writer, CancellationToken cancel = default)
@@ -57,7 +57,7 @@ namespace AEther.NAudio
 
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             Input.Dispose();
         }

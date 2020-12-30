@@ -41,5 +41,10 @@ namespace AEther
             await writer.CompleteAsync();
         }
 
+        public override void Dispose()
+        {
+            Input.Dispose();
+        }
+
     }
 }

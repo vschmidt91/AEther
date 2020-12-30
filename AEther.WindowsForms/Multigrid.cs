@@ -33,13 +33,13 @@ namespace AEther.WindowsForms
             internal readonly Texture2D ResidualFine;
             internal readonly Texture2D Solution;
 
-            internal CoarseGrid(Graphics graphics, int sizeLog, int scaleLog)
+            internal CoarseGrid(Graphics graphics, int width, int height, int scaleLog)
                 : base(graphics)
             {
-                Solver = new Multigrid(graphics, sizeLog, scaleLog);
-                Residual = Graphics.CreateTexture(Solver.Size, Solver.Size, Format.R16_Float);
-                Solution = Graphics.CreateTexture(Solver.Size, Solver.Size, Format.R16_Float);
-                ResidualFine = Graphics.CreateTexture(2 * Solver.Size, 2 * Solver.Size, Format.R16_Float);
+                Solver = new Multigrid(graphics, width, height, scaleLog);
+                Residual = Graphics.CreateTexture(width, height, Format.R16_Float);
+                Solution = Graphics.CreateTexture(width, height, Format.R16_Float);
+                ResidualFine = Graphics.CreateTexture(2 * width, 2 * height, Format.R16_Float);
             }
 
             internal void Solve(Texture2D target, Texture2D solution, MultigridMode mode)
@@ -74,34 +74,37 @@ namespace AEther.WindowsForms
 
         public const int MinSize = 16;
 
-        public readonly int SizeLog;
-        public int Size => 1 << SizeLog;
+        public readonly int Width;
+        public readonly int Height;
 
         public readonly int ScaleLog;
         public int Scale => 1 << ScaleLog;
 
-        readonly IPoissonSolver Relaxation;
+        public int Presmoothing { get; set; } = 1;
+        public int Postsmoothing { get; set; } = 1;
+        public MultigridMode Mode { get; set; } = MultigridMode.VCycle;
+
+        readonly SOR Relaxation;
         readonly CoarseGrid? Coarse;
 
 
-        public Multigrid(Graphics graphics, int sizeLog, int scaleLog = 0)
+        public Multigrid(Graphics graphics, int width, int height, int scaleLog = 0)
             : base(graphics)
         {
 
-            SizeLog = sizeLog;
+            Width = width;
+            Height = height;
             ScaleLog = scaleLog;
 
-            Relaxation = new SOR(graphics, Size, Size)
+            Relaxation = new SOR(graphics, width, height)
             {
-                Iterations = 2,
-                Jacobi = false,
                 Omega = 1f,
                 Scale = Scale,
             };
 
-            if (MinSize < Size)
+            if (MinSize < Math.Min(width, height))
             {
-                Coarse = new CoarseGrid(graphics, sizeLog - 1, scaleLog + 1);
+                Coarse = new CoarseGrid(graphics, width / 2, height / 2, scaleLog + 1);
             }
             else
             {
@@ -112,14 +115,15 @@ namespace AEther.WindowsForms
         }
 
         public void Solve(Texture2D target, Texture2D destination)
-            => Solve(target, destination, MultigridMode.FCycle);
+            => Solve(target, destination, Mode);
 
         public void Solve(Texture2D target, Texture2D destination, MultigridMode mode)
         {
 
-            // Relaxation
-
             Graphics.Context.ClearRenderTargetView(destination.GetRenderTargetView(), new Color4(0f));
+
+            // Relaxation
+            Relaxation.Iterations = Presmoothing;
             Relaxation.Solve(target, destination);
 
             if (Coarse != null)
@@ -142,6 +146,10 @@ namespace AEther.WindowsForms
                 }
 
             }
+
+            // Relaxation
+            Relaxation.Iterations = Postsmoothing;
+            Relaxation.Solve(target, destination);
 
         }
 

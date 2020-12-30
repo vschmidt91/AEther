@@ -25,6 +25,12 @@ namespace AEther
             Children = children as IList<Tree<T>> ?? children.ToList();
         }
 
+        public static Tree<T> Unfold<S>(S seed, Func<S, (T, IEnumerable<S>)> f)
+        {
+            var (item, childSeeds) = f(seed);
+            return new Tree<T>(item, childSeeds.Select(s => Tree<T>.Unfold(s, f)).ToArray());
+        }
+
         public S Fold<S>(Func<T, IEnumerable<S>, S> f)
             => f(Item, Children.Select(c => c.Fold(f)));
 
@@ -58,7 +64,7 @@ namespace AEther
         public override string ToString()
             => Children.Any()
             ? $"{Item} [{string.Join(", ", Children)}]"
-            : Item.ToString();
+            : Item?.ToString() ?? string.Empty;
 
     }
 
@@ -73,12 +79,6 @@ namespace AEther
                 return Sequence<T>.Empty.Instance;
             var (item, tailSeed) = x.Value;
             return new Sequence<T>.Cons(item, tailSeed.UnfoldToSequence(f));
-        }
-
-        public static Tree<T> UnfoldToTree<T, S>(this S seed, Func<S, (T, IEnumerable<S>)> f)
-        {
-            var (item, childSeeds) = f(seed);
-            return new Tree<T>(item, childSeeds.Select(s => s.UnfoldToTree(f)).ToArray());
         }
 
     }

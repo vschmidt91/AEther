@@ -32,6 +32,7 @@
             this.tlpPanel = new System.Windows.Forms.TableLayoutPanel();
             this.pgConfiguration = new System.Windows.Forms.PropertyGrid();
             this.lbState = new System.Windows.Forms.ListBox();
+            this.lbInput = new System.Windows.Forms.ListBox();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.tlpPanel.SuspendLayout();
             this.SuspendLayout();
@@ -40,12 +41,14 @@
             // 
             this.tlpPanel.ColumnCount = 1;
             this.tlpPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tlpPanel.Controls.Add(this.pgConfiguration, 0, 1);
-            this.tlpPanel.Controls.Add(this.lbState, 0, 0);
+            this.tlpPanel.Controls.Add(this.pgConfiguration, 0, 2);
+            this.tlpPanel.Controls.Add(this.lbState, 0, 1);
+            this.tlpPanel.Controls.Add(this.lbInput, 0, 0);
             this.tlpPanel.Dock = System.Windows.Forms.DockStyle.Left;
             this.tlpPanel.Location = new System.Drawing.Point(0, 0);
             this.tlpPanel.Name = "tlpPanel";
-            this.tlpPanel.RowCount = 2;
+            this.tlpPanel.RowCount = 3;
+            this.tlpPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tlpPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tlpPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tlpPanel.Size = new System.Drawing.Size(240, 561);
@@ -55,9 +58,9 @@
             // pgConfiguration
             // 
             this.pgConfiguration.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pgConfiguration.Location = new System.Drawing.Point(3, 103);
+            this.pgConfiguration.Location = new System.Drawing.Point(3, 203);
             this.pgConfiguration.Name = "pgConfiguration";
-            this.pgConfiguration.Size = new System.Drawing.Size(234, 455);
+            this.pgConfiguration.Size = new System.Drawing.Size(234, 355);
             this.pgConfiguration.TabIndex = 1;
             this.pgConfiguration.PropertyValueChanged += new System.Windows.Forms.PropertyValueChangedEventHandler(this.pgConfiguration_PropertyValueChanged);
             // 
@@ -66,10 +69,21 @@
             this.lbState.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lbState.FormattingEnabled = true;
             this.lbState.ItemHeight = 15;
-            this.lbState.Location = new System.Drawing.Point(3, 3);
+            this.lbState.Location = new System.Drawing.Point(3, 103);
             this.lbState.Name = "lbState";
             this.lbState.Size = new System.Drawing.Size(234, 94);
             this.lbState.TabIndex = 2;
+            // 
+            // lbInput
+            // 
+            this.lbInput.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lbInput.FormattingEnabled = true;
+            this.lbInput.ItemHeight = 15;
+            this.lbInput.Location = new System.Drawing.Point(3, 3);
+            this.lbInput.Name = "lbInput";
+            this.lbInput.Size = new System.Drawing.Size(234, 94);
+            this.lbInput.TabIndex = 3;
+            this.lbInput.SelectedValueChanged += new System.EventHandler(this.lbInput_SelectedValueChanged);
             // 
             // notifyIcon1
             // 
@@ -98,5 +112,6 @@
         private System.Windows.Forms.PropertyGrid pgConfiguration;
         private System.Windows.Forms.ListBox lbState;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
+        private System.Windows.Forms.ListBox lbInput;
     }
 }

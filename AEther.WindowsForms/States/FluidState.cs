@@ -14,8 +14,7 @@ namespace AEther.WindowsForms
     public class FluidState : GraphicsState
     {
 
-        public const int SizeLog = 9;
-        public const int Size = 1 << SizeLog;
+        public const int Size = 1 << 10;
 
         Texture2D Velocity;
         Texture2D VelocityNew;
@@ -35,13 +34,18 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
-            //PoissonSolver = new SOR(graphics, Size, Size) { Iterations = 256, Omega = 1.8f };
-            PoissonSolver = new Multigrid(graphics, SizeLog);
+            var width = Graphics.BackBuffer.Width;
+            var height = Graphics.BackBuffer.Height;
 
-            Velocity = Graphics.CreateTexture(Size, Size, Format.R16G16B16A16_Float);
-            VelocityNew = Graphics.CreateTexture(Size, Size, Format.R16G16B16A16_Float);
-            Pressure = Graphics.CreateTexture(Size, Size, Format.R16_Float);
-            Divergence = Graphics.CreateTexture(Size, Size, Format.R16_Float);
+            width = height = Size;
+
+            //PoissonSolver = new SOR(graphics, Size, Size) { Iterations = 256, Omega = 1.8f };
+            PoissonSolver = new Multigrid(graphics, width, height);
+
+            Velocity = Graphics.CreateTexture(width, height, Format.R16G16B16A16_Float);
+            VelocityNew = Graphics.CreateTexture(width, height, Format.R16G16B16A16_Float);
+            Pressure = Graphics.CreateTexture(width, height, Format.R16_Float);
+            Divergence = Graphics.CreateTexture(width, height, Format.R16_Float);
 
             Graphics.Context.ClearRenderTargetView(Velocity.GetRenderTargetView(), new Color4(0f));
 

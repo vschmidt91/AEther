@@ -25,7 +25,7 @@ namespace AEther.CLI
             
             SampleSource sampleSource;
             if (path == null)
-                sampleSource = new CSCore.Listener();
+                sampleSource = new CSCore.WASAPI();
             else
                 sampleSource = new SampleReader(File.OpenRead(path));
 

@@ -28,7 +28,7 @@ namespace AEther
 
 
         [Category("DFT")]
-        public int TimeResolution { get; set; } = 1 << 6;
+        public int TimeResolution { get; set; } = 1 << 8;
 
         [Category("DFT")]
         public int MaxParallelization { get; set; } = -1;
@@ -40,7 +40,7 @@ namespace AEther
         public float FrequencyWindow { get; set; } = 1f;
 
         [Category("Splitter")]
-        public float TimeWindow { get; set; } = .1f;
+        public float TimeWindow { get; set; } = .03f;
 
         [Category("Normalizer")]
         public float NormalizerFloorRoom { get; set; } = 0f;

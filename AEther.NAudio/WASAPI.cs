@@ -7,7 +7,7 @@ using NAudio.Wave;
 namespace AEther.NAudio
 {
 
-    public class WASAPI : Listener
+    public class WASAPI : Input
     {
 
         public WASAPI()
