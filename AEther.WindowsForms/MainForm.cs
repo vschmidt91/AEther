@@ -28,7 +28,6 @@ namespace AEther.WindowsForms
 
         Task Task;
         CancellationTokenSource Cancel;
-
         SpectrumAccumulator[] Spectrum;
         Histogram[] Histogram;
         double Latency = 0;
@@ -48,16 +47,15 @@ namespace AEther.WindowsForms
             lbInput.Items.AddRange(audioDevices.ToArray());
             lbInput.SelectedItem = LoopbackEntry;
 
-            var states = new GraphicsState[]
+            lbState.Items.Clear();
+            lbState.Items.AddRange(new GraphicsState[]
             {
                 new ShaderState(Graphics, Graphics.Shaders["histogram.fx"]),
                 new ShaderState(Graphics, Graphics.Shaders["spectrum.fx"]),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
-            };
-            lbState.Items.Clear();
-            lbState.Items.AddRange(states);
-            lbState.SelectedItem = states[0];
+            });
+            lbState.SelectedIndex = 3;
 
             pgOptions.SelectedObject = new SessionOptions();
 
@@ -198,6 +196,9 @@ namespace AEther.WindowsForms
         public void Render()
         {
 
+            if (IsDisposed)
+                return;
+
             var now = DateTime.Now;
             if(LatencyUpdateInterval < now - LastLatencyUpdate)
             {
@@ -303,16 +304,19 @@ namespace AEther.WindowsForms
             Cancel.Cancel();
             await Task;
 
-            foreach (var spectrum in Spectrum)
+            SpectrumAccumulator[] oldSpectrum;
+            (Spectrum, oldSpectrum) = (CreateSpectrum(), Spectrum);
+            foreach (var spectrum in oldSpectrum)
             {
                 spectrum.Dispose();
             }
-            Spectrum = CreateSpectrum();
-            foreach (var histogram in Histogram)
+
+            Histogram[] oldHistogram;
+            (Histogram, oldHistogram) = (CreateHistogram(), Histogram);
+            foreach (var histogram in oldHistogram)
             {
                 histogram.Dispose();
             }
-            Histogram = CreateHistogram();
 
             Cancel = new CancellationTokenSource();
             Task = RunAsync(Cancel.Token);

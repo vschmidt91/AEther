@@ -151,10 +151,6 @@ namespace AEther.WindowsForms
 
                 using (var map = Texture.Map(context))
                 {
-                    if (Buffer?.Length != map.Length)
-                    {
-                        throw new Exception();
-                    }
                     map.Write(Buffer);
                     bandwidth += (int)map.Length;
                 }

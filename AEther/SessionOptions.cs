@@ -24,11 +24,11 @@ namespace AEther
         public float MaxFrequency { get; set; } = 12000f;
 
         [Category("Domain")]
-        public int FrequencyResolution { get; set; } = 8;
+        public int FrequencyResolution { get; set; } = 12;
 
 
         [Category("DFT")]
-        public int TimeResolution { get; set; } = 1 << 6;
+        public int TimeResolution { get; set; } = 1 << 8;
 
         [Category("DFT")]
         public int MaxParallelization { get; set; } = -1;

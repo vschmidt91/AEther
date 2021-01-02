@@ -23,6 +23,7 @@ namespace AEther.WindowsForms
         {
 
             var ifsSize = Math.Max(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
+            ifsSize = 1 << 8;
 
             var ifsDescription = new Texture2DDescription
             {
@@ -52,7 +53,7 @@ namespace AEther.WindowsForms
                 //new IFSElement(Graphics.Shader["ifs-swirl.fx"]),
                 new IFSElement(Graphics.Shaders["ifs-hyperbolic.fx"]),
                 //new IFSElement(Graphics.Shader["ifs-sqrt.fx"]),
-                new IFSAffine(Graphics.Shaders) {  Scale = .5f, Speed = -.1535f, OffsetScale = 2f },
+                //new IFSAffine(Graphics.Shaders) {  Scale = .5f, Speed = -.1535f, OffsetScale = 2f },
                 new IFSAffine(Graphics.Shaders) {  Scale = .9f, OffsetScale = 1f },
                 //new IFSAffine(Graphics.Shader) {  Speed = -.0256f },
                 //new IFSAffine(Graphics.Shader) {  Speed = .2125f },
@@ -81,8 +82,6 @@ namespace AEther.WindowsForms
 
 
             Graphics.Context.Rasterizer.SetViewport(Source.ViewPort);
-            //Graphics.Shaders["ifs-input.fx"].ShaderResources["Spectrum0"].SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
-            //Graphics.Shaders["ifs-input.fx"].ShaderResources["Spectrum1"].SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
             Graphics.Context.OutputMerger.SetRenderTargets(null, Source.GetRenderTargetView());
             Graphics.Draw(Graphics.Shaders["ifs-input.fx"]);
 

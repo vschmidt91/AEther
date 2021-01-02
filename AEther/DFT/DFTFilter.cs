@@ -17,6 +17,7 @@ namespace AEther
         Complex State;
 
         readonly Complex Coefficient;
+        readonly Complex[] CoefficientPow;
         readonly float Frequency;
         readonly float DFTFrequency;
         readonly float Q;
@@ -33,7 +34,11 @@ namespace AEther
             State = Complex.Zero;
             var length = (int)Math.Round(M / DFTFrequency);
             Buffer = RingBuffer<float>.Create(length);
-            Coefficient = Complex.Exp(2 * Complex.ImaginaryOne * Math.PI * M / Length);
+            Coefficient = Complex.Exp(2 * Math.PI * Complex.ImaginaryOne * M / Length);
+
+            CoefficientPow = Enumerable.Range(0, length + 1)
+                .Select(i => Complex.Exp(2 * Math.PI * Complex.ImaginaryOne * i * M / Length))
+                .ToArray();
 
         }
 
@@ -53,14 +58,32 @@ namespace AEther
         {
             while(0 < samples.Length)
             {
+
                 var (src, dst) = Buffer.Add(samples);
+
                 for (var i = 0; i < src.Length; ++i)
                 {
                     var input = src.Span[i] - dst.Span[i];
                     State = Coefficient * State + input;
                 }
+
+                //var newState = Complex.Zero;
+                //for (var i = 0; i < src.Length; ++i)
+                //{
+                //    var coeff = CoefficientPow[src.Length - 1 - i];
+                //    var input = src.Span[i] - dst.Span[i];
+                //    newState = newState + coeff * input;
+                //}
+                //State = CoefficientPow[src.Length] * State + newState;
+
+                //var add = Enumerable.Range(0, src.Length);
+                //var addRe = add.Sum(i => (src.Span[i] - dst.Span[i]) * CoefficientPow[src.Length - 1 - i].Real);
+                //var addIm = add.Sum(i => (src.Span[i] - dst.Span[i]) * CoefficientPow[src.Length - 1 - i].Imaginary);
+                //State = CoefficientPow[src.Length] * State + new Complex(addRe, addIm);
+
                 Buffer.Advance(src);
                 samples = samples.Slice(src.Length);
+
             }
         }
 

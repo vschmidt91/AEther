@@ -18,14 +18,16 @@ namespace AEther.WindowsForms
 {
     public class Graphics
     {
-        public class FrameHandle : IDisposable
+        public class FrameHandle : GraphicsComponent, IDisposable
         {
 
-            public EventHandler? OnDisposed;
+            public FrameHandle(Graphics graphics)
+                : base(graphics)
+            { }
 
             public void Dispose()
             {
-                OnDisposed?.Invoke(this, EventArgs.Empty);
+                Graphics.Present();
             }
 
         }
@@ -259,6 +261,11 @@ namespace AEther.WindowsForms
             }
         }
 
+        void Present()
+        {
+            Chain.TryPresent(1, PresentFlags.None);
+        }
+
         public FrameHandle RenderFrame()
         {
 
@@ -270,12 +277,7 @@ namespace AEther.WindowsForms
             FrameConstants.Value.Time.Y = dt;
             FrameConstants.Update(Context);
 
-            var frame = new FrameHandle();
-            frame.OnDisposed += (sender, evt) =>
-            {
-                Chain.TryPresent(1, PresentFlags.None);
-            };
-            return frame;
+            return new FrameHandle(this);
 
         }
 
