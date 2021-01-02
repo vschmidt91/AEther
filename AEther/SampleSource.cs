@@ -19,24 +19,6 @@ namespace AEther
 
         public abstract SampleFormat Format { get; }
 
-        //public abstract Task WriteToAsync(PipeWriter writer, CancellationToken cancel = default);
-
-        //public async IAsyncEnumerable<PipeHandle> ReadAllAsync([EnumeratorCancellation] CancellationToken cancel = default)
-        //{
-
-        //    var pipe = new System.IO.Pipelines.Pipe();
-        //    var writerTask = WriteToAsync(pipe.Writer, cancel);
-
-        //    var inputs = pipe.Reader.ReadAllAsync();
-        //    await foreach (var input in inputs)
-        //    {
-        //        yield return input;
-        //    }
-
-        //    await writerTask;
-
-        //}
-
         public abstract void Start();
 
         public abstract void Stop();

@@ -19,7 +19,8 @@ namespace AEther.WindowsForms
     public partial class MainForm : Form
     {
 
-        const bool UseMapping = true;
+        const string LoopbackEntry = "Loopback";
+        const bool UseMapping = false;
         const bool UseFloatTextures = false;
 
         readonly Graphics Graphics;
@@ -41,20 +42,11 @@ namespace AEther.WindowsForms
             InitializeComponent();
             Graphics = new Graphics(Handle);
 
-            var audioDevices = Recorder.GetAvailableDevices();
-
-            var audioSources = new List<SampleSource>();
-            var wasapiSource = new WASAPI();
-            audioSources.Add(wasapiSource);
-            audioSources.AddRange(audioDevices.Select(d => new Recorder(d)));
+            var audioDevices = Recorder.GetAvailableDeviceNames();
             lbInput.Items.Clear();
-            lbInput.Items.AddRange(audioSources.ToArray());
-            lbInput.SelectedItem = wasapiSource;
-
-            foreach(var source in audioSources)
-            {
-                source.Start();
-            }
+            lbInput.Items.Add(LoopbackEntry);
+            lbInput.Items.AddRange(audioDevices.ToArray());
+            lbInput.SelectedItem = LoopbackEntry;
 
             var states = new GraphicsState[]
             {
@@ -89,11 +81,6 @@ namespace AEther.WindowsForms
             base.OnFormClosing(e);
             Cancel.Cancel();
             await Task;
-            foreach (SampleSource source in lbInput.Items)
-            {
-                source.Stop();
-                source.Dispose();
-            }
         }
 
         protected override void OnShown(EventArgs e)
@@ -132,12 +119,15 @@ namespace AEther.WindowsForms
         async Task RunAsync(CancellationToken cancel)
         {
 
-            if (lbInput.SelectedItem is not SampleSource sampleSource)
+            if (lbInput.SelectedItem is not string sampleSourceName)
                 return;
 
             if (pgOptions.SelectedObject is not SessionOptions options)
                 return;
 
+            SampleSource sampleSource = sampleSourceName is LoopbackEntry
+                ? new Loopback()
+                : new Recorder(sampleSourceName);
 
             var session = new Session(sampleSource.Format, options);
             var chain = session.CreateChain(8);
@@ -149,14 +139,15 @@ namespace AEther.WindowsForms
                 pipe.Writer.WriteAsync(data);
             }
 
-            void stop()
+            void stopped(object? sender, Exception? exc)
             {
-                sampleSource.OnDataAvailable -= dataAvailable;
-                pipe.Writer.CompleteAsync();
+                pipe.Writer.CompleteAsync(exc);
             }
 
             sampleSource.OnDataAvailable += dataAvailable;
-            cancel.Register(stop);
+            sampleSource.OnStopped += stopped;
+            cancel.Register(sampleSource.Stop);
+            sampleSource.Start();
 
             await foreach (var output in chain(inputs))
             {
@@ -176,6 +167,8 @@ namespace AEther.WindowsForms
                 }
                 InputCounter++;
             }
+
+            //sampleSource.Dispose();
 
         }
 

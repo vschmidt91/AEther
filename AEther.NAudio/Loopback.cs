@@ -7,10 +7,10 @@ using NAudio.Wave;
 namespace AEther.NAudio
 {
 
-    public class WASAPI : Input
+    public class Loopback : Input
     {
 
-        public WASAPI()
+        public Loopback()
             : base(new WasapiLoopbackCapture())
         { }
 

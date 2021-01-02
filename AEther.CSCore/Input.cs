@@ -46,8 +46,6 @@ namespace AEther.CSCore
 
         private void Device_Stopped(object? sender, RecordingStoppedEventArgs evt)
         {
-            Device.DataAvailable -= Device_DataAvailable;
-            Device.Stopped -= Device_Stopped;
             OnStopped?.Invoke(this, evt.Exception);
         }
 

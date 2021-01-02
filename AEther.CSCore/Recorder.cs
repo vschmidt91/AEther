@@ -16,24 +16,29 @@ namespace AEther.CSCore
 
         readonly string Name;
 
-        public Recorder(MMDevice device)
-            : base(CreateDevice(device))
+        public Recorder(string deviceName)
+            : base(CreateDevice(deviceName))
         {
-            Name = device.FriendlyName;
+            Name = deviceName;
         }
 
         public override string ToString()
             => Name;
 
-        public static MMDevice[] GetAvailableDevices()
+        static IEnumerable<MMDevice> GetAvailableDevices()
         {
             using var enumerator = new MMDeviceEnumerator();
             using var endpoints = enumerator.EnumAudioEndpoints(DataFlow.Capture, DeviceState.Active);
             return endpoints.ToArray();
         }
 
-        static WasapiCapture CreateDevice(MMDevice device)
+        public static IEnumerable<string> GetAvailableDeviceNames()
+            => GetAvailableDevices().Select(d => d.FriendlyName);
+
+        static WasapiCapture CreateDevice(string deviceName)
         {
+            var devices = GetAvailableDevices();
+            var device = devices.First(d => d.FriendlyName.Equals(deviceName));
             var eventSync = false;
             var mode = AudioClientShareMode.Shared;
             var format = new WaveFormat();

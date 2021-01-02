@@ -24,7 +24,7 @@ namespace AEther.CLI
             
             SampleSource sampleSource;
             if (path == null)
-                sampleSource = new CSCore.WASAPI();
+                sampleSource = new CSCore.Loopback();
             else
                 sampleSource = new SampleReader(File.OpenRead(path));
 

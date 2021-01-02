@@ -10,10 +10,10 @@ using CSCore;
 
 namespace AEther.CSCore
 {
-    public class WASAPI : Input
+    public class Loopback : Input
     {
 
-        public WASAPI()
+        public Loopback()
             : base(CreateDevice())
         { }
 
