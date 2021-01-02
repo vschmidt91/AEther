@@ -47,6 +47,7 @@ namespace AEther.WindowsForms
 
         readonly byte[] Buffer;
         readonly T[] Slice;
+        readonly int Pitch;
 
         public override int Position => UpdatePosition;
 
@@ -59,7 +60,19 @@ namespace AEther.WindowsForms
 
             UseMapping = useMapping;
 
-            Buffer = new byte[Texture.RowPitch * height];
+            if(useMapping)
+            {
+                using(var map = Texture.Map(device.ImmediateContext))
+                {
+                    Pitch = (int)map.Pitch;
+                }
+            }
+            else
+            {
+                Pitch = width * format.SizeOfInBytes();
+            }
+            Buffer = new byte[Pitch * height];
+
             Slice = new T[4 * width];
 
             UpdatePosition = 0;
@@ -92,7 +105,7 @@ namespace AEther.WindowsForms
             {
                 Slice[i] = Convert(src[i]);
             }
-            var dstOffset = WritePosition * Texture.RowPitch;
+            var dstOffset = WritePosition * Pitch;
             var lengthInBytes = src.Length * Marshal.SizeOf<T>();
 
             System.Buffer.BlockCopy(Slice, 0, Buffer, dstOffset, lengthInBytes);

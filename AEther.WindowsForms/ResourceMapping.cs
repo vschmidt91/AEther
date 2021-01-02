@@ -13,6 +13,7 @@ namespace AEther.WindowsForms
     {
 
         public long Length => Stream?.Length ?? 0;
+        public long Pitch => Box.RowPitch;
 
         readonly DeviceContext Context;
         readonly Resource Resource;

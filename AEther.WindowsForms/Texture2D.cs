@@ -20,8 +20,6 @@ namespace AEther.WindowsForms
 
         public Viewport ViewPort => new(0, 0, Width, Height, 0, 1);
 
-        public override int RowPitch => (Description.Format.SizeOfInBytes() * Description.Width).NextMultipleOf(PitchAlignment);
-
         public Texture2D(SharpDX.Direct3D11.Texture2D texture)
             : base(texture)
         { }

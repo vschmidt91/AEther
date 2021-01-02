@@ -20,7 +20,7 @@ namespace AEther.WindowsForms
     {
 
         const string LoopbackEntry = "Loopback";
-        const bool UseMapping = false;
+        const bool UseMapping = true;
         const bool UseFloatTextures = false;
 
         readonly Graphics Graphics;
@@ -130,8 +130,13 @@ namespace AEther.WindowsForms
                 : new Recorder(sampleSourceName);
 
             var session = new Session(sampleSource.Format, options);
-            var chain = session.CreateChain(8);
-            var pipe = new System.IO.Pipelines.Pipe();
+            var chain = session.CreateChain(4);
+
+            var pipe = new System.IO.Pipelines.Pipe(new PipeOptions(
+                null,
+                PipeScheduler.ThreadPool,
+                PipeScheduler.ThreadPool
+            ));
             var inputs = pipe.Reader.ReadAllAsync();
 
             void dataAvailable(object? sender, ReadOnlyMemory<byte> data)
@@ -168,7 +173,7 @@ namespace AEther.WindowsForms
                 InputCounter++;
             }
 
-            //sampleSource.Dispose();
+            sampleSource.Dispose();
 
         }
 
@@ -307,6 +312,7 @@ namespace AEther.WindowsForms
             {
                 histogram.Dispose();
             }
+            Histogram = CreateHistogram();
 
             Cancel = new CancellationTokenSource();
             Task = RunAsync(Cancel.Token);

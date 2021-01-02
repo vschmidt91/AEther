@@ -1,17 +1,48 @@
 ﻿using System;
+using System.Buffers;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 
 namespace AEther
 {
+
+    public readonly struct PipeHandle
+    {
+
+        public readonly ReadOnlySequence<byte> Data;
+        public readonly PipeReader Reader;
+
+        public PipeHandle(ReadOnlySequence<byte> data, PipeReader reader)
+        {
+            Data = data;
+            Reader = reader;
+        }
+
+    }
+
     public static class Extensions
     {
+
+        public static async IAsyncEnumerable<PipeHandle> ReadAllAsync(this PipeReader reader, CancellationToken cancel = default)
+        {
+            while (true)
+            {
+                var result = await reader.ReadAsync(cancel);
+                if (result.IsCompleted || result.IsCanceled)
+                {
+                    break;
+                }
+                yield return new PipeHandle(result.Buffer, reader);
+            }
+        }
 
         public static float Clamp(this float x, float a, float b)
         {

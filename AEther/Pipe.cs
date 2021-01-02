@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Buffers;
-using System.IO.Pipelines;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -16,35 +15,8 @@ namespace AEther
         where Ti : struct
         where To : struct;
 
-    public readonly struct PipeHandle
-    {
-
-        public readonly ReadOnlySequence<byte> Data;
-        public readonly PipeReader Reader;
-
-        public PipeHandle(ReadOnlySequence<byte> data, PipeReader reader)
-        {
-            Data = data;
-            Reader = reader;
-        }
-
-    }
-
     public static class Pipe
     {
-
-        public static async IAsyncEnumerable<PipeHandle> ReadAllAsync(this PipeReader reader, CancellationToken cancel = default)
-        {
-            while (true)
-            {
-                var result = await reader.ReadAsync(cancel);
-                if (result.IsCompleted || result.IsCanceled)
-                {
-                    break;
-                }
-                yield return new PipeHandle(result.Buffer, reader);
-            }
-        }
 
         public static Pipe<Ti, To> Buffer<Ti, To>(this Pipe<Ti, To> pipe, int capacity = -1)
             where Ti : struct

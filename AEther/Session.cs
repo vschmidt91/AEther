@@ -114,12 +114,13 @@ namespace AEther
                 await foreach (var input in inputs)
                 {
                     var output = DFTEvent.Rent(format.ChannelCount, domain.Count);
-                    await Task.WhenAll(Enumerable.Range(0, format.ChannelCount)
+                    var tasks = Enumerable.Range(0, format.ChannelCount)
                         .Select(c => Task.Run(() =>
                         {
                             dft[c].Process(input[c]);
                             dft[c].Output(output[c].Span);
-                        })));
+                        }));
+                    await Task.WhenAll(tasks);
                     //for (int c = 0; c < format.ChannelCount; ++c)
                     //{
                     //    dft[c].Process(input[c]);

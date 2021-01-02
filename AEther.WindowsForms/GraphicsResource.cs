@@ -21,16 +21,11 @@ namespace AEther.WindowsForms
             set => Resource.DebugName = value;
         }
 
-        public const int PitchAlignment = 256;
-
         protected T Resource;
 
         RenderTargetView? RTView;
         ShaderResourceView? SRView;
         DepthStencilView? DSView;
-
-        public virtual int RowPitch => 0;
-        public virtual int DepthPitch => 0;
 
         public GraphicsResource(T resource)
         {
@@ -105,10 +100,10 @@ namespace AEther.WindowsForms
             return new ContextMapping(context, Resource, subResource, mode, flags);
         }
 
-        public void Update<S>(DeviceContext context, S[] data, int? subResource = default, ResourceRegion? region = null)
+        public void Update<S>(DeviceContext context, S[] data, int subResource = 0, ResourceRegion? region = null)
             where S : struct
         {
-            context.UpdateSubresource(data, Resource, subResource ?? 0, RowPitch, DepthPitch, region);
+            context.UpdateSubresource(data, Resource, subResource, 0, 0, region);
         }
 
         public void Dispose()
