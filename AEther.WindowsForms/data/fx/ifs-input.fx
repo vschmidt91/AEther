@@ -14,7 +14,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	float d = length(IN.UV - .5);
 	float lr = IN.UV.x;
 
-	float2 uv = float2(f, HistogramShift - .25 * d);
+	float2 uv = float2(f, .5);
 	float4 l = Spectrum0.Sample(Linear, uv);
 	float4 r = Spectrum1.Sample(Linear, uv);
 	float4 s = lerp(l, r, lr);

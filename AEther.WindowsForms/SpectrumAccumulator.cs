@@ -10,28 +10,42 @@ using SharpDX.Direct3D11;
 namespace AEther.WindowsForms
 {
 
-    public interface ISpectrumAccumulator : IDisposable
+    public abstract class SpectrumAccumulator
     {
 
-        Texture2D Texture { get; }
+        public readonly Texture2D Texture;
 
-        void Clear();
+        public SpectrumAccumulator(Texture2D texture)
+        {
+            Texture = texture;
+        }
 
-        void Add(ReadOnlySpan<float> src);
+        public abstract void Clear();
 
-        int Update(DeviceContext context);
+        public abstract void Add(ReadOnlySpan<float> values);
+
+        public abstract int Update(DeviceContext context);
+
+        public void Dispose()
+        {
+            Texture.Dispose();
+        }
 
     }
 
-    public abstract class SpectrumAccumulator<T> : ISpectrumAccumulator
+    public abstract class SpectrumAccumulator<T> : SpectrumAccumulator
         where T : struct 
     {
-
-        public Texture2D Texture { get; }
 
         readonly T[] Buffer;
 
         protected SpectrumAccumulator(Device device, int length, SharpDX.DXGI.Format format)
+            : base(CreateTexture(device, length, format))
+        {
+            Buffer = new T[4 * length];
+        }
+
+        static Texture2D CreateTexture(Device device, int length, SharpDX.DXGI.Format format)
         {
             var desc = new Texture2DDescription
             {
@@ -46,35 +60,32 @@ namespace AEther.WindowsForms
                 MipLevels = 1,
                 ArraySize = 1,
             };
-            Buffer = new T[4 * length];
-            Texture = new Texture2D(new SharpDX.Direct3D11.Texture2D(device, desc));
+            return new Texture2D(new SharpDX.Direct3D11.Texture2D(device, desc));
         }
 
-        public void Clear()
+        public override void Clear()
         {
             Array.Clear(Buffer, 0, Buffer.Length);
         }
 
-        protected abstract T Combine(float src, T dst);
+        protected abstract T Convert(float value);
 
-        public void Add(ReadOnlySpan<float> src)
+        protected abstract T Combine(T src, T dst);
+
+        public override void Add(ReadOnlySpan<float> src)
         {
             for (int i = 0; i < Buffer.Length; ++i)
             {
-                Buffer[i] = Combine(src[i], Buffer[i]);
+                var value = Convert(src[i]);
+                Buffer[i] = Combine(value, Buffer[i]);
             }
         }
 
-        public int Update(DeviceContext context)
+        public override int Update(DeviceContext context)
         {
             using var map = Texture.Map(context);
             map.WriteRange(Buffer.AsSpan());
             return Buffer.Length * Marshal.SizeOf<T>();
-        }
-
-        public void Dispose()
-        {
-            Texture.Dispose();
         }
 
     }
@@ -86,7 +97,11 @@ namespace AEther.WindowsForms
             : base(device, length, SharpDX.DXGI.Format.R8G8B8A8_UNorm)
         { }
 
-        protected override byte Combine(float src, byte dst) => Math.Max(dst, (byte)(255 * src.Clamp(0, 1)));
+        protected override byte Combine(byte src, byte dst)
+            => Math.Max(src, dst);
+
+        protected override byte Convert(float value)
+            => (byte)(255 * value.Clamp(0, 1));
 
     }
 
@@ -97,7 +112,11 @@ namespace AEther.WindowsForms
             : base(device, length, SharpDX.DXGI.Format.R32G32B32A32_Float)
         { }
 
-        protected override float Combine(float src, float dst) => Math.Max(dst, src);
+        protected override float Combine(float src, float dst)
+            => Math.Max(src, dst);
+
+        protected override float Convert(float value)
+            => value;
 
     }
 

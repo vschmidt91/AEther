@@ -14,25 +14,32 @@ namespace AEther
     public abstract class SampleSource : IDisposable
     {
 
+        public EventHandler<ReadOnlyMemory<byte>>? OnDataAvailable;
+        public EventHandler<Exception?>? OnStopped;
+
         public abstract SampleFormat Format { get; }
 
-        public abstract Task WriteToAsync(PipeWriter writer, CancellationToken cancel = default);
+        //public abstract Task WriteToAsync(PipeWriter writer, CancellationToken cancel = default);
 
-        public async IAsyncEnumerable<PipeHandle> ReadAllAsync([EnumeratorCancellation] CancellationToken cancel = default)
-        {
+        //public async IAsyncEnumerable<PipeHandle> ReadAllAsync([EnumeratorCancellation] CancellationToken cancel = default)
+        //{
 
-            var pipe = new System.IO.Pipelines.Pipe();
-            var writerTask = WriteToAsync(pipe.Writer, cancel);
+        //    var pipe = new System.IO.Pipelines.Pipe();
+        //    var writerTask = WriteToAsync(pipe.Writer, cancel);
 
-            var inputs = pipe.Reader.ReadAllAsync();
-            await foreach (var input in inputs)
-            {
-                yield return input;
-            }
+        //    var inputs = pipe.Reader.ReadAllAsync();
+        //    await foreach (var input in inputs)
+        //    {
+        //        yield return input;
+        //    }
 
-            await writerTask;
+        //    await writerTask;
 
-        }
+        //}
+
+        public abstract void Start();
+
+        public abstract void Stop();
 
         public abstract void Dispose();
 

@@ -12,7 +12,7 @@ using System.Xml.Serialization;
 namespace AEther
 {
     [Serializable]
-    public class Configuration
+    public class SessionOptions
     {
 
         public Domain Domain => Domain.FromRange(MinFrequency, MaxFrequency, FrequencyResolution);
@@ -24,11 +24,11 @@ namespace AEther
         public float MaxFrequency { get; set; } = 12000f;
 
         [Category("Domain")]
-        public int FrequencyResolution { get; set; } = 12;
+        public int FrequencyResolution { get; set; } = 8;
 
 
         [Category("DFT")]
-        public int TimeResolution { get; set; } = 1 << 8;
+        public int TimeResolution { get; set; } = 1 << 7;
 
         [Category("DFT")]
         public int MaxParallelization { get; set; } = -1;
@@ -48,17 +48,7 @@ namespace AEther
         [Category("Normalizer")]
         public float NormalizerHeadRoom { get; set; } = .05f;
 
-
-        [Category("Graphics")]
-        public bool UseFloatTextures { get; set; } = false;
-
-        [Category("Graphics")]
-        public bool UseMapping { get; set; } = false;
-
-        [Category("Pipeline")]
-        public int ChannelCapacity { get; set; } = 8;
-
-        public static Configuration? ReadFromFile(string path)
+        public static SessionOptions? ReadFromFile(string path)
         {
 
             if(!File.Exists(path))
@@ -66,15 +56,15 @@ namespace AEther
                 return default;
             }
 
-            Configuration? result = default;
+            SessionOptions? result = default;
 
             var file = new FileInfo(path);
-            var serializer = new XmlSerializer(typeof(Configuration));
+            var serializer = new XmlSerializer(typeof(SessionOptions));
             using (var stream = file.Open(FileMode.Open, FileAccess.Read))
             {
                 try
                 {
-                    result = serializer.Deserialize(stream) as Configuration;
+                    result = serializer.Deserialize(stream) as SessionOptions;
                 }
                 catch(InvalidOperationException exc)
                 {
@@ -90,7 +80,7 @@ namespace AEther
         {
 
             var file = new FileInfo(path);
-            var serializer = new XmlSerializer(typeof(Configuration));
+            var serializer = new XmlSerializer(typeof(SessionOptions));
             using var stream = file.Open(FileMode.OpenOrCreate, FileAccess.Write);
             try
             {

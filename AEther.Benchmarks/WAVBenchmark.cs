@@ -16,17 +16,21 @@ namespace AEther.Benchmarks
     {
 
         [Benchmark]
-        public Task RunA() => RunAsync(new Configuration());
-
-        [Benchmark]
-        public Task RunB() => RunAsync(new Configuration
+        public Task RunA() => RunAsync(new SessionOptions
         {
-            MaxParallelization = 1,
+            FrequencyResolution = 1,
         });
 
-        public static async Task RunAsync(Configuration configuration)
+        [Benchmark]
+        public Task RunB() => RunAsync(new SessionOptions
+        {
+            FrequencyResolution = 2,
+        });
+
+        public static async Task RunAsync(SessionOptions options)
         {
 
+            //var path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
             var path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "..", "..", "..", "..", "TestFiles", "test_sine.wav");
             var inputStream = File.OpenRead(path);
             var outputStream = new MemoryStream();
@@ -34,19 +38,20 @@ namespace AEther.Benchmarks
             var header = WAVHeader.FromStream(inputStream);
             var format = header.GetSampleFormat();
             var sampleSource = new SampleReader(inputStream);
-
             var pipe = new System.IO.Pipelines.Pipe();
-            var writerTask = sampleSource.WriteToAsync(pipe.Writer);
+            sampleSource.OnDataAvailable += async (sender, evt) =>
+            {
+                await pipe.Writer.WriteAsync(evt);
+            };
 
-            var session = new Session(configuration, format);
-            var chain = session.CreateBatcher()
-                .Chain(session.CreateDFT())
-                .Chain(session.CreateSplitter());
+            var session = new Session(format, options);
+            var chain = session.CreateChain();
 
-            var outputFloats = new float[4 * configuration.Domain.Count];
+            var outputFloats = new float[4 * options.Domain.Count];
             var outputBytes = new byte[sizeof(float) * outputFloats.Length];
 
             var inputs = pipe.Reader.ReadAllAsync();
+            sampleSource.Start();
             await foreach (var output in chain(inputs))
             {
                 for (int c = 0; c < output.ChannelCount; ++c)
@@ -58,8 +63,6 @@ namespace AEther.Benchmarks
                 }
                 output.Return();
             }
-
-            await writerTask;
 
         }
 

@@ -23,12 +23,14 @@ namespace AEther.WindowsForms
 
         public Shader this[string key] => GetShader(key);
 
+        public IEnumerable<string> Keys => Shaders.Keys;
+
         readonly Dictionary<string, Shader> Shaders = new Dictionary<string, Shader>();
         readonly IncludeHandler Includes;
         readonly FileSystemWatcher? Watcher;
         readonly string BasePath;
 
-        public ShaderManager(Graphics graphics, string basePath, bool watch = false, bool preload = false)
+        public ShaderManager(Graphics graphics, string basePath, bool watch = false, bool preload = true)
             : base(graphics)
         {
 
@@ -144,20 +146,7 @@ namespace AEther.WindowsForms
                 Name = file.Name,
             };
 
-            for (var c = 0; c < Graphics.Spectrum.Length; ++c)
-            {
-                if (shader.ShaderResources.TryGetValue("Spectrum" + c, out var spectrumVariable))
-                {
-                    spectrumVariable.SetResource(Graphics.Spectrum[c].Texture.GetShaderResourceView());
-                }
-                if (shader.ShaderResources.TryGetValue("Histogram" + c, out var histogramVariable))
-                {
-                    histogramVariable.SetResource(Graphics.Histogram[c].Texture.GetShaderResourceView());
-                }
-            }
-            shader.ConstantBuffers[0].SetConstantBuffer(Graphics.RuntimeConstants.Buffer);
-            shader.ConstantBuffers[1].SetConstantBuffer(Graphics.FrameConstants.Buffer);
-            shader.ConstantBuffers[2].SetConstantBuffer(Graphics.GeometryConstants.Buffer);
+            shader.ConstantBuffers[0].SetConstantBuffer(Graphics.FrameConstants.Buffer);
 
             return shader;
 

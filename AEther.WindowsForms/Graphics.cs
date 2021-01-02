@@ -18,8 +18,17 @@ namespace AEther.WindowsForms
 {
     public class Graphics
     {
+        public class FrameHandle : IDisposable
+        {
 
-        public event EventHandler? OnRender;
+            public EventHandler? OnDisposed;
+
+            public void Dispose()
+            {
+                OnDisposed?.Invoke(this, EventArgs.Empty);
+            }
+
+        }
 
         public bool IsFullscreen
         {
@@ -44,47 +53,24 @@ namespace AEther.WindowsForms
 
         public ModeDescription NativeMode { get; protected set; }
         public Texture2D BackBuffer { get; protected set; }
-        public ShaderManager Shader { get; protected set; }
+        public ShaderManager Shaders { get; protected set; }
+        public DeviceContext Context => Device.ImmediateContext;
 
         public readonly Device Device;
-        public readonly DeviceContext Context;
-        public readonly ISpectrumAccumulator[] Spectrum;
-        public readonly IHistogram[] Histogram;
-        public readonly ConstantBuffer<RuntimeConstants> RuntimeConstants;
         public readonly ConstantBuffer<FrameConstants> FrameConstants;
-        public readonly ConstantBuffer<GeometryConstants> GeometryConstants;
 
         readonly DeviceDebug? Debug;
         readonly SwapChain Chain;
         readonly Model Quad;
-        readonly IntPtr Handle;
-        readonly object InputLock = new();
 
-        int InputCounter = 0;
-
-        public Graphics(Domain domain, IntPtr handle, int histogramLength, bool useFloatTextures, bool useMapping)
+        public Graphics(IntPtr handle)
         {
 
-            Handle = handle;
-
-            (Device, Chain) = CreateDevice();
-            Context = Device.ImmediateContext;
-
-            var channels = Enumerable.Range(0, 2);
-            if (useFloatTextures)
-            {
-                Spectrum = channels.Select(c => new FloatSpectrum(Device, domain.Count)).ToArray();
-                Histogram = channels.Select(c => new FloatHistogram(Device, domain.Count, histogramLength, useMapping)).ToArray();
-            }
-            else
-            {
-                Spectrum = channels.Select(c => new ByteSpectrum(Device, domain.Count)).ToArray();
-                Histogram = channels.Select(c => new ByteHistogram(Device, domain.Count, histogramLength, useMapping)).ToArray();
-            }
+            (Device, Chain) = CreateDevice(handle);
 
             using (var factory = Chain.GetParent<Factory>())
             {
-                factory.MakeWindowAssociation(Handle, WindowAssociationFlags.IgnoreAll);
+                factory.MakeWindowAssociation(handle, WindowAssociationFlags.IgnoreAll);
             }
 
             if (Device.CreationFlags.HasFlag(DeviceCreationFlags.Debug))
@@ -94,12 +80,8 @@ namespace AEther.WindowsForms
 
 
             BackBuffer = new Texture2D(Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0));
-
-            RuntimeConstants = new ConstantBuffer<RuntimeConstants>(Device);
             FrameConstants = new ConstantBuffer<FrameConstants>(Device);
-            GeometryConstants = new ConstantBuffer<GeometryConstants>(Device);
-
-            Shader = CreateShader();
+            Shaders = CreateShader();
             Quad = new Model(Device, new Grid(2, 2));
 
         }
@@ -153,41 +135,14 @@ namespace AEther.WindowsForms
 
         }
 
-        public void ProcessInput(SplitterEvent evt)
-        {
-
-            lock(InputLock)
-            {
-                for (int c = 0; c < evt.ChannelCount; ++c)
-                {
-                    var src = evt[c].Span;
-                    Histogram[c].Add(src);
-                    Spectrum[c].Add(src);
-                }
-                InputCounter++;
-            }
-
-        }
-
         public void Dispose()
         {
 
             Context.ClearState();
             Context.Flush();
 
-            foreach(var spectrum in Spectrum)
-            {
-                spectrum.Dispose();
-            }
-
-            foreach (var histogram in Histogram)
-            {
-                histogram.Dispose();
-            }
-
-            Shader.Dispose();
+            Shaders.Dispose();
             FrameConstants.Dispose();
-            RuntimeConstants.Dispose();
             Quad.Dispose();
             BackBuffer.Dispose();
 
@@ -219,7 +174,7 @@ namespace AEther.WindowsForms
                  Usage = usage,
              }));
 
-        (Device, SwapChain) CreateDevice(Format? format = default)
+        (Device, SwapChain) CreateDevice(IntPtr handle, Format? format = default)
         {
 
             var modeFormat = format ?? Format.R8G8B8A8_UNorm;
@@ -240,7 +195,7 @@ namespace AEther.WindowsForms
                 BufferCount = 1,
                 ModeDescription = NativeMode,
                 IsWindowed = true,
-                OutputHandle = Handle,
+                OutputHandle = handle,
                 SampleDescription = new SampleDescription(1, 0),
                 SwapEffect = SwapEffect.Discard,
                 Usage = Usage.RenderTargetOutput,
@@ -278,13 +233,9 @@ namespace AEther.WindowsForms
 #endif
             var shaderPath = Path.Join(shaderDir, "data", "fx");
             ShaderManager shader = null;
-            bool preload = false;
-#if DEBUG
-            preload = true;
-#endif
             try
             {
-                shader = new ShaderManager(this, shaderPath, true, preload);
+                shader = new ShaderManager(this, shaderPath, true);
             }
             catch (CompilationException exc)
             {
@@ -308,26 +259,8 @@ namespace AEther.WindowsForms
             }
         }
 
-        public void Render()
+        public FrameHandle RenderFrame()
         {
-
-            lock(InputLock)
-            {
-                if (0 < InputCounter)
-                {
-                    foreach (var spectrum in Spectrum)
-                    {
-                        spectrum.Update(Context);
-                        spectrum.Clear();
-                    }
-                }
-                foreach (var histogram in Histogram)
-                {
-                    histogram.Update(Context);
-                }
-                InputCounter = 0;
-            }
-
 
             var dt = .01f;
             var t = (float)DateTime.Now.TimeOfDay.TotalSeconds;
@@ -335,12 +268,14 @@ namespace AEther.WindowsForms
             FrameConstants.Value.AspectRatio = BackBuffer.Width / (float)BackBuffer.Height;
             FrameConstants.Value.Time.X = t;
             FrameConstants.Value.Time.Y = dt;
-            FrameConstants.Value.HistogramShift = (Histogram[0].Position - .1f) / (float)Histogram[0].Texture.Height;
             FrameConstants.Update(Context);
 
-            OnRender?.Invoke(this, EventArgs.Empty);
-
-            Chain.TryPresent(1, PresentFlags.None);
+            var frame = new FrameHandle();
+            frame.OnDisposed += (sender, evt) =>
+            {
+                Chain.TryPresent(1, PresentFlags.None);
+            };
+            return frame;
 
         }
 

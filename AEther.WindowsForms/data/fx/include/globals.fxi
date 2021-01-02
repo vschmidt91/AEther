@@ -56,30 +56,14 @@ SamplerState Anisotropic
     AddressV = WRAP;
 };
 
-cbuffer RuntimeConstants : register(b0)
+cbuffer FrameConstants : register(b0)
 {
-	float4 Emission;
-	float4 Scattering;
-	float4 Absorption;
-};
-
-cbuffer FrameConstants : register(b1)
-{
-	float4x4 View;
-	float4x4 Projection;
 	float T;
 	float DT;
 	float S;
 	float DS;
-	float HistogramShift;
 	float AspectRatio;
 };
-
-cbuffer DrawConstants : register(b2)
-{
-	float4x4 World;
-	float3 Color;
-}
 
 struct Instance
 {

@@ -19,7 +19,7 @@ namespace AEther.WindowsForms
 
         Texture2D SolutionBuffer;
 
-        Shader Solver => Graphics.Shader["poisson-sor.fx"];
+        Shader Solver => Graphics.Shaders["poisson-sor.fx"];
 
         public SOR(Graphics graphics, int width, int height)
             : base(graphics)

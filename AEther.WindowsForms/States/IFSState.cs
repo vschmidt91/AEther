@@ -50,10 +50,10 @@ namespace AEther.WindowsForms
                 //new IFSAffine(Graphics.Shader["ifs-sqrt.fx"]) {  Speed = -.0435f },
                 //new IFSAffine(Graphics.Shader["ifs-polar.fx"]) {  Speed = -.4935f },
                 //new IFSElement(Graphics.Shader["ifs-swirl.fx"]),
-                new IFSElement(Graphics.Shader["ifs-hyperbolic.fx"]),
+                new IFSElement(Graphics.Shaders["ifs-hyperbolic.fx"]),
                 //new IFSElement(Graphics.Shader["ifs-sqrt.fx"]),
-                new IFSAffine(Graphics.Shader) {  Scale = .5f, Speed = -.1535f, OffsetScale = 2f },
-                new IFSAffine(Graphics.Shader) {  Scale = .9f, OffsetScale = 1f },
+                new IFSAffine(Graphics.Shaders) {  Scale = .5f, Speed = -.1535f, OffsetScale = 2f },
+                new IFSAffine(Graphics.Shaders) {  Scale = .9f, OffsetScale = 1f },
                 //new IFSAffine(Graphics.Shader) {  Speed = -.0256f },
                 //new IFSAffine(Graphics.Shader) {  Speed = .2125f },
                 //new IFSAffine(Graphics.Shader) { Speed = -.04f },
@@ -81,10 +81,10 @@ namespace AEther.WindowsForms
 
 
             Graphics.Context.Rasterizer.SetViewport(Source.ViewPort);
-            Graphics.Shader["ifs-input.fx"].ShaderResources["Spectrum0"].SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
-            Graphics.Shader["ifs-input.fx"].ShaderResources["Spectrum1"].SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
+            //Graphics.Shaders["ifs-input.fx"].ShaderResources["Spectrum0"].SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
+            //Graphics.Shaders["ifs-input.fx"].ShaderResources["Spectrum1"].SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
             Graphics.Context.OutputMerger.SetRenderTargets(null, Source.GetRenderTargetView());
-            Graphics.Draw(Graphics.Shader["ifs-input.fx"]);
+            Graphics.Draw(Graphics.Shaders["ifs-input.fx"]);
 
             //Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), Color4.White);
             //for (int n = 0; n < 8; ++n)
@@ -107,8 +107,8 @@ namespace AEther.WindowsForms
 
             Graphics.Context.Rasterizer.SetViewport(Graphics.BackBuffer.ViewPort);
             Graphics.Context.OutputMerger.SetRenderTargets(null, Graphics.BackBuffer.GetRenderTargetView());
-            Graphics.Shader["ifs-output.fx"].ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
-            Graphics.Draw(Graphics.Shader["ifs-output.fx"]);
+            Graphics.Shaders["ifs-output.fx"].ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
+            Graphics.Draw(Graphics.Shaders["ifs-output.fx"]);
 
         }
 

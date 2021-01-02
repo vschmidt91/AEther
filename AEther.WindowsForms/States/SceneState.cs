@@ -88,10 +88,10 @@ namespace AEther.WindowsForms
         {
 
             Camera.AspectRatio = Graphics.FrameConstants.Value.AspectRatio;
-            Graphics.FrameConstants.Value.View = Camera.View;
-            Graphics.FrameConstants.Value.Projection = Camera.Projection;
 
-            Graphics.Shader["geometry.fx"].ShaderResources["Instances"].SetResource(InstanceBuffer.GetShaderResourceView());
+            Graphics.Shaders["geometry.fx"].ShaderResources["Instances"].SetResource(InstanceBuffer.GetShaderResourceView());
+            Graphics.Shaders["geometry.fx"].Variables["View"].AsMatrix().SetMatrix(Camera.View);
+            Graphics.Shaders["geometry.fx"].Variables["Projection"].AsMatrix().SetMatrix(Camera.Projection);
 
             Graphics.Context.ClearRenderTargetView(Graphics.BackBuffer.GetRenderTargetView(), Color4.Black);
             Graphics.Context.Rasterizer.SetViewport(Graphics.BackBuffer.ViewPort);
@@ -102,7 +102,7 @@ namespace AEther.WindowsForms
             {
                 Graphics.SetModel(evt.Model);
                 InstanceBuffer.Update(Graphics.Context, evt.Instances);
-                Graphics.Draw(Graphics.Shader["geometry.fx"], evt.Instances.Count);
+                Graphics.Draw(Graphics.Shaders["geometry.fx"], evt.Instances.Count);
             }
             RenderBuffer.BufferFinished += finishBuffer;
 

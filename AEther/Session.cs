@@ -21,17 +21,27 @@ namespace AEther
     public class Session
     {
 
-        readonly Configuration Configuration;
-        readonly SampleFormat Format;
+        public readonly SessionOptions Options;
+        public readonly SampleFormat Format;
 
-        public Session(Configuration configuration, SampleFormat format)
+        public Session(SampleFormat format, SessionOptions? options = null)
         {
-            Configuration = configuration;
+            Options = options ?? new SessionOptions();
             Format = format;
         }
 
+        public Pipe<PipeHandle, SplitterEvent> CreateChain(int capacity = -1)
+        {
+            return CreateBatcher()
+                .Buffer(capacity)
+                .Chain(CreateDFT())
+                .Buffer(capacity)
+                .Chain(CreateSplitter())
+                .Buffer(capacity);
+        }
+
         public Pipe<PipeHandle, SampleEvent> CreateBatcher()
-            => CreateBatcher(Format, Format.SampleRate / Configuration.TimeResolution);
+            => CreateBatcher(Format, Format.SampleRate / Options.TimeResolution);
 
         public static Pipe<PipeHandle, SampleEvent> CreateBatcher(SampleFormat format, int batchSize)
         {
@@ -90,7 +100,7 @@ namespace AEther
         }
 
         public Pipe<SampleEvent, DFTEvent> CreateDFT()
-            => CreateDFT(Configuration.Domain, Format, Configuration.UseSIMD, Configuration.MaxParallelization);
+            => CreateDFT(Options.Domain, Format, Options.UseSIMD, Options.MaxParallelization);
 
         public static Pipe<SampleEvent, DFTEvent> CreateDFT(Domain domain, SampleFormat format, bool useSIMD = true, int maxParallelism = -1)
         {
@@ -125,7 +135,7 @@ namespace AEther
         }
 
         public Pipe<DFTEvent, SplitterEvent> CreateSplitter()
-            => CreateSplitter(Configuration.Domain, Format.ChannelCount, Configuration.TimeResolution, Configuration.FrequencyWindow, Configuration.TimeWindow, Configuration.NormalizerFloorRoom, Configuration.NormalizerHeadRoom);
+            => CreateSplitter(Options.Domain, Format.ChannelCount, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow, Options.NormalizerFloorRoom, Options.NormalizerHeadRoom);
 
         public static Pipe<DFTEvent, SplitterEvent> CreateSplitter(Domain domain, int channelCount, float timeResolution, float frequencyWindow, float timeWindow, float floorRoom, float headRoom)
         {

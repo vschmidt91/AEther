@@ -25,14 +25,17 @@ namespace AEther.Tests
             var sampleSource = new SampleReader(wav);
             var format = sampleSource.Format;
 
-            var configuration = new Configuration();
-
             var pipe = new System.IO.Pipelines.Pipe();
-            var session = new Session(configuration, format);
+            var session = new Session(format);
             var chain = session.CreateBatcher()
                 .Chain(session.CreateDFT());
+            sampleSource.OnDataAvailable += async (sender, evt) =>
+            {
+                await pipe.Writer.WriteAsync(evt);
+            };
 
-            var inputs = sampleSource.ReadAllAsync();
+            var inputs = pipe.Reader.ReadAllAsync();
+            sampleSource.Start();
             await foreach(var output in chain(inputs))
             {
                 //var channels = Enumerable.Range(0, output.ChannelCount);

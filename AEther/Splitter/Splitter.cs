@@ -36,14 +36,24 @@ namespace AEther
             int halfSizeFrequency = (int)(frequencyWindow * domain.Resolution);
             int halfSizeTime = (int)(timeWindow * timeResolution);
 
-            Frequency = new MovingExponentialAverage(2f / (1 + halfSizeFrequency));
+            //Frequency = new MovingExponentialAverage(2f / (1 + halfSizeFrequency));
+            //Time = Enumerable.Range(0, domain.Count)
+            //    .Select(k => new MovingExponentialAverage(2f / (1 + halfSizeTime)))
+            //    .ToArray();
+
+            //Frequency2 = new MovingExponentialAverage(2f / (1 + halfSizeFrequency));
+            //Time2 = Enumerable.Range(0, domain.Count)
+            //    .Select(k => new MovingExponentialAverage(2f / (1 + halfSizeTime)))
+            //    .ToArray();
+
+            Frequency = new MovingMedian(1 + halfSizeFrequency);
             Time = Enumerable.Range(0, domain.Count)
-                .Select(k => new MovingExponentialAverage(2f / (1 + halfSizeTime)))
+                .Select(k => new MovingMedian(1 + halfSizeTime))
                 .ToArray();
 
-            Frequency2 = new MovingExponentialAverage(2f / (1 + halfSizeFrequency));
+            Frequency2 = new MovingMedian(1 + halfSizeFrequency);
             Time2 = Enumerable.Range(0, domain.Count)
-                .Select(k => new MovingExponentialAverage(2f / (1 + halfSizeTime)))
+                .Select(k => new MovingMedian(1 + halfSizeTime))
                 .ToArray();
 
             Ceiling = new MovingQuantile(1 - headRoom, 2f / (1 + 7 * timeResolution));
@@ -75,7 +85,7 @@ namespace AEther
                 var y = dst.Slice(4 * k, 4);
 
                 y[0] = Math.Max(0, buffer2[k] - buffer4[k]);
-                y[1] = 2 * Math.Max(0, buffer1[k] - buffer3[k]);
+                y[1] = Math.Max(0, buffer1[k] - buffer3[k]);
                 //y[2] = Math.Max(0, src[k] - Math.Max(y[0], y[1]))
                 y[2] = Math.Max(0, src[k] - y[0] - y[1]);
                 //y[3] = 0;

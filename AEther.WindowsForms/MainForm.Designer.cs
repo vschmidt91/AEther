@@ -30,7 +30,7 @@
         {
             this.components = new System.ComponentModel.Container();
             this.tlpPanel = new System.Windows.Forms.TableLayoutPanel();
-            this.pgConfiguration = new System.Windows.Forms.PropertyGrid();
+            this.pgOptions = new System.Windows.Forms.PropertyGrid();
             this.lbState = new System.Windows.Forms.ListBox();
             this.lbInput = new System.Windows.Forms.ListBox();
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
@@ -41,7 +41,7 @@
             // 
             this.tlpPanel.ColumnCount = 1;
             this.tlpPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tlpPanel.Controls.Add(this.pgConfiguration, 0, 2);
+            this.tlpPanel.Controls.Add(this.pgOptions, 0, 2);
             this.tlpPanel.Controls.Add(this.lbState, 0, 1);
             this.tlpPanel.Controls.Add(this.lbInput, 0, 0);
             this.tlpPanel.Dock = System.Windows.Forms.DockStyle.Left;
@@ -57,12 +57,12 @@
             // 
             // pgConfiguration
             // 
-            this.pgConfiguration.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pgConfiguration.Location = new System.Drawing.Point(3, 203);
-            this.pgConfiguration.Name = "pgConfiguration";
-            this.pgConfiguration.Size = new System.Drawing.Size(234, 355);
-            this.pgConfiguration.TabIndex = 1;
-            this.pgConfiguration.PropertyValueChanged += new System.Windows.Forms.PropertyValueChangedEventHandler(this.pgConfiguration_PropertyValueChanged);
+            this.pgOptions.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pgOptions.Location = new System.Drawing.Point(3, 203);
+            this.pgOptions.Name = "pgConfiguration";
+            this.pgOptions.Size = new System.Drawing.Size(234, 355);
+            this.pgOptions.TabIndex = 1;
+            this.pgOptions.PropertyValueChanged += new System.Windows.Forms.PropertyValueChangedEventHandler(this.pgOptions_PropertyValueChanged);
             // 
             // lbState
             // 
@@ -109,7 +109,7 @@
         #endregion
 
         private System.Windows.Forms.TableLayoutPanel tlpPanel;
-        private System.Windows.Forms.PropertyGrid pgConfiguration;
+        private System.Windows.Forms.PropertyGrid pgOptions;
         private System.Windows.Forms.ListBox lbState;
         private System.Windows.Forms.NotifyIcon notifyIcon1;
         private System.Windows.Forms.ListBox lbInput;

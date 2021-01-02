@@ -12,8 +12,10 @@ namespace AEther.Bass
     {
 
         public override SampleFormat Format { get; }
+        public int BufferSize { get; } = 1 << 10;
 
         int Channel;
+        byte[] Buffer;
 
         public Listener(int? deviceIndex = default)
         {
@@ -33,56 +35,37 @@ namespace AEther.Bass
             return devices;
         }
 
-        public override void Dispose()
-        {
-            ManagedBass.Bass.Free();
-        }
-
-        public override async Task WriteToAsync(PipeWriter writer, CancellationToken cancel = default)
+        bool Procedure(int handle, IntPtr data, int length, IntPtr user)
         {
 
-            byte[]? buffer = null;
-
-            bool Procedure(int handle, IntPtr data, int length, IntPtr user)
+            if (Buffer.Length < length)
             {
-
-                if (buffer == default || buffer.Length < length)
-                {
-                    buffer = new byte[length];
-                }
-
-                Marshal.Copy(data, buffer, 0, length);
-
-                var offset = 0;
-                while (offset < length)
-                {
-
-                    var target = writer.GetMemory(length);
-                    var count = Math.Min(target.Length, length - offset);
-                    var source = buffer.AsMemory(0, count);
-
-                    source.CopyTo(target);
-                    writer.Advance(count);
-                    offset += count;
-
-                }
-
-                return !cancel.IsCancellationRequested;
-
+                Buffer = new byte[length];
             }
 
-            var stopTask = new TaskCompletionSource<bool>();
+            Marshal.Copy(data, Buffer, 0, length);
 
-            cancel.Register(() => ManagedBass.Bass.ChannelStop(Channel));
+            OnDataAvailable?.Invoke(this, Buffer.AsMemory(0, length));
 
+            return true;
+
+        }
+
+        public override void Start()
+        {
+            Buffer = new byte[BufferSize];
             var flags = BassFlags.RecordPause;
             Channel = ManagedBass.Bass.RecordStart(Format.SampleRate, Format.ChannelCount, flags, Procedure);
             ManagedBass.Bass.ChannelPlay(Channel);
+        }
+        public override void Stop()
+        {
+            ManagedBass.Bass.ChannelStop(Channel);
+        }
 
-            await stopTask.Task;
-
-            await writer.CompleteAsync();
-
+        public override void Dispose()
+        {
+            ManagedBass.Bass.Free();
         }
 
     }

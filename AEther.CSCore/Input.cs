@@ -29,13 +29,8 @@ namespace AEther.CSCore
         {
 
             Device = device;
-
-            //CodecFactory.Instance.GetCodec(@"C:\Users\Ryzen\Google Drive\Projekte\170521.mp3")
-            //    .ToSampleSource()
-            //    .ToWaveSource()
-            //    .WriteToStream(stream);
-            //stream.Seek(0, SeekOrigin.Begin);
-
+            Device.DataAvailable += Device_DataAvailable;
+            Device.Stopped += Device_Stopped;
             Device.Initialize();
 
             var type = (Device.WaveFormat.WaveFormatTag, Device.WaveFormat.BitsPerSample) switch
@@ -49,59 +44,35 @@ namespace AEther.CSCore
 
         }
 
-        public void Playback()
+        private void Device_Stopped(object? sender, RecordingStoppedEventArgs evt)
         {
-
-            var output = new WaveOut();
-            var source = new SoundInSource(Device);
-
-            output.Initialize(source);
-            output.Play();
-
+            Device.DataAvailable -= Device_DataAvailable;
+            Device.Stopped -= Device_Stopped;
+            OnStopped?.Invoke(this, evt.Exception);
         }
 
-        public override async Task WriteToAsync(PipeWriter writer, CancellationToken cancel = default)
+        private void Device_DataAvailable(object? sender, DataAvailableEventArgs evt)
         {
+            var samples = evt.Data.AsMemory(evt.Offset, evt.ByteCount);
+            OnDataAvailable?.Invoke(this, samples);
+        }
 
-            var stopTask = new TaskCompletionSource<bool>();
+        public void Playback()
+        {
+            var output = new WaveOut();
+            var source = new SoundInSource(Device);
+            output.Initialize(source);
+            output.Play();
+        }
 
-            async void dataAvailable(object? sender, DataAvailableEventArgs evt)
-            {
-                var samples = evt.Data.AsMemory(evt.Offset, evt.ByteCount);
-                await writer.WriteAsync(samples);
-            }
-
-            void stopped(object? sender, RecordingStoppedEventArgs evt)
-            {
-                if(evt.HasError)
-                {
-                    stopTask.TrySetException(evt.Exception);
-                }
-                else
-                {
-                    stopTask.SetResult(true);
-                }
-            }
-
-            Device.DataAvailable += dataAvailable;
-            Device.Stopped += stopped;
-
-            cancel.Register(Device.Stop);
-
+        public override void Start()
+        {
             Device.Start();
+        }
 
-            await stopTask.Task;
-
-            Device.DataAvailable -= dataAvailable;
-            Device.Stopped -= stopped;
-
-            await writer.CompleteAsync(stopTask.Task.Exception);
-
-            //while (Input.RecordingState != RecordingState.Stopped)
-            //{
-            //    await Task.Delay(1);
-            //}
-
+        public override void Stop()
+        {
+            Device.Stop();
         }
 
         public override void Dispose()

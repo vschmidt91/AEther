@@ -3,10 +3,8 @@
 #include "globals.fxi"
 
 Texture2D<float4> Source : register(t0);
-Texture2D<float4> Spectrum0 : register(t1);
-Texture2D<float4> Spectrum1 : register(t2);
 
-cbuffer Effect : register(b2)
+cbuffer EffectConstants : register(b2)
 {
 	float4 Weight;
 	float4 Transform;

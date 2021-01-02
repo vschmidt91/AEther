@@ -21,12 +21,12 @@ namespace AEther.WindowsForms
         Texture2D Pressure;
         readonly Texture2D Divergence;
 
-        Shader Input => Graphics.Shader["fluid-input.fx"];
-        Shader Advect => Graphics.Shader["fluid-advect.fx"];
-        Shader Diffuse => Graphics.Shader["fluid-diffuse.fx"];
-        Shader DivergenceShader => Graphics.Shader["fluid-divergence.fx"];
-        Shader Project => Graphics.Shader["fluid-project.fx"];
-        Shader Output => Graphics.Shader["fluid-output.fx"];
+        Shader Input => Graphics.Shaders["fluid-input.fx"];
+        Shader Advect => Graphics.Shaders["fluid-advect.fx"];
+        Shader Diffuse => Graphics.Shaders["fluid-diffuse.fx"];
+        Shader DivergenceShader => Graphics.Shaders["fluid-divergence.fx"];
+        Shader Project => Graphics.Shaders["fluid-project.fx"];
+        Shader Output => Graphics.Shaders["fluid-output.fx"];
 
         readonly IPoissonSolver PoissonSolver;
 
@@ -68,8 +68,8 @@ namespace AEther.WindowsForms
 
             Graphics.SetFullscreenTarget(VelocityNew);
             Input.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
-            Input.ShaderResources["Spectrum0"].AsShaderResource().SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
-            Input.ShaderResources["Spectrum1"].AsShaderResource().SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
+            //Input.ShaderResources["Spectrum0"].AsShaderResource().SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
+            //Input.ShaderResources["Spectrum1"].AsShaderResource().SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
             Graphics.Draw(Input);
 
             (Velocity, VelocityNew) = (VelocityNew, Velocity);

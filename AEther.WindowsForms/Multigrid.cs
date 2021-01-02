@@ -24,9 +24,9 @@ namespace AEther.WindowsForms
         internal class CoarseGrid : GraphicsComponent
         {
 
-            Shader ResidualShader => Graphics.Shader["mg-residual.fx"];
-            Shader Copy => Graphics.Shader["copy.fx"];
-            Shader Add => Graphics.Shader["add.fx"];
+            Shader ResidualShader => Graphics.Shaders["mg-residual.fx"];
+            Shader Copy => Graphics.Shaders["copy.fx"];
+            Shader Add => Graphics.Shaders["add.fx"];
 
             internal readonly Multigrid Solver;
             internal readonly Texture2D Residual;

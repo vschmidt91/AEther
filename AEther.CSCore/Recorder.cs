@@ -14,26 +14,26 @@ namespace AEther.CSCore
     public class Recorder : Input
     {
 
-        public Recorder(int device)
-            : base(CreateDevice(device))
-        { }
+        readonly string Name;
 
-        public static string[] GetAvailableDevices()
+        public Recorder(MMDevice device)
+            : base(CreateDevice(device))
         {
-            using var enumerator = new MMDeviceEnumerator();
-            using var endpoints = enumerator.EnumAudioEndpoints(DataFlow.Capture, DeviceState.Active);
-            return endpoints
-                .Select(device => device.FriendlyName)
-                .ToArray();
+            Name = device.FriendlyName;
         }
 
-        static WasapiCapture CreateDevice(int device)
-        {
+        public override string ToString()
+            => Name;
 
+        public static MMDevice[] GetAvailableDevices()
+        {
             using var enumerator = new MMDeviceEnumerator();
             using var endpoints = enumerator.EnumAudioEndpoints(DataFlow.Capture, DeviceState.Active);
-            var endpoint = endpoints[device];
+            return endpoints.ToArray();
+        }
 
+        static WasapiCapture CreateDevice(MMDevice device)
+        {
             var eventSync = false;
             var mode = AudioClientShareMode.Shared;
             var format = new WaveFormat();
@@ -41,7 +41,7 @@ namespace AEther.CSCore
             var priority = ThreadPriority.Normal;
             return new WasapiCapture(eventSync, mode, latency, format, priority)
             {
-                Device = endpoint
+                Device = device
             };
 
         }

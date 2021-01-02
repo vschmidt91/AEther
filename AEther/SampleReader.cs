@@ -15,35 +15,41 @@ namespace AEther
 
         public override SampleFormat Format { get; }
 
+        public int BufferSize { get; set; } = 1 << 10;
+
         readonly Stream Input;
+        readonly CancellationTokenSource Cancel;
 
         public SampleReader(Stream input)
         {
             Input = input;
             Format = WAVHeader.FromStream(input).GetSampleFormat();
-        }
-
-        public override async Task WriteToAsync(PipeWriter writer, CancellationToken cancel = default)
-        {
-            while (!cancel.IsCancellationRequested)
-            {
-                var target = writer.GetMemory();
-                var count = await Input.ReadAsync(target, cancel);
-                if (count == 0)
-                {
-                    break;
-                }
-                else
-                {
-                    writer.Advance(count);
-                }
-            }
-            await writer.CompleteAsync();
+            Cancel = new CancellationTokenSource();
         }
 
         public override void Dispose()
         {
             Input.Dispose();
+        }
+
+        public override void Start()
+        {
+            var buffer = new byte[BufferSize];
+            while(!Cancel.IsCancellationRequested)
+            {
+                var count = Input.Read(buffer, 0, buffer.Length);
+                if (count == 0)
+                {
+                    break;
+                }
+                OnDataAvailable?.Invoke(this, buffer.AsMemory(0, count));
+            }
+            OnStopped?.Invoke(this, null);
+        }
+
+        public override void Stop()
+        {
+            Cancel.Cancel();
         }
 
     }

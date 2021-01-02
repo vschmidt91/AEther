@@ -7,37 +7,42 @@ namespace AEther
     public class MovingExponentialAverage : ITimeFilter<float>, IFrequencyFilter<float>
     {
 
+        public float Average => State;
+
         readonly float Mix;
 
-        float Average;
+        float State;
 
         public MovingExponentialAverage(float mix)
         {
             Mix = mix;
-            Average = 0f;
+            State = 0f;
         }
+
+        public static MovingExponentialAverage FromWindow(int window)
+            => new MovingExponentialAverage(2f / (1 + window));
 
         public void Clear()
         {
-            Average = 0f;
+            State = 0f;
         }
 
         public float Filter(float newValue)
         {
-            Average += Mix * (newValue - Average);
-            return Average;
+            State += Mix * (newValue - State);
+            return State;
         }
 
         public void Filter(ReadOnlySpan<float> src, Memory<float> dst)
         {
 
-            Average = src[0];
+            State = src[0];
             for (int k = 0; k < src.Length; ++k)
             {
                 dst.Span[k] = 0.5f * Filter(src[k]);
             }
 
-            Average = src[src.Length - 1];
+            State = src[src.Length - 1];
             for (int k = src.Length - 1; 0 <= k; --k)
             {
                 dst.Span[k] += 0.5f * Filter(src[k]);

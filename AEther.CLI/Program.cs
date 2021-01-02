@@ -20,8 +20,7 @@ namespace AEther.CLI
         static async Task<int> Main(string? path = null)
         {
 
-            var configuration = new Configuration();
-            // var sampleSource = 
+            var options = new SessionOptions();
             
             SampleSource sampleSource;
             if (path == null)
@@ -29,25 +28,24 @@ namespace AEther.CLI
             else
                 sampleSource = new SampleReader(File.OpenRead(path));
 
-            var domain = configuration.Domain;
-            var format = sampleSource.Format;
-
             var pipe = new System.IO.Pipelines.Pipe();
-            var session = new Session(configuration, sampleSource.Format);
+            var session = new Session(sampleSource.Format, options);
             var chain = session.CreateBatcher()
                 .Chain(session.CreateDFT())
                 .Chain(session.CreateSplitter());
 
-            var writerTask = sampleSource.WriteToAsync(pipe.Writer);
-            var inputs = pipe.Reader.ReadAllAsync();
+            sampleSource.OnDataAvailable += async (sender, evt) =>
+            {
+                await pipe.Writer.WriteAsync(evt);
+            };
 
+            var inputs = pipe.Reader.ReadAllAsync();
+            sampleSource.Start();
             await foreach (var output in chain(inputs))
             {
                 Console.WriteLine(JsonSerializer.Serialize(output));
                 output.Return();
             }
-
-            await writerTask;
 
             return 0;
 

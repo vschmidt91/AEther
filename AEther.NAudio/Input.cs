@@ -22,12 +22,25 @@ namespace AEther.NAudio
 
         public override SampleFormat Format { get; }
 
-        readonly IWaveIn Device;
+        protected readonly IWaveIn Device;
 
         public Input(IWaveIn device)
         {
             Device = device;
+            Device.DataAvailable += Device_DataAvailable;
+            Device.RecordingStopped += Device_RecordingStopped;
             Format = ToSampleFormat(device.WaveFormat);
+        }
+
+        private void Device_RecordingStopped(object? sender, StoppedEventArgs e)
+        {
+            OnStopped?.Invoke(this, e.Exception);
+        }
+
+        private void Device_DataAvailable(object? sender, WaveInEventArgs evt)
+        {
+            var data = evt.Buffer.AsMemory(0, evt.BytesRecorded);
+            OnDataAvailable?.Invoke(this, data);
         }
 
         public void Playback()
@@ -62,34 +75,14 @@ namespace AEther.NAudio
             return new SampleFormat(type, format.SampleRate, format.Channels);
         }
 
-        public override async Task WriteToAsync(PipeWriter writer, CancellationToken cancel = default)
+        public override void Start()
         {
-
-            async void dataAvailable(object? sender, WaveInEventArgs evt)
-            {
-                await writer.WriteAsync(evt.Buffer.AsMemory(0, evt.BytesRecorded));
-            }
-
-            var stopTask = new TaskCompletionSource<bool>();
-            void stopped(object? sender, StoppedEventArgs evt)
-            {
-                stopTask.SetResult(true);
-            }
-
-            Device.DataAvailable += dataAvailable;
-            Device.RecordingStopped += stopped;
-
-            cancel.Register(Device.StopRecording);
-
             Device.StartRecording();
+        }
 
-            await stopTask.Task;
-
-            Device.DataAvailable -= dataAvailable;
-            Device.RecordingStopped -= stopped;
-
-            await writer.CompleteAsync();
-
+        public override void Stop()
+        {
+            Device.StopRecording();
         }
 
         public override void Dispose()

@@ -20,6 +20,14 @@ struct PSin
 	float3 Color : COLOR0;
 };
 
+cbuffer EffectConstants : register(b2)
+{
+	float4x4 View;
+	float4x4 Projection;
+	float4x4 World;
+	float3 Color;
+}
+
 PSin VS(VSin IN)
 {
 

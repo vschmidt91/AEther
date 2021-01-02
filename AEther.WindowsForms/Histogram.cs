@@ -13,19 +13,29 @@ using System.Runtime.InteropServices;
 
 namespace AEther.WindowsForms
 {
-    public interface IHistogram : IDisposable
+    public abstract class Histogram : IDisposable
     {
 
-        int Position { get; }
+        public readonly Texture2D Texture;
 
-        Texture2D Texture { get; }
+        public Histogram(Texture2D texture)
+        {
+            Texture = texture;
+        }
 
-        void Add(ReadOnlySpan<float> src);
+        public abstract int Position { get; }
 
-        int Update(DeviceContext context);
+        public abstract void Add(ReadOnlySpan<float> src);
+
+        public abstract int Update(DeviceContext context);
+
+        public void Dispose()
+        {
+            Texture.Dispose();
+        }
 
     }
-    public abstract class Histogram<T> : IHistogram
+    public abstract class Histogram<T> : Histogram
     {
 
         public Format Format => Texture.Description.Format;
@@ -33,36 +43,21 @@ namespace AEther.WindowsForms
         public int Width => Texture.Width;
         public int Length => Texture.Height;
 
-        public Texture2D Texture { get; }
-
         public readonly bool UseMapping;
 
         readonly byte[] Buffer;
         readonly T[] Slice;
 
-        public int Position => UpdatePosition;
+        public override int Position => UpdatePosition;
 
         int UpdatePosition;
         int WritePosition;
 
-        public Histogram(SharpDX.Direct3D11.Device device, Format format, int width, int height, bool? useMapping = default)
+        public Histogram(SharpDX.Direct3D11.Device device, Format format, int width, int height, bool useMapping)
+            : base(CreateTexture(device, format, width, height, useMapping))
         {
 
-            UseMapping = useMapping ?? false;
-
-            Texture = new Texture2D(new SharpDX.Direct3D11.Texture2D(device, new Texture2DDescription
-            {
-                ArraySize = 1,
-                BindFlags = BindFlags.ShaderResource,
-                CpuAccessFlags = UseMapping ? CpuAccessFlags.Write : CpuAccessFlags.None,
-                Format = format,
-                MipLevels = 1,
-                OptionFlags = ResourceOptionFlags.None,
-                Usage = UseMapping ? ResourceUsage.Dynamic : ResourceUsage.Default,
-                Width = width,
-                Height = height,
-                SampleDescription = new SampleDescription(1, 0),
-            }));
+            UseMapping = useMapping;
 
             Buffer = new byte[Texture.RowPitch * height];
             Slice = new T[4 * width];
@@ -71,10 +66,26 @@ namespace AEther.WindowsForms
             WritePosition = 0;
 
         }
+        static Texture2D CreateTexture(SharpDX.Direct3D11.Device device, Format format, int width, int height, bool useMapping)
+        {
+            return new Texture2D(new SharpDX.Direct3D11.Texture2D(device, new Texture2DDescription
+            {
+                ArraySize = 1,
+                BindFlags = BindFlags.ShaderResource,
+                CpuAccessFlags = useMapping ? CpuAccessFlags.Write : CpuAccessFlags.None,
+                Format = format,
+                MipLevels = 1,
+                OptionFlags = ResourceOptionFlags.None,
+                Usage = useMapping ? ResourceUsage.Dynamic : ResourceUsage.Default,
+                Width = width,
+                Height = height,
+                SampleDescription = new SampleDescription(1, 0),
+            }));
+        }
 
         protected abstract T Convert(float value);
 
-        public void Add(ReadOnlySpan<float> src)
+        public override void Add(ReadOnlySpan<float> src)
         {
 
             for(int i = 0; i < src.Length; ++i)
@@ -94,7 +105,7 @@ namespace AEther.WindowsForms
         int GetBandwidth(ResourceRegion region)
             => Format.SizeOfInBytes() * (region.Bottom - region.Top) * (region.Right - region.Left);
 
-        public int Update(DeviceContext context)
+        public override int Update(DeviceContext context)
         {
 
             var bandwidth = 0;
@@ -156,17 +167,12 @@ namespace AEther.WindowsForms
 
         }
 
-        public void Dispose()
-        {
-            Texture.Dispose();
-        }
-
     }
 
     public class FloatHistogram : Histogram<float>
     {
 
-        public FloatHistogram(SharpDX.Direct3D11.Device device, int width, int height, bool? useMapping = default)
+        public FloatHistogram(SharpDX.Direct3D11.Device device, int width, int height, bool useMapping)
             : base(device, Format.R32G32B32A32_Float, width, height, useMapping)
         { }
 
@@ -177,7 +183,7 @@ namespace AEther.WindowsForms
     public class ByteHistogram : Histogram<byte>
     {
 
-        public ByteHistogram(SharpDX.Direct3D11.Device device, int width, int height, bool? useMapping = default)
+        public ByteHistogram(SharpDX.Direct3D11.Device device, int width, int height, bool useMapping)
             : base(device, Format.R8G8B8A8_UNorm, width, height, useMapping)
         { }
 

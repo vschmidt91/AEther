@@ -5,6 +5,11 @@
 Texture2D<float4> Histogram0 : register(t0);
 Texture2D<float4> Histogram1 : register(t1);
 
+cbuffer EffectConstants : register(b2)
+{
+	float HistogramShift;
+};
+
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 

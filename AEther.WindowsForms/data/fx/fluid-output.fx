@@ -8,14 +8,11 @@ float4 PS(const PSDefaultin IN) : SV_Target
 {
 
 	float4 v = Velocity.Sample(Linear, IN.UV);
-	return float4(v.z, v.w, 0, 1);
 
-	/*
-	float3 lab = float3(2 * length(v.xy), -1 + 2 * v.zw);
+	float3 lab = float3(length(v.zw), v.zw);
 	float3 xyz = LABtoXYZ(lab);
 	float3 rgb = XYZtoRGB(xyz);
 	return float4(rgb, 1);
-	*/
 
 }
 

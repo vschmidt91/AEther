@@ -33,30 +33,43 @@ namespace AEther
     public static class Pipe
     {
 
-        public static async IAsyncEnumerable<PipeHandle> ReadAllAsync(this PipeReader reader)
+        public static async IAsyncEnumerable<PipeHandle> ReadAllAsync(this PipeReader reader, CancellationToken cancel = default)
         {
             while (true)
             {
-                var result = await reader.ReadAsync();
-                yield return new PipeHandle(result.Buffer, reader);
+                var result = await reader.ReadAsync(cancel);
                 if (result.IsCompleted || result.IsCanceled)
                 {
                     break;
                 }
+                yield return new PipeHandle(result.Buffer, reader);
             }
         }
 
-        public static Pipe<Ti, To> Buffer<Ti, To>(this Pipe<Ti, To> pipe, int capacity)
+        public static Pipe<Ti, To> Buffer<Ti, To>(this Pipe<Ti, To> pipe, int capacity = -1)
             where Ti : struct
             where To : struct
         {
-            var buffer = Channel.CreateBounded<To>(new BoundedChannelOptions(capacity)
+            Channel<To> buffer;
+            if (capacity == -1)
             {
-                AllowSynchronousContinuations = false,
-                FullMode = BoundedChannelFullMode.DropOldest,
-                SingleReader = true,
-                SingleWriter = true,
-            });
+                buffer = Channel.CreateUnbounded<To>(new UnboundedChannelOptions
+                {
+                    AllowSynchronousContinuations = true,
+                    SingleReader = true,
+                    SingleWriter = true,
+                });
+            }
+            else
+            {
+                buffer = Channel.CreateBounded<To>(new BoundedChannelOptions(capacity)
+                {
+                    AllowSynchronousContinuations = true,
+                    FullMode = BoundedChannelFullMode.DropOldest,
+                    SingleReader = true,
+                    SingleWriter = true,
+                });
+            }
             async IAsyncEnumerable<To> RunAsync(IAsyncEnumerable<Ti> inputs)
             {
                 var task = Task.Run(async () =>
