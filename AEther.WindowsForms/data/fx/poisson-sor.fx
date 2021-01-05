@@ -20,7 +20,7 @@ float PS(const PSDefaultin IN) : SV_Target
 	float p = Solution.Sample(Point, IN.UV);
 	float p2 = Target.Sample(Point, IN.UV);
 
-	p2 *= Scale * Scale;
+	p2 *= Scale;
 	p2 -= Solution.Sample(Point, IN.UV, int2(-1, 0));
 	p2 -= Solution.Sample(Point, IN.UV, int2(+1, 0));
 	p2 -= Solution.Sample(Point, IN.UV, int2(0, -1));
@@ -31,7 +31,7 @@ float PS(const PSDefaultin IN) : SV_Target
 	p2 += (1 - Omega) * p;
 	
 	int2 idx = IN.Position.xy;
-	int parity = (idx.x + idx.y) & 1;
+	int parity = dot(idx, 1) & 1;
 	if ((parity == 0) & UpdateEven)
 		p = p2;
 	if ((parity == 1) & UpdateOdd)

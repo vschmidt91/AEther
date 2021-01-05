@@ -7,21 +7,24 @@ Texture2D<float> Target : register(t1);
 
 cbuffer EffectConstants : register(b3)
 {
-	float Scale;
+	float2 ScaleInv;
 };
 
 float PS(const PSDefaultin IN) : SV_Target
 {
 
 	float b = Target.Sample(Point, IN.UV);
-	
-	float Ax = -4 * Solution.Sample(Point, IN.UV);
-	Ax += Solution.Sample(Point, IN.UV, int2(-1, 0));
-	Ax += Solution.Sample(Point, IN.UV, int2(+1, 0));
-	Ax += Solution.Sample(Point, IN.UV, int2(0, -1));
-	Ax += Solution.Sample(Point, IN.UV, int2(0, +1));
+	float u = Solution.Sample(Point, IN.UV);
 
-	return b - Ax / (Scale * Scale);
+	float2 Ax = -2 * float2(u, u);
+	Ax.x += Solution.Sample(Point, IN.UV, int2(-1, 0));
+	Ax.x += Solution.Sample(Point, IN.UV, int2(+1, 0));
+	Ax.y += Solution.Sample(Point, IN.UV, int2(0, -1));
+	Ax.y += Solution.Sample(Point, IN.UV, int2(0, +1));
+	
+	float r = b - dot(Ax, ScaleInv);
+
+	return r;
 
 }
 

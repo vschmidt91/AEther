@@ -7,11 +7,6 @@
 
 Texture2D<float4> Velocity : register(t0);
 
-cbuffer EffectConstants : register(b3)
-{
-	int Size;
-};
-
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 

@@ -33,10 +33,10 @@ namespace AEther.WindowsForms
             internal readonly Texture2D ResidualFine;
             internal readonly Texture2D Solution;
 
-            internal CoarseGrid(Graphics graphics, int width, int height, int scaleLog)
+            internal CoarseGrid(Graphics graphics, int width, int height, Vector2 scale)
                 : base(graphics)
             {
-                Solver = new Multigrid(graphics, width, height, scaleLog);
+                Solver = new Multigrid(graphics, width, height, scale);
                 Residual = Graphics.CreateTexture(width, height, Format.R16_Float);
                 Solution = Graphics.CreateTexture(width, height, Format.R16_Float);
                 ResidualFine = Graphics.CreateTexture(2 * width, 2 * height, Format.R16_Float);
@@ -48,7 +48,7 @@ namespace AEther.WindowsForms
                 // Residual
 
                 Graphics.SetFullscreenTarget(ResidualFine);
-                ResidualShader.Variables["Scale"].AsScalar().Set(Solver.Scale / 2);
+                ResidualShader.Variables["ScaleInv"].AsVector().Set(.5f / Solver.Scale);
                 ResidualShader.ShaderResources["Solution"].AsShaderResource().SetResource(solution.GetShaderResourceView());
                 ResidualShader.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
                 Graphics.Draw(ResidualShader);
@@ -77,8 +77,7 @@ namespace AEther.WindowsForms
         public readonly int Width;
         public readonly int Height;
 
-        public readonly int ScaleLog;
-        public int Scale => 1 << ScaleLog;
+        public readonly Vector2 Scale;
 
         public int Presmoothing { get; set; } = 1;
         public int Postsmoothing { get; set; } = 1;
@@ -88,23 +87,23 @@ namespace AEther.WindowsForms
         readonly CoarseGrid? Coarse;
 
 
-        public Multigrid(Graphics graphics, int width, int height, int scaleLog = 0)
+        public Multigrid(Graphics graphics, int width, int height, Vector2? scale = null)
             : base(graphics)
         {
 
             Width = width;
             Height = height;
-            ScaleLog = scaleLog;
+            Scale = scale ?? Vector2.One;
 
-            Relaxation = new SOR(graphics, width, height)
+            Relaxation = new SOR(graphics, Width, Height)
             {
                 Omega = 1f,
                 Scale = Scale,
             };
 
-            if (MinSize < Math.Min(width, height))
+            if (MinSize < Math.Min(Width, Height))
             {
-                Coarse = new CoarseGrid(graphics, width / 2, height / 2, scaleLog + 1);
+                Coarse = new CoarseGrid(graphics, Width / 2, Height / 2, Scale * 2);
             }
             else
             {

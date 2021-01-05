@@ -18,7 +18,7 @@ namespace AEther.WindowsForms
 
         Texture2D Velocity;
         Texture2D VelocityNew;
-        Texture2D Pressure;
+        readonly Texture2D Pressure;
         readonly Texture2D Divergence;
 
         Shader Input => Graphics.Shaders["fluid-input.fx"];
@@ -34,10 +34,11 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
-            var width = Graphics.BackBuffer.Width;
-            var height = Graphics.BackBuffer.Height;
+            //var width = Graphics.BackBuffer.Width;
+            //var height = Graphics.BackBuffer.Height;
 
-            width = height = Size;
+            var width = 1 << 8;
+            var height = width;
 
             //PoissonSolver = new SOR(graphics, Size, Size) { Iterations = 256, Omega = 1.8f };
             PoissonSolver = new Multigrid(graphics, width, height);
@@ -92,7 +93,6 @@ namespace AEther.WindowsForms
 
             Graphics.SetFullscreenTarget(VelocityNew);
             Diffuse.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
-            Diffuse.Variables["Size"].AsScalar().Set(Size);
             Graphics.Draw(Diffuse);
 
             (Velocity, VelocityNew) = (VelocityNew, Velocity);

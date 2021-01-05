@@ -15,7 +15,7 @@ namespace AEther.WindowsForms
 
         public int Iterations { get; set; } = 1;
         public float Omega { get; set; } = 1f;
-        public float Scale { get; set; } = 1f;
+        public Vector2 Scale { get; set; } = Vector2.One;
 
         Texture2D SolutionBuffer;
 
@@ -35,7 +35,7 @@ namespace AEther.WindowsForms
             Texture2D from = solution;
             Texture2D to = SolutionBuffer;
 
-            Solver.Variables["Scale"].AsScalar().Set(Scale);
+            Solver.Variables["Scale"].AsScalar().Set(Scale.X * Scale.Y);
             Solver.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
             Solver.Variables["Omega"].AsScalar().Set(Omega);
 
