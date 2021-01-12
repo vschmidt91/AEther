@@ -21,6 +21,7 @@ namespace AEther
     public class Session
     {
 
+        public readonly ArrayPool<float> Pool = ArrayPool<float>.Shared;
         public readonly SessionOptions Options;
         public readonly SampleFormat Format;
         public readonly Domain Domain;
@@ -50,7 +51,7 @@ namespace AEther
 
             async IAsyncEnumerable<SampleEvent> RunAsync(IAsyncEnumerable<PipeHandle> inputs)
             {
-                await foreach(var input in inputs)
+                await foreach(var input in inputs) 
                 {
                     var samples = input.Data;
                     var sampleCount = samples.Length / Format.Size;
@@ -61,8 +62,9 @@ namespace AEther
                         var batch = samples.Slice(offset * Format.Size, batchSize * Format.Size);
                         batch.CopyTo(buffer);
 
-                        var output = SampleEvent.Rent(Format.ChannelCount, batchSize);
-                        for (var c = 0; c < Format.ChannelCount; ++c)
+                        var outputSamples = Pool.Rent(Format.ChannelCount * batchSize);
+                        var output = new SampleEvent(outputSamples, batchSize, DateTime.Now);
+                        for (var c = 0; c < Format.ChannelCount; ++c) 
                         {
                             var channel = output.GetChannel(c);
                             for (var i = 0; i < batchSize; ++i)
@@ -71,7 +73,6 @@ namespace AEther
                             }
                         }
 
-                        output = new SampleEvent(output, batchSize, DateTime.Now);
                         yield return output;
 
                     }
@@ -89,7 +90,7 @@ namespace AEther
             var offset = Format.Type.GetSize() * index;
             return Format.Type switch
             {
-                SampleType.UInt16 => BitConverter.ToInt16(source, offset) / 32768f,
+                SampleType.UInt16 => BitConverter.ToInt16(source, offset) / (float)short.MaxValue,
                 SampleType.Float32 => BitConverter.ToSingle(source, offset),
                 _ => throw new Exception(),
             };
@@ -106,7 +107,9 @@ namespace AEther
             {
                 await foreach (var input in inputs)
                 {
-                    var output = SampleEvent.Rent(Format.ChannelCount, Domain.Count);
+
+                    var outputSamples = Pool.Rent(Format.ChannelCount * Domain.Count);
+                    var output = new SampleEvent(outputSamples, Domain.Count, input.Time);
 
                     for (int c = 0; c < Format.ChannelCount; ++c)
                     {
@@ -114,8 +117,7 @@ namespace AEther
                         dft[c].Output(output.GetChannel(c).Span);
                     }
 
-                    input.Return();
-                    output = new SampleEvent(output, output.SampleCount, input.Time);
+                    Pool.Return(input.Samples);
                     yield return output;
                 }
             }
@@ -135,15 +137,15 @@ namespace AEther
             {
                 await foreach (var input in inputs)
                 {
-                    var output = SampleEvent.Rent(Format.ChannelCount, 4 * Domain.Count);
+                    var outputSamples = Pool.Rent(4 * Format.ChannelCount * Domain.Count);
+                    var output = new SampleEvent(outputSamples, 4 * Domain.Count, input.Time);
 
                     for (int c = 0; c < Format.ChannelCount; ++c)
                     {
                         splitter[c].Process(input.GetChannel(c).Span, output.GetChannel(c).Span);
                     }
 
-                    input.Return();
-                    output = new SampleEvent(output, output.SampleCount, input.Time);
+                    Pool.Return(input.Samples);
                     yield return output;
                 }
             }

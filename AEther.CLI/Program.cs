@@ -44,7 +44,7 @@ namespace AEther.CLI
             await foreach (var output in chain(inputs))
             {
                 Console.WriteLine(JsonSerializer.Serialize(output));
-                output.Return();
+                session.Pool.Return(output.Samples);
             }
 
             return 0;

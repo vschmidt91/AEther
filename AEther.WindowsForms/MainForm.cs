@@ -139,13 +139,12 @@ namespace AEther.WindowsForms
             var format = sampleSource.Format;
             var session = new Session(format, options);
             var chain = session.CreateChain(1);
-
             var pipe = new System.IO.Pipelines.Pipe();
-            var inputs = pipe.Reader.ReadAllAsync();
+            var inputs = pipe.Reader.ReadAllAsync(cancel);
 
             void dataAvailable(object? sender, ReadOnlyMemory<byte> data)
             {
-                pipe.Writer.WriteAsync(data);
+                pipe.Writer.WriteAsync(data, cancel);
             }
 
             void stopped(object? sender, Exception? exc)
@@ -175,7 +174,7 @@ namespace AEther.WindowsForms
                     }
                 }
                 InputCounter++;
-                output.Return();
+                session.Pool.Return(output.Samples);
             }
 
             sampleSource.Dispose();
@@ -191,11 +190,8 @@ namespace AEther.WindowsForms
             }
             else 
             {
-                if (Graphics != null)
-                {
-                    Graphics.Resize(Graphics.NativeMode);
-                    Graphics.IsFullscreen = true;
-                }
+                Graphics.Resize(Graphics.NativeMode);
+                Graphics.IsFullscreen = true;
             }
         }
 

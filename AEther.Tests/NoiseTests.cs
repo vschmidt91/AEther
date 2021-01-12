@@ -48,7 +48,7 @@ namespace AEther.Tests
                 //Assert.Less(avg, 0);
                 //Assert.Greater(max, -10);
                 //Assert.Less(max, 10);
-                output.Return();
+                session.Pool.Return(output.Samples);
             }
 
         }

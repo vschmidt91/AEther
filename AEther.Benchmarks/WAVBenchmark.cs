@@ -61,7 +61,7 @@ namespace AEther.Benchmarks
                     Buffer.BlockCopy(outputFloats, 0, outputBytes, 0, outputBytes.Length);
                     await outputStream.WriteAsync(outputBytes);
                 }
-                output.Return();
+                session.Pool.Return(output.Samples);
             }
 
         }

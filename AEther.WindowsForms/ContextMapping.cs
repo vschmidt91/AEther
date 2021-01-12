@@ -45,14 +45,6 @@ namespace AEther.WindowsForms
             Stream.WriteRange(values, offset, count);
         }
 
-        public void WriteRange<T>(Span<T> span)
-            where T : struct
-        {
-            var buffer = ArrayPool<T>.Shared.Rent(span.Length);
-            span.CopyTo(buffer);
-            Stream.WriteRange(buffer, 0, span.Length);
-        }
-
         public void Dispose()
         {
             Stream.Close();
