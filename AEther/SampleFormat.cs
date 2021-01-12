@@ -19,13 +19,6 @@ namespace AEther
             ChannelCount = channelCount;
         }
 
-        public void Deconstruct(out SampleType type, out int sampleRate, out int channelCount)
-        {
-            type = Type;
-            sampleRate = SampleRate;
-            channelCount = ChannelCount;
-        }
-
         public int Size => Type.GetSize() * ChannelCount;
 
     }

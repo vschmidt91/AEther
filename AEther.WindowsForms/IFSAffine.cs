@@ -4,7 +4,6 @@ using System.Text;
 
 using SharpDX;
 using SharpDX.Direct3D11;
-using SharpDX.Mathematics.Interop;
 
 namespace AEther.WindowsForms
 {
@@ -33,8 +32,8 @@ namespace AEther.WindowsForms
 
         public override void Dispose()
         {
-            Utilities.Dispose(ref Transform);
-            Utilities.Dispose(ref Offset);
+            Transform.Dispose();
+            Offset.Dispose();
             base.Dispose();
         }
 
@@ -42,18 +41,18 @@ namespace AEther.WindowsForms
         {
             base.Update(t);
             float a = Speed * t;
-            Transform.Set(new[]
+            Transform.Set(Scale * new Vector4
             {
-                +Scale * (float)Math.Cos(a),
-                -Scale * (float)Math.Sin(a),
-                +Scale * (float)Math.Sin(a),
-                +Scale * (float)Math.Cos(a),
+                X = (float)+Math.Cos(a),
+                Y = (float)-Math.Sin(a),
+                Z = (float)+Math.Sin(a),
+                W = (float)+Math.Cos(a),
             });
             float b = 1.4756346f * Speed * t;
-            Offset.Set(new[]
+            Offset.Set(OffsetScale * new Vector2
             {
-                OffsetScale * (float)Math.Cos(b),
-                OffsetScale * (float)Math.Sin(b)
+                X = (float)Math.Cos(b),
+                Y = (float)Math.Sin(b),
             });
 
             //Transform.Set(new[] { 1, .5f, -.5f, 1 });

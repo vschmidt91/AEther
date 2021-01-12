@@ -12,7 +12,7 @@ namespace AEther
     public interface IDFT
     {
 
-        IEnumerable<DFTEvent> Filter(SampleEvent sampleEvent);
+        IEnumerable<SampleEvent> Filter(SampleEvent sampleEvent);
 
         void Clear();
 

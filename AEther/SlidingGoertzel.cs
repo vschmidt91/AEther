@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace AEther
 {
@@ -83,18 +84,17 @@ namespace AEther
         private static float DFTOutput(in StateElement s, in ConstElement c)
             => s.Q0 * s.Q0 + s.Q1 * s.Q1 - s.Q0 * s.Q1 * c.Coeff;
 
-        public IEnumerable<DFTEvent> Filter(SampleEvent evt)
+        public IEnumerable<SampleEvent> Filter(SampleEvent evt)
         {
 
-            for (int i = 0; i < evt.Length; ++i)
+            for (int i = 0; i < evt.SampleCount; ++i)
             {
 
-                for (int k = 0; k < Domain.Count; ++k)
+                for (int c = 0; c < ChannelCount; ++c)
                 {
-                    for (int c = 0; c < ChannelCount; ++c)
+                    var x = evt.GetChannel(c).Span[i];
+                    for (int k = 0; k < Domain.Count; ++k)
                     {
-
-                        var x = evt[c].Span[i];
                         DFTIteration(ref States[c, k], Const[k], x);
                     }
                 }
@@ -102,7 +102,7 @@ namespace AEther
                 SampleCounter--;
                 if (SampleCounter <= 0)
                 {
-                    var result = DFTEvent.Rent(ChannelCount, Domain.Count);
+                    var result = SampleEvent.Rent(ChannelCount, Domain.Count);
                     for (int k = 0; k < Domain.Count; ++k)
                     {
                         for (int c = 0; c < ChannelCount; ++c)
@@ -110,16 +110,14 @@ namespace AEther
                             var x = DFTOutput(States[c, k], Const[k]);
                             x = Math.Max(0, x);
                             x = DFTDomain[k] * (float)Math.Sqrt(x);
-                            result.Channels[c][k] = x;
+                            result.GetChannel(c).Span[k] = x;
                         }
                     }
-                    yield return new DFTEvent(result, Domain.Count, evt.Time);
+                    yield return new SampleEvent(result, Domain.Count, evt.Time);
                     SampleCounter = BatchSize;
                 }
 
             }
-
-            yield break;
 
         }
 

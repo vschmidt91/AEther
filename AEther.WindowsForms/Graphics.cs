@@ -65,6 +65,8 @@ namespace AEther.WindowsForms
         readonly SwapChain Chain;
         readonly Model Quad;
 
+        int IndexCount;
+
         public Graphics(IntPtr handle)
         {
 
@@ -258,6 +260,7 @@ namespace AEther.WindowsForms
                 Context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
                 Context.InputAssembler.SetVertexBuffers(0, model.VertexBufferBinding);
                 Context.InputAssembler.SetIndexBuffer(model.IndexBuffer, Format.R32_UInt, 0);
+                IndexCount = model.IndexBuffer.Description.SizeInBytes / sizeof(uint);
             }
         }
 
@@ -310,9 +313,9 @@ namespace AEther.WindowsForms
         public void Draw(Shader shader, int? numInstances = default, int? techniqueIndex = default, int? indexOffset = default, int? vertexOffset = default, int? instanceOffset = default)
         {
 
-            Context.InputAssembler.GetIndexBuffer(out var indexBuffer, out var _, out var indexBufferOffset);
-            var indexOffsetValue = indexOffset ?? indexBufferOffset;
-            var indexCount = indexBuffer.Description.SizeInBytes / sizeof(uint) - indexOffsetValue;
+            //Context.InputAssembler.GetIndexBuffer(out var indexBuffer, out var _, out var indexBufferOffset);
+            //var indexOffsetValue = indexOffset ?? indexBufferOffset;
+            //var indexCount = indexBuffer.Description.SizeInBytes / sizeof(uint) - indexOffsetValue;
 
             var technique = shader[techniqueIndex ?? 0];
             for(int passIndex = 0; passIndex < technique.PassCount; ++passIndex)
@@ -325,11 +328,11 @@ namespace AEther.WindowsForms
 
                 if (numInstances.HasValue)
                 {
-                    Context.DrawIndexedInstanced(indexCount, numInstances.Value, indexOffsetValue, vertexOffset ?? 0, instanceOffset ?? 0);
+                    Context.DrawIndexedInstanced(IndexCount, numInstances.Value, indexOffset ?? 0, vertexOffset ?? 0, instanceOffset ?? 0);
                 }
                 else
                 {
-                    Context.DrawIndexed(indexCount, indexOffsetValue, vertexOffset ?? 0);
+                    Context.DrawIndexed(IndexCount, indexOffset ?? 0, vertexOffset ?? 0);
                 }
 
                 for(int i = 0; i < shader.ShaderResources.Count; ++i)

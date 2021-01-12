@@ -9,7 +9,7 @@ using SharpDX.Direct3D11;
 
 namespace AEther.WindowsForms
 {
-    public class ContextMapping : IDisposable
+    public readonly struct ContextMapping
     {
 
         public long Length => Stream?.Length ?? 0;
@@ -19,8 +19,7 @@ namespace AEther.WindowsForms
         readonly Resource Resource;
         readonly int Subresource;
         readonly DataBox Box;
-
-        DataStream Stream;
+        readonly DataStream Stream;
 
         public ContextMapping(DeviceContext context, Resource resource, int? subresource = default, MapMode? mode = default, MapFlags? flags = default)
         {
@@ -40,6 +39,12 @@ namespace AEther.WindowsForms
             Stream.Write(buffer, offset, count);
         }
 
+        public void WriteRange<T>(T[] values, int offset, int count)
+            where T : struct
+        {
+            Stream.WriteRange(values, offset, count);
+        }
+
         public void WriteRange<T>(Span<T> span)
             where T : struct
         {
@@ -51,7 +56,7 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
             Stream.Close();
-            Utilities.Dispose(ref Stream);
+            Stream.Dispose();
             Context.UnmapSubresource(Resource, Subresource);
         }
 

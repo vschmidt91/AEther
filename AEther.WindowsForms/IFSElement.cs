@@ -4,21 +4,26 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
+using SharpDX;
+using SharpDX.Direct3D11;
+using Vector4 = System.Numerics.Vector4;
+
 namespace AEther.WindowsForms
 {
     public class IFSElement : IDisposable
     {
 
-        public Shader Shader;
+        public readonly EffectVectorVariable WeightVariable;
+        public readonly Shader Shader;
 
-        public Vector4 Weight { get; set; }
-        public float Speed { get; set; }
+        public Vector4 Weight { get; set; } = Vector4.One;
+        public float Speed { get; set; } = .1f;
 
         public IFSElement(Shader shader)
         {
             Shader = shader;
-            Weight = Vector4.One;
-            Speed = .1f;
+            WeightVariable = Shader.Variables["Weight"].AsVector();
+            WeightVariable.GetVector<Vector4>();
         }
 
         public virtual void Update(float t)
@@ -32,7 +37,7 @@ namespace AEther.WindowsForms
 
         public virtual void Dispose()
         {
-            SharpDX.Utilities.Dispose(ref Shader);
+            WeightVariable.Dispose();
         }
 
     }

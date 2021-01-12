@@ -62,10 +62,9 @@ namespace AEther.WindowsForms
 
             if(useMapping)
             {
-                using(var map = Texture.Map(device.ImmediateContext))
-                {
-                    Pitch = (int)map.Pitch;
-                }
+                var map = Texture.Map(device.ImmediateContext);
+                Pitch = (int)map.Pitch;
+                map.Dispose();
             }
             else
             {
@@ -149,12 +148,11 @@ namespace AEther.WindowsForms
             if (UseMapping)
             {
 
-                using (var map = Texture.Map(context))
-                {
-                    map.Write(Buffer);
-                    bandwidth += (int)map.Length;
-                }
+                var map = Texture.Map(context);
+                map.Write(Buffer);
+                bandwidth += (int)map.Length;
                 UpdatePosition = WritePosition;
+                map.Dispose();
 
             }
             else

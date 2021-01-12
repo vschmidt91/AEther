@@ -15,10 +15,5 @@ namespace AEther.Bass
             (Index, Name) = (index, name);
         }
 
-        public void Deconstruct(out int index, out string name)
-        {
-            (index, name) = (Index, Name);
-        }
-
     }
 }

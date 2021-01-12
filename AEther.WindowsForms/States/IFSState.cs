@@ -18,6 +18,10 @@ namespace AEther.WindowsForms
         public Texture2D Target;
         public readonly IFSElement[] Elements;
 
+        Shader InputShader => Graphics.Shaders["ifs-input.fx"];
+
+        Shader OutputShader => Graphics.Shaders["ifs-output.fx"];
+
         public IFSState(Graphics graphics)
             : base(graphics)
         {
@@ -83,7 +87,7 @@ namespace AEther.WindowsForms
 
             Graphics.Context.Rasterizer.SetViewport(Source.ViewPort);
             Graphics.Context.OutputMerger.SetRenderTargets(null, Source.GetRenderTargetView());
-            Graphics.Draw(Graphics.Shaders["ifs-input.fx"]);
+            Graphics.Draw(InputShader);
 
             //Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), Color4.White);
             //for (int n = 0; n < 8; ++n)
@@ -93,11 +97,10 @@ namespace AEther.WindowsForms
                 Graphics.Context.Rasterizer.SetViewport(Target.ViewPort);
                 foreach(var element in Elements)
                 {
-                    var shader = element.Shader;
                     Graphics.Context.OutputMerger.SetRenderTargets(null, Target.GetRenderTargetView());
-                    shader.ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
-                    shader.Variables["Weight"].AsVector().Set(element.Weight / sumWeight);
-                    Graphics.Draw(shader);
+                    element.Shader.ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
+                    element.WeightVariable.Set(element.Weight / sumWeight);
+                    Graphics.Draw(element.Shader);
                 }
 
                 (Source, Target) = (Target, Source);
@@ -106,7 +109,7 @@ namespace AEther.WindowsForms
 
             Graphics.Context.Rasterizer.SetViewport(Graphics.BackBuffer.ViewPort);
             Graphics.Context.OutputMerger.SetRenderTargets(null, Graphics.BackBuffer.GetRenderTargetView());
-            Graphics.Shaders["ifs-output.fx"].ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
+            OutputShader.ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
             Graphics.Draw(Graphics.Shaders["ifs-output.fx"]);
 
         }

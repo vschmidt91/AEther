@@ -23,14 +23,16 @@ namespace AEther
 
         public readonly SessionOptions Options;
         public readonly SampleFormat Format;
+        public readonly Domain Domain;
 
         public Session(SampleFormat format, SessionOptions? options = null)
         {
             Options = options ?? new SessionOptions();
+            Domain = Options.Domain;
             Format = format;
         }
 
-        public Pipe<PipeHandle, SplitterEvent> CreateChain(int capacity = -1)
+        public Pipe<PipeHandle, SampleEvent> CreateChain(int capacity = -1)
         {
             return CreateBatcher()
                 .Buffer(capacity)
@@ -41,44 +43,39 @@ namespace AEther
         }
 
         public Pipe<PipeHandle, SampleEvent> CreateBatcher()
-            => CreateBatcher(Format, Format.SampleRate / Options.TimeResolution);
-
-        public static Pipe<PipeHandle, SampleEvent> CreateBatcher(SampleFormat format, int batchSize)
         {
 
-            var buffer = new byte[batchSize * format.Size];
-            var bufferFloat = new float[batchSize * format.ChannelCount];
+            var batchSize = Format.SampleRate / Options.TimeResolution;
+            var buffer = new byte[batchSize * Format.Size];
 
             async IAsyncEnumerable<SampleEvent> RunAsync(IAsyncEnumerable<PipeHandle> inputs)
             {
                 await foreach(var input in inputs)
                 {
-                    var sampleCount = input.Data.Length / format.Size;
-                    long offset = 0;
-                    while (offset + batchSize < sampleCount)
+                    var samples = input.Data;
+                    var sampleCount = samples.Length / Format.Size;
+                    long offset;
+                    for (offset = 0;  offset + batchSize < sampleCount; offset += batchSize)
                     {
 
-                        var output = SampleEvent.Rent(format.ChannelCount, batchSize);
+                        var batch = samples.Slice(offset * Format.Size, batchSize * Format.Size);
+                        batch.CopyTo(buffer);
 
-                        input.Data.Slice(offset * format.Size, batchSize * format.Size).CopyTo(buffer);
-                        Buffer.BlockCopy(buffer, 0, bufferFloat, 0, buffer.Length);
-
-                        for (var i = 0; i < batchSize; ++i)
+                        var output = SampleEvent.Rent(Format.ChannelCount, batchSize);
+                        for (var c = 0; c < Format.ChannelCount; ++c)
                         {
-                            for (var c = 0; c < format.ChannelCount; ++c)
+                            var channel = output.GetChannel(c);
+                            for (var i = 0; i < batchSize; ++i)
                             {
-                                output[c].Span[i] = GetSample(buffer, format, i, c);
-                                if (float.IsNaN(output[c].Span[i]))
-                                    throw new Exception();
+                                channel.Span[i] = GetSample(buffer, i, c);
                             }
                         }
 
-                        yield return new SampleEvent(output, batchSize, DateTime.Now);
-                        offset += batchSize;
-
+                        output = new SampleEvent(output, batchSize, DateTime.Now);
+                        yield return output;
 
                     }
-                    input.Reader.AdvanceTo(input.Data.GetPosition(offset * format.Size), input.Data.End);
+                    input.AdvanceTo(samples.GetPosition(offset * Format.Size), samples.End);
                 }
             }
 
@@ -86,48 +83,40 @@ namespace AEther
 
         }
 
-        private static float GetSample(ReadOnlyMemory<byte> source, SampleFormat format, int offset, int channel)
+        private float GetSample(byte[] source, int sampleIndex, int channel)
         {
-            var i = offset * format.ChannelCount + channel;
-            var size = format.Type.GetSize();
-            var element = source.Slice(size * i, size).Span;
-            return format.Type switch
+            var index = sampleIndex * Format.ChannelCount + channel;
+            var offset = Format.Type.GetSize() * index;
+            return Format.Type switch
             {
-                SampleType.UInt16 => BitConverter.ToInt16(element) / 32768f,
-                SampleType.Float32 => BitConverter.ToSingle(element),
+                SampleType.UInt16 => BitConverter.ToInt16(source, offset) / 32768f,
+                SampleType.Float32 => BitConverter.ToSingle(source, offset),
                 _ => throw new Exception(),
             };
         }
 
-        public Pipe<SampleEvent, DFTEvent> CreateDFT()
-            => CreateDFT(Options.Domain, Format, Options.UseSIMD, Options.MaxParallelization);
-
-        public static Pipe<SampleEvent, DFTEvent> CreateDFT(Domain domain, SampleFormat format, bool useSIMD = true, int maxParallelism = -1)
+        public Pipe<SampleEvent, SampleEvent> CreateDFT()
         {
 
-            var dft = Enumerable.Range(0, format.ChannelCount)
-                .Select(c => new DFTProcessor(domain, format.SampleRate, useSIMD, maxParallelism))
+            var dft = Enumerable.Range(0, Format.ChannelCount)
+                .Select(c => new DFTProcessor(Domain, Format.SampleRate, Options.UseSIMD, Options.MaxParallelization))
                 .ToArray();
 
-            async IAsyncEnumerable<DFTEvent> RunAsync(IAsyncEnumerable<SampleEvent> inputs)
+            async IAsyncEnumerable<SampleEvent> RunAsync(IAsyncEnumerable<SampleEvent> inputs)
             {
                 await foreach (var input in inputs)
                 {
-                    var output = DFTEvent.Rent(format.ChannelCount, domain.Count);
-                    var tasks = Enumerable.Range(0, format.ChannelCount)
-                        .Select(c => Task.Run(() =>
-                        {
-                            dft[c].Process(input[c]);
-                            dft[c].Output(output[c].Span);
-                        }));
-                    await Task.WhenAll(tasks);
-                    //for (int c = 0; c < format.ChannelCount; ++c)
-                    //{
-                    //    dft[c].Process(input[c]);
-                    //    dft[c].Output(output[c].Span);
-                    //}
+                    var output = SampleEvent.Rent(Format.ChannelCount, Domain.Count);
+
+                    for (int c = 0; c < Format.ChannelCount; ++c)
+                    {
+                        dft[c].Process(input.GetChannel(c));
+                        dft[c].Output(output.GetChannel(c).Span);
+                    }
+
                     input.Return();
-                    yield return new DFTEvent(output, domain.Count, input.Time);
+                    output = new SampleEvent(output, output.SampleCount, input.Time);
+                    yield return output;
                 }
             }
 
@@ -135,32 +124,27 @@ namespace AEther
 
         }
 
-        public Pipe<DFTEvent, SplitterEvent> CreateSplitter()
-            => CreateSplitter(Options.Domain, Format.ChannelCount, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow, Options.NormalizerFloorRoom, Options.NormalizerHeadRoom);
-
-        public static Pipe<DFTEvent, SplitterEvent> CreateSplitter(Domain domain, int channelCount, float timeResolution, float frequencyWindow, float timeWindow, float floorRoom, float headRoom)
+        public Pipe<SampleEvent, SampleEvent> CreateSplitter()
         {
 
-            var splitter = Enumerable.Range(0, channelCount)
-                .Select(c => new Splitter(domain, timeResolution, frequencyWindow, timeWindow, floorRoom, headRoom))
+            var splitter = Enumerable.Range(0, Format.ChannelCount)
+                .Select(c => new Splitter(Domain, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow, Options.NormalizerFloorRoom, Options.NormalizerHeadRoom))
                 .ToArray();
 
-            async IAsyncEnumerable<SplitterEvent> RunAsync(IAsyncEnumerable<DFTEvent> inputs)
+            async IAsyncEnumerable<SampleEvent> RunAsync(IAsyncEnumerable<SampleEvent> inputs)
             {
                 await foreach (var input in inputs)
                 {
-                    var output = SplitterEvent.Rent(channelCount, domain.Count);
-                    await Task.WhenAll(Enumerable.Range(0, channelCount)
-                        .Select(c => Task.Run(() =>
-                        {
-                            splitter[c].Process(input[c].Span, output[c].Span);
-                        })));
-                    //for(int c = 0; c < channelCount; ++c)
-                    //{
-                    //    splitter[c].Process(input[c].Span, output[c].Span);
-                    //}
+                    var output = SampleEvent.Rent(Format.ChannelCount, 4 * Domain.Count);
+
+                    for (int c = 0; c < Format.ChannelCount; ++c)
+                    {
+                        splitter[c].Process(input.GetChannel(c).Span, output.GetChannel(c).Span);
+                    }
+
                     input.Return();
-                    yield return new SplitterEvent(output, input.Length, input.Time);
+                    output = new SampleEvent(output, output.SampleCount, input.Time);
+                    yield return output;
                 }
             }
 

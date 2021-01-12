@@ -14,7 +14,7 @@ namespace AEther
     public class Splitter
     {
 
-        static readonly ArrayPool<float> Pool = ArrayPool<float>.Shared;
+        static ArrayPool<float> Pool => ArrayPool<float>.Shared;
 
         readonly Domain Domain;
 
@@ -27,6 +27,11 @@ namespace AEther
         readonly float FloorRoom;
         readonly MovingQuantile Ceiling;
 
+        readonly float[] Buffer1;
+        readonly float[] Buffer2;
+        readonly float[] Buffer3;
+        readonly float[] Buffer4;
+
         public Splitter(Domain domain, float timeResolution, float frequencyWindow, float timeWindow, float floorRoom, float headRoom)
         {
 
@@ -35,6 +40,11 @@ namespace AEther
 
             int halfSizeFrequency = (int)(frequencyWindow * domain.Resolution);
             int halfSizeTime = (int)(timeWindow * timeResolution);
+
+            Buffer1 = new float[Domain.Count];
+            Buffer2 = new float[Domain.Count];
+            Buffer3 = new float[Domain.Count];
+            Buffer4 = new float[Domain.Count];
 
             //Frequency = new MovingExponentialAverage(2f / (1 + halfSizeFrequency));
             //Time = Enumerable.Range(0, domain.Count)
@@ -65,18 +75,13 @@ namespace AEther
             var src = input;
             var dst = output;
 
-            var buffer1 = Pool.Rent(Domain.Count);
-            var buffer2 = Pool.Rent(Domain.Count);
-            var buffer3 = Pool.Rent(Domain.Count);
-            var buffer4 = Pool.Rent(Domain.Count);
-
-            Frequency.Filter(src, buffer1);
+            Frequency.Filter(src, Buffer1);
             for (int k = 0; k < Domain.Count; ++k)
             {
-                buffer2[k] = Time[k].Filter(src[k]);
-                buffer3[k] = Time2[k].Filter(buffer1[k]);
+                Buffer2[k] = Time[k].Filter(src[k]);
+                Buffer3[k] = Time2[k].Filter(Buffer1[k]);
             }
-            Frequency2.Filter(buffer2, buffer4);
+            Frequency2.Filter(Buffer2, Buffer4);
 
             var currentCeiling = float.NegativeInfinity;
             for (int k = 0; k < Domain.Count; ++k)
@@ -84,8 +89,8 @@ namespace AEther
 
                 var y = dst.Slice(4 * k, 4);
 
-                y[0] = Math.Max(0, buffer2[k] - buffer4[k]);
-                y[1] = Math.Max(0, buffer1[k] - buffer3[k]);
+                y[0] = Math.Max(0, Buffer2[k] - Buffer4[k]);
+                y[1] = Math.Max(0, Buffer1[k] - Buffer3[k]);
                 //y[2] = Math.Max(0, src[k] - Math.Max(y[0], y[1]))
                 y[2] = Math.Max(0, src[k] - y[0] - y[1]);
                 //y[3] = 0;
@@ -118,11 +123,6 @@ namespace AEther
                     y[i] = ((1 + FloorRoom) * (y[i] / ceiling) - FloorRoom).Clamp(0, 1);
                 }
             }
-
-            Pool.Return(buffer1);
-            Pool.Return(buffer2);
-            Pool.Return(buffer3);
-            Pool.Return(buffer4);
 
         }
 

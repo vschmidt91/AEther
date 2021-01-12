@@ -54,9 +54,9 @@ namespace AEther.Benchmarks
             sampleSource.Start();
             await foreach (var output in chain(inputs))
             {
-                for (int c = 0; c < output.ChannelCount; ++c)
+                for (int c = 0; c < format.ChannelCount; ++c)
                 {
-                    var src = output[c];
+                    var src = output.GetChannel(c);
                     src.CopyTo(outputFloats);
                     Buffer.BlockCopy(outputFloats, 0, outputBytes, 0, outputBytes.Length);
                     await outputStream.WriteAsync(outputBytes);

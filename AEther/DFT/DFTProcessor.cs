@@ -27,7 +27,6 @@ namespace AEther
         };
 
         readonly IDFTFilter[] Filters;
-        readonly float[] AWeighting;
         readonly ParallelOptions Options;
 
         public DFTProcessor(Domain domain, float sampleRate, bool useSIMD = true, int maxParallelism = -1)
@@ -46,7 +45,7 @@ namespace AEther
                 MaxDegreeOfParallelism = maxParallelism,
             };
 
-            if(cosines.Length == 1)
+            if (cosines.Length == 1)
             {
                 Filters = Enumerable.Range(0, domain.Count)
                     .Select(k => new DFTFilter(domain[k], domain.Resolution, sampleRate))
@@ -64,10 +63,6 @@ namespace AEther
                     .Select(k => new WindowedDFTFilter(domain[k], domain.Resolution, sampleRate, window))
                     .ToArray();
             }
-
-            var a1k = GetAWeighting(1000);
-            AWeighting = domain.Select(f => (float)(GetAWeighting(f) / a1k)).ToArray();
-            //AWeighting = domain.Select(f => f / 1000f).ToArray();
 
         }
 
@@ -117,13 +112,18 @@ namespace AEther
 
         public void Process(ReadOnlyMemory<float> samples)
         {
-
-            void ProcessFilter(IDFTFilter filter)
+            
+            foreach(var filter in Filters)
             {
                 filter.Process(samples);
             }
 
-            Parallel.ForEach(Filters, Options, ProcessFilter);
+            //void ProcessFilter(IDFTFilter filter)
+            //{
+            //    filter.Process(samples);
+            //}
+
+            //Parallel.ForEach(Filters, Options, ProcessFilter);
 
         }
 

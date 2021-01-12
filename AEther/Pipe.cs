@@ -11,16 +11,12 @@ using System.Threading.Tasks;
 namespace AEther
 {
 
-    public delegate IAsyncEnumerable<To> Pipe<Ti, To>(IAsyncEnumerable<Ti> inputs)
-        where Ti : struct
-        where To : struct;
+    public delegate IAsyncEnumerable<To> Pipe<Ti, To>(IAsyncEnumerable<Ti> inputs);
 
     public static class Pipe
     {
 
         public static Pipe<Ti, To> Buffer<Ti, To>(this Pipe<Ti, To> pipe, int capacity = -1)
-            where Ti : struct
-            where To : struct
         {
             Channel<To> buffer;
             if (capacity == -1)
@@ -62,9 +58,6 @@ namespace AEther
         }
 
         public static Pipe<Ti, To> Chain<Ti, Tm, To>(this Pipe<Ti, Tm> pipe1, Pipe<Tm, To> pipe2)
-            where Ti : struct
-            where Tm : struct
-            where To : struct
             => inputs => pipe2(pipe1(inputs));
 
     }

@@ -14,6 +14,8 @@ using System.Linq;
 
 using AEther.CSCore;
 
+using SharpDX.Direct3D11;
+
 namespace AEther.WindowsForms
 {
     public partial class MainForm : Form
@@ -35,11 +37,18 @@ namespace AEther.WindowsForms
         DateTime LastLatencyUpdate = DateTime.MinValue;
         int InputCounter = 0;
 
+
+        Shader HistogramShader => Graphics.Shaders["histogram.fx"];
+        Shader SpectrumShader => Graphics.Shaders["spectrum.fx"];
+        EffectScalarVariable HistogramShiftVariable;
+
         public MainForm()
         {
 
             InitializeComponent();
             Graphics = new Graphics(Handle);
+
+            HistogramShiftVariable = HistogramShader.Variables["HistogramShift"].AsScalar();
 
             var audioDevices = Recorder.GetAvailableDeviceNames();
             lbInput.Items.Clear();
@@ -50,8 +59,8 @@ namespace AEther.WindowsForms
             lbState.Items.Clear();
             lbState.Items.AddRange(new GraphicsState[]
             {
-                new ShaderState(Graphics, Graphics.Shaders["histogram.fx"]),
-                new ShaderState(Graphics, Graphics.Shaders["spectrum.fx"]),
+                new ShaderState(Graphics, HistogramShader),
+                new ShaderState(Graphics, SpectrumShader),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
             });
@@ -127,14 +136,11 @@ namespace AEther.WindowsForms
                 ? new Loopback()
                 : new Recorder(sampleSourceName);
 
-            var session = new Session(sampleSource.Format, options);
-            var chain = session.CreateChain(4);
+            var format = sampleSource.Format;
+            var session = new Session(format, options);
+            var chain = session.CreateChain(1);
 
-            var pipe = new System.IO.Pipelines.Pipe(new PipeOptions(
-                null,
-                PipeScheduler.ThreadPool,
-                PipeScheduler.ThreadPool
-            ));
+            var pipe = new System.IO.Pipelines.Pipe();
             var inputs = pipe.Reader.ReadAllAsync();
 
             void dataAvailable(object? sender, ReadOnlyMemory<byte> data)
@@ -156,9 +162,9 @@ namespace AEther.WindowsForms
             {
                 var latency = (DateTime.Now - output.Time).TotalMilliseconds;
                 Latency = Math.Max(Latency, latency);
-                for (int c = 0; c < output.ChannelCount; ++c)
+                for (int c = 0; c < format.ChannelCount; ++c)
                 {
-                    var src = output[c];
+                    var src = output.GetChannel(c);
                     lock (Spectrum[c])
                     {
                         Spectrum[c].Add(src.Span);
@@ -169,6 +175,7 @@ namespace AEther.WindowsForms
                     }
                 }
                 InputCounter++;
+                output.Return();
             }
 
             sampleSource.Dispose();
@@ -200,14 +207,14 @@ namespace AEther.WindowsForms
                 return;
 
             var now = DateTime.Now;
-            if(LatencyUpdateInterval < now - LastLatencyUpdate)
+            if (LatencyUpdateInterval < now - LastLatencyUpdate)
             {
                 Text = $"Latency: {Math.Round(Latency, 1)} ms";
                 LastLatencyUpdate = now;
                 Latency = 0;
             }
 
-            if(0 < InputCounter)
+            if (0 < InputCounter)
             {
                 foreach (var spectrum in Spectrum)
                 {
@@ -225,7 +232,7 @@ namespace AEther.WindowsForms
                     }
                 }
                 var histogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
-                Graphics.Shaders["histogram.fx"].Variables["HistogramShift"].AsScalar().Set(histogramShift);
+                HistogramShiftVariable.Set(histogramShift);
                 InputCounter = 0;
             }
 

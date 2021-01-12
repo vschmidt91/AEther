@@ -18,10 +18,10 @@ namespace AEther.WindowsForms
         WCycle,
     }
 
-    public class Multigrid : GraphicsComponent, IPoissonSolver
+    public class Multigrid : GraphicsComponent, IPoissonSolver, IDisposable
     {
 
-        internal class CoarseGrid : GraphicsComponent
+        internal class CoarseGrid : GraphicsComponent, IDisposable
         {
 
             Shader ResidualShader => Graphics.Shaders["mg-residual.fx"];
@@ -32,6 +32,7 @@ namespace AEther.WindowsForms
             internal readonly Texture2D Residual;
             internal readonly Texture2D ResidualFine;
             internal readonly Texture2D Solution;
+            internal readonly EffectVectorVariable ScaleVariable;
 
             internal CoarseGrid(Graphics graphics, int width, int height, Vector2 scale)
                 : base(graphics)
@@ -40,6 +41,7 @@ namespace AEther.WindowsForms
                 Residual = Graphics.CreateTexture(width, height, Format.R16_Float);
                 Solution = Graphics.CreateTexture(width, height, Format.R16_Float);
                 ResidualFine = Graphics.CreateTexture(2 * width, 2 * height, Format.R16_Float);
+                ScaleVariable = ResidualShader.Variables["ScaleInv"].AsVector();
             }
 
             internal void Solve(Texture2D target, Texture2D solution, MultigridMode mode)
@@ -48,7 +50,7 @@ namespace AEther.WindowsForms
                 // Residual
 
                 Graphics.SetFullscreenTarget(ResidualFine);
-                ResidualShader.Variables["ScaleInv"].AsVector().Set(.5f / Solver.Scale);
+                ScaleVariable.Set(.5f / Solver.Scale);
                 ResidualShader.ShaderResources["Solution"].AsShaderResource().SetResource(solution.GetShaderResourceView());
                 ResidualShader.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
                 Graphics.Draw(ResidualShader);
@@ -70,6 +72,13 @@ namespace AEther.WindowsForms
                 Graphics.Draw(Add);
 
             }
+
+            public void Dispose()
+            {
+                Solver.Dispose();
+                ScaleVariable.Dispose();
+            }
+
         }
 
         public const int MinSize = 16;
@@ -150,6 +159,11 @@ namespace AEther.WindowsForms
             Relaxation.Iterations = Postsmoothing;
             Relaxation.Solve(target, destination);
 
+        }
+
+        public void Dispose()
+        {
+            Coarse?.Dispose();
         }
 
     }

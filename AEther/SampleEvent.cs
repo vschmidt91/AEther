@@ -7,49 +7,46 @@ using System.Threading.Channels;
 
 namespace AEther
 {
-    public readonly struct SampleEvent
+    public class SampleEvent
     {
 
-        public static readonly ArrayPool<float> Pool = ArrayPool<float>.Shared;
+        static ArrayPool<float> Pool => ArrayPool<float>.Shared;
 
-        readonly float[][] Channels;
+        float[] Samples;
 
-
-        public int ChannelCount => Channels.Length;
-        public int Length { get; }
-
-        public Memory<float> this[int c] => Channels[c].AsMemory(0, Length);
-
+        public readonly int SampleCount;
         public readonly DateTime Time;
 
-        public SampleEvent(SampleEvent other, int length, DateTime time)
+        public SampleEvent(SampleEvent other, int sampleCount, DateTime time)
         {
-            Channels = other.Channels;
-            Length = length;
+            Samples = other.Samples;
+            SampleCount = sampleCount;
             Time = time;
         }
 
-        SampleEvent(float[][] channels, int length, DateTime? time = default)
+        SampleEvent(float[] samples, int sampleCount, DateTime time)
         {
-            Channels = channels;
-            Length = length;
-            Time = time ?? DateTime.MinValue;
+            Samples = samples;
+            SampleCount = sampleCount;
+            Time = time;
         }
 
-        public static SampleEvent Rent(int channelCount, int length)
+        public Memory<float> GetChannel(int channelIndex)
         {
-            var channels = Enumerable.Range(0, channelCount)
-                .Select(c => Pool.Rent(length))
-                .ToArray();
-            return new SampleEvent(channels, length);
+            var offset = channelIndex * SampleCount;
+            return Samples.AsMemory(offset, SampleCount);
+        }
+
+        public static SampleEvent Rent(int channelCount, int sampleCount)
+        {
+            var samples = Pool.Rent(channelCount * sampleCount);
+            return new SampleEvent(samples, sampleCount, DateTime.Now);
         }
 
         public void Return()
         {
-            foreach(var channel in Channels)
-            {
-                Pool.Return(channel);
-            }
+            Pool.Return(Samples);
+            Samples = null;
         }
 
     }

@@ -18,7 +18,7 @@ namespace AEther
     {
 
         public readonly ReadOnlySequence<byte> Data;
-        public readonly PipeReader Reader;
+        readonly PipeReader Reader;
 
         public PipeHandle(ReadOnlySequence<byte> data, PipeReader reader)
         {
@@ -26,12 +26,17 @@ namespace AEther
             Reader = reader;
         }
 
+        public void AdvanceTo(SequencePosition consumed, SequencePosition observed)
+        {
+            Reader.AdvanceTo(consumed, observed);
+        }
+
     }
 
     public static class Extensions
     {
 
-        public static async IAsyncEnumerable<PipeHandle> ReadAllAsync(this PipeReader reader, CancellationToken cancel = default)
+        public static async IAsyncEnumerable<PipeHandle> ReadAllAsync(this PipeReader reader, [EnumeratorCancellation]CancellationToken cancel = default)
         {
             while (true)
             {

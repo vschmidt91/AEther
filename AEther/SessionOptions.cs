@@ -26,7 +26,6 @@ namespace AEther
         [Category("Domain")]
         public int FrequencyResolution { get; set; } = 12;
 
-
         [Category("DFT")]
         public int TimeResolution { get; set; } = 1 << 8;
 
@@ -48,31 +47,16 @@ namespace AEther
         [Category("Normalizer")]
         public float NormalizerHeadRoom { get; set; } = .05f;
 
-        public static SessionOptions? ReadFromFile(string path)
+        public static SessionOptions ReadFromFile(string path)
         {
-
-            if(!File.Exists(path))
-            {
-                return default;
-            }
-
-            SessionOptions? result = default;
 
             var file = new FileInfo(path);
             var serializer = new XmlSerializer(typeof(SessionOptions));
-            using (var stream = file.Open(FileMode.Open, FileAccess.Read))
-            {
-                try
-                {
-                    result = serializer.Deserialize(stream) as SessionOptions;
-                }
-                catch(InvalidOperationException exc)
-                {
-                    Debug.WriteLine("ERROR reading configuration: " + exc.Message);
-                }
-            }
-
-            return result;
+            using var stream = file.Open(FileMode.Open, FileAccess.Read);
+            var result = serializer.Deserialize(stream);
+            if (result is not SessionOptions options)
+                throw new InvalidCastException();
+            return options;
 
         }
 
@@ -82,14 +66,7 @@ namespace AEther
             var file = new FileInfo(path);
             var serializer = new XmlSerializer(typeof(SessionOptions));
             using var stream = file.Open(FileMode.OpenOrCreate, FileAccess.Write);
-            try
-            {
-                serializer.Serialize(stream, this);
-            }
-            catch (XmlException exc)
-            {
-                Debug.WriteLine("ERROR writing configuration: " + exc.Message);
-            }
+            serializer.Serialize(stream, this);
 
         }
         
