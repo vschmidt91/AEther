@@ -113,17 +113,17 @@ namespace AEther
         public void Process(ReadOnlyMemory<float> samples)
         {
             
-            foreach(var filter in Filters)
-            {
-                filter.Process(samples);
-            }
-
-            //void ProcessFilter(IDFTFilter filter)
+            //foreach(var filter in Filters)
             //{
             //    filter.Process(samples);
             //}
 
-            //Parallel.ForEach(Filters, Options, ProcessFilter);
+            void ProcessFilter(IDFTFilter filter)
+            {
+                filter.Process(samples);
+            }
+
+            Parallel.ForEach(Filters, Options, ProcessFilter);
 
         }
 

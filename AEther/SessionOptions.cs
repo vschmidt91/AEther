@@ -17,6 +17,9 @@ namespace AEther
 
         public Domain Domain => Domain.FromRange(MinFrequency, MaxFrequency, FrequencyResolution);
 
+        [Category("Pipeline")]
+        public int BufferCapacity { get; set; } = -1;
+
         [Category("Domain")]
         public float MinFrequency { get; set; } = 30f;
 

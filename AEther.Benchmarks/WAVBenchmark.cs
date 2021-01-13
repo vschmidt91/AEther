@@ -18,13 +18,12 @@ namespace AEther.Benchmarks
         [Benchmark]
         public Task RunA() => RunAsync(new SessionOptions
         {
-            FrequencyResolution = 1,
         });
 
         [Benchmark]
         public Task RunB() => RunAsync(new SessionOptions
         {
-            FrequencyResolution = 2,
+            MaxParallelization = 4,
         });
 
         public static async Task RunAsync(SessionOptions options)
@@ -38,22 +37,31 @@ namespace AEther.Benchmarks
             var header = WAVHeader.FromStream(inputStream);
             var format = header.GetSampleFormat();
             var sampleSource = new SampleReader(inputStream);
-            var pipe = new System.IO.Pipelines.Pipe();
-            sampleSource.OnDataAvailable += async (sender, evt) =>
+            var session = new Session(format, options);
+            sampleSource.OnDataAvailable += (sender, evt) =>
             {
-                await pipe.Writer.WriteAsync(evt);
+                session.Post(evt);
+            };
+            sampleSource.OnStopped += (sender, evt) =>
+            {
+                session.Complete();
             };
 
-            var session = new Session(format, options);
-            var chain = session.CreateChain();
 
             var outputFloats = new float[4 * options.Domain.Count];
             var outputBytes = new byte[sizeof(float) * outputFloats.Length];
 
-            var inputs = pipe.Reader.ReadAllAsync();
             sampleSource.Start();
-            await foreach (var output in chain(inputs))
+
+            while(!session.Completion.IsCompleted)
             {
+                SampleEvent output;
+                try
+                {
+                    output = await session.ReceiveAsync(CancellationToken.None);
+                }
+                catch (InvalidOperationException) { break; }
+                catch (TaskCanceledException) { break; }
                 for (int c = 0; c < format.ChannelCount; ++c)
                 {
                     var src = output.GetChannel(c);
@@ -63,6 +71,8 @@ namespace AEther.Benchmarks
                 }
                 session.Pool.Return(output.Samples);
             }
+
+            sampleSource.Dispose();
 
         }
 

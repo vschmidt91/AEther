@@ -15,6 +15,7 @@ using System.Linq;
 using AEther.CSCore;
 
 using SharpDX.Direct3D11;
+using System.Threading.Tasks.Dataflow;
 
 namespace AEther.WindowsForms
 {
@@ -123,7 +124,7 @@ namespace AEther.WindowsForms
         }
 
 
-        async Task RunAsync(CancellationToken cancel)
+        async Task RunAsync(CancellationToken cancel = default)
         {
 
             if (lbInput.SelectedItem is not string sampleSourceName)
@@ -138,18 +139,15 @@ namespace AEther.WindowsForms
 
             var format = sampleSource.Format;
             var session = new Session(format, options);
-            var chain = session.CreateChain(1);
-            var pipe = new System.IO.Pipelines.Pipe();
-            var inputs = pipe.Reader.ReadAllAsync(cancel);
 
             void dataAvailable(object? sender, ReadOnlyMemory<byte> data)
             {
-                pipe.Writer.WriteAsync(data, cancel);
+                session.Post(data);
             }
 
             void stopped(object? sender, Exception? exc)
             {
-                pipe.Writer.CompleteAsync(exc);
+                session.Complete();
             }
 
             sampleSource.OnDataAvailable += dataAvailable;
@@ -157,8 +155,15 @@ namespace AEther.WindowsForms
             cancel.Register(sampleSource.Stop);
             sampleSource.Start();
 
-            await foreach (var output in chain(inputs))
+            while (!session.Completion.IsCompleted)
             {
+                SampleEvent output;
+                try
+                {
+                    output = await session.ReceiveAsync(cancel);
+                }
+                catch (InvalidOperationException) { break; }
+                catch (TaskCanceledException) { break; }
                 var latency = (DateTime.Now - output.Time).TotalMilliseconds;
                 Latency = Math.Max(Latency, latency);
                 for (int c = 0; c < format.ChannelCount; ++c)
@@ -175,7 +180,7 @@ namespace AEther.WindowsForms
                 }
                 InputCounter++;
                 session.Pool.Return(output.Samples);
-            }
+                }
 
             sampleSource.Dispose();
 

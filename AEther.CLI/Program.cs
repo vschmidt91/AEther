@@ -12,6 +12,7 @@ using System.Text.Json;
 
 using System.CommandLine;
 using System.Buffers;
+using System.Threading;
 
 namespace AEther.CLI
 {
@@ -19,6 +20,8 @@ namespace AEther.CLI
     {
         static async Task<int> Main(string? path = null)
         {
+
+            path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
 
             var options = new SessionOptions();
             
@@ -28,24 +31,33 @@ namespace AEther.CLI
             else
                 sampleSource = new SampleReader(File.OpenRead(path));
 
-            var pipe = new System.IO.Pipelines.Pipe();
             var session = new Session(sampleSource.Format, options);
-            var chain = session.CreateBatcher()
-                .Chain(session.CreateDFT())
-                .Chain(session.CreateSplitter());
 
-            sampleSource.OnDataAvailable += async (sender, evt) =>
+            sampleSource.OnDataAvailable += (sender, evt) =>
             {
-                await pipe.Writer.WriteAsync(evt);
+                session.Post(evt);
+            };
+            sampleSource.OnStopped += (sender, evt) =>
+            {
+                session.Complete();
             };
 
-            var inputs = pipe.Reader.ReadAllAsync();
             sampleSource.Start();
-            await foreach (var output in chain(inputs))
+
+            while (!session.Completion.IsCompleted)
             {
-                Console.WriteLine(JsonSerializer.Serialize(output));
+                SampleEvent output;
+                try
+                {
+                    output = await session.ReceiveAsync(CancellationToken.None);
+                }
+                catch (InvalidOperationException) { break; }
+                catch (TaskCanceledException) { break; }
+                //Console.WriteLine(JsonSerializer.Serialize(output));
                 session.Pool.Return(output.Samples);
             }
+
+            sampleSource.Dispose();
 
             return 0;
 

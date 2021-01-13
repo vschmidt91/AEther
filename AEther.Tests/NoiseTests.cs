@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Threading;
 
 namespace AEther.Tests
 {
@@ -27,8 +28,6 @@ namespace AEther.Tests
 
             var pipe = new System.IO.Pipelines.Pipe();
             var session = new Session(format);
-            var chain = session.CreateBatcher()
-                .Chain(session.CreateDFT());
             sampleSource.OnDataAvailable += async (sender, evt) =>
             {
                 await pipe.Writer.WriteAsync(evt);
@@ -36,8 +35,10 @@ namespace AEther.Tests
 
             var inputs = pipe.Reader.ReadAllAsync();
             sampleSource.Start();
-            await foreach(var output in chain(inputs))
+
+            while (!session.Completion.IsCompleted)
             {
+                var output = await session.ReceiveAsync(CancellationToken.None);
                 //var channels = Enumerable.Range(0, output.ChannelCount);
                 //var min = channels.Min(c => output[c].Span.Min());
                 //var avg = output.Channels.Average(c => c.Average());
