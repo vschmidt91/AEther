@@ -21,14 +21,21 @@ namespace AEther
     public class Session
     {
 
-        public readonly ArrayPool<float> Pool = ArrayPool<float>.Shared;
+        public ChannelWriter<DataEvent> Writer => SampleChannel.Writer;
+        public ChannelReader<SampleEvent> Reader => SplitterChannel.Reader;
+
         public readonly SessionOptions Options;
         public readonly SampleFormat Format;
         public readonly Domain Domain;
 
-        readonly TransformManyBlock<ReadOnlyMemory<byte>, SampleEvent> Batcher;
-        readonly TransformBlock<SampleEvent, SampleEvent> DFT;
-        readonly TransformBlock<SampleEvent, SampleEvent> Splitter;
+        readonly byte[] Batch;
+        readonly DFTProcessor[] DFT;
+        readonly Splitter[] Splitter;
+
+        readonly Channel<DataEvent> SampleChannel;
+        readonly Channel<SampleEvent> BatcherChannel;
+        readonly Channel<SampleEvent> DFTChannel;
+        readonly Channel<SampleEvent> SplitterChannel;
 
         public Session(SampleFormat format, SessionOptions? options = null)
         {
@@ -37,70 +44,97 @@ namespace AEther
             Domain = Options.Domain;
             Format = format;
 
-            var executionOptions = new ExecutionDataflowBlockOptions
-            {
-                BoundedCapacity = Options.BufferCapacity,
-                CancellationToken = CancellationToken.None,
-                EnsureOrdered = true,
-                MaxDegreeOfParallelism = 1,
-                SingleProducerConstrained = true,
-            };
+            var batchSize = Format.SampleRate / Options.TimeResolution;
+            Batch = new byte[batchSize * Format.Size];
+            DFT = Enumerable.Range(0, Format.ChannelCount)
+                .Select(c => new DFTProcessor(Domain, Format.SampleRate, Options.UseSIMD, Options.MaxParallelization))
+                .ToArray();
+            Splitter = Enumerable.Range(0, Format.ChannelCount)
+                .Select(c => new Splitter(Domain, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow, Options.NormalizerFloorRoom, Options.NormalizerHeadRoom))
+                .ToArray();
 
-            Batcher = CreateBatcher(executionOptions);
-            DFT = CreateDFT(executionOptions);
-            Splitter = CreateSplitter(executionOptions);
+            SampleChannel = CreateChannel<DataEvent>();
+            BatcherChannel = CreateChannel<SampleEvent>();
+            DFTChannel = CreateChannel<SampleEvent>();
+            SplitterChannel = CreateChannel<SampleEvent>();
 
-            var linkOptions = new DataflowLinkOptions
-            {
-                PropagateCompletion = true,
-            };
-
-            Batcher.LinkTo(DFT, linkOptions);
-            DFT.LinkTo(Splitter, linkOptions);
 
         }
 
-        public bool Post(ReadOnlyMemory<byte> samples) => Batcher.Post(samples);
-
-        public void Complete() => Batcher.Complete();
-
-        public Task Completion => Splitter.Completion;
-        public Task<SampleEvent> ReceiveAsync(CancellationToken cancel) => Splitter.ReceiveAsync(cancel);
-
-        public TransformManyBlock<ReadOnlyMemory<byte>, SampleEvent> CreateBatcher(ExecutionDataflowBlockOptions options)
+        public async Task RunAsync(CancellationToken cancel = default)
         {
-
-            IEnumerable<SampleEvent> Transform(ReadOnlyMemory<byte> samples)
+            var batcherTask = Task.Run(async () =>
             {
-                var batchSize = Format.SampleRate / Options.TimeResolution;
-                var buffer = ArrayPool<byte>.Shared.Rent(batchSize * Format.Size);
-                var sampleCount = samples.Length / Format.Size;
-                int offset;
-                for (offset = 0; offset + batchSize < sampleCount; offset += batchSize)
+                await foreach (var input in SampleChannel.Reader.ReadAllAsync())
                 {
-
-                    var batch = samples.Slice(offset * Format.Size, batchSize * Format.Size);
-                    batch.CopyTo(buffer);
-
-                    var outputSamples = Pool.Rent(Format.ChannelCount * batchSize);
-                    var output = new SampleEvent(outputSamples, batchSize, DateTime.Now);
-                    for (var c = 0; c < Format.ChannelCount; ++c)
+                    foreach (var output in RunBatcher(input))
                     {
-                        var channel = output.GetChannel(c);
-                        for (var i = 0; i < batchSize; ++i)
-                        {
-                            channel.Span[i] = GetSample(buffer, i, c);
-                        }
+                        await BatcherChannel.Writer.WriteAsync(output);
                     }
-
-                    yield return output;
-
                 }
-                ArrayPool<byte>.Shared.Return(buffer);
+                BatcherChannel.Writer.Complete();
+            });
+            var dftTask = Task.Run(async () =>
+            {
+                await foreach (var input in BatcherChannel.Reader.ReadAllAsync())
+                {
+                    var output = RunDFT(input);
+                    await DFTChannel.Writer.WriteAsync(output);
+                }
+                DFTChannel.Writer.Complete();
+            });
+            var splitterTask = Task.Run(async () =>
+            {
+                await foreach (var input in DFTChannel.Reader.ReadAllAsync())
+                {
+                    var output = RunSplitter(input);
+                    await SplitterChannel.Writer.WriteAsync(output);
+                }
+                SplitterChannel.Writer.Complete();
+            });
+            await Task.WhenAll(batcherTask, dftTask, splitterTask);
+        }
+
+        Channel<T> CreateChannel<T>()
+        {
+            if(Options.BufferCapacity == -1)
+            {
+                return Channel.CreateUnbounded<T>(new UnboundedChannelOptions
+                {
+                    SingleReader = true,
+                    SingleWriter = true,
+                });
             }
+            else
+            {
+                return Channel.CreateBounded<T>(new BoundedChannelOptions(Options.BufferCapacity)
+                {
+                    SingleReader = true,
+                    SingleWriter = true,
+                    FullMode = BoundedChannelFullMode.DropOldest,
+                });
+            }
+        }
 
-            return new TransformManyBlock<ReadOnlyMemory<byte>, SampleEvent>(Transform, options);
+        public IEnumerable<SampleEvent> RunBatcher(DataEvent input)
+        {
+            var batchSize = Batch.Length / Format.Size;
+            for (var offset = 0; offset + Batch.Length < input.Length; offset += Batch.Length)
+            {
+                Array.Copy(input.Data, offset, Batch, 0, Batch.Length);
+                var output = new SampleEvent(batchSize, Format.ChannelCount, input.Time);
+                for (var c = 0; c < Format.ChannelCount; ++c)
+                {
+                    var channel = output.GetChannel(c);
+                    for (var i = 0; i < output.SampleCount; ++i)
+                    {
+                        channel.Span[i] = GetSample(Batch, i, c);
+                    }
+                }
+                yield return output;
 
+            }
+            input.Dispose();
         }
 
         private float GetSample(byte[] source, int sampleIndex, int channel)
@@ -115,55 +149,27 @@ namespace AEther
             };
         }
 
-        public TransformBlock<SampleEvent, SampleEvent> CreateDFT(ExecutionDataflowBlockOptions options)
+        public SampleEvent RunDFT(SampleEvent input)
         {
-
-            var dft = Enumerable.Range(0, Format.ChannelCount)
-                .Select(c => new DFTProcessor(Domain, Format.SampleRate, Options.UseSIMD, Options.MaxParallelization))
-                .ToArray();
-
-            SampleEvent Transform(SampleEvent input)
+            var output = new SampleEvent(Domain.Count, Format.ChannelCount, input.Time);
+            for (int c = 0; c < Format.ChannelCount; ++c)
             {
-                var outputSamples = Pool.Rent(Format.ChannelCount * Domain.Count);
-                var output = new SampleEvent(outputSamples, Domain.Count, input.Time);
-
-                for (int c = 0; c < Format.ChannelCount; ++c)
-                {
-                    dft[c].Process(input.GetChannel(c));
-                    dft[c].Output(output.GetChannel(c).Span);
-                }
-
-                Pool.Return(input.Samples);
-                return output;
+                DFT[c].Process(input.GetChannel(c));
+                DFT[c].Output(output.GetChannel(c).Span);
             }
-
-            return new TransformBlock<SampleEvent, SampleEvent>(Transform, options);
-
+            input.Dispose();
+            return output;
         }
 
-        public TransformBlock<SampleEvent, SampleEvent> CreateSplitter(ExecutionDataflowBlockOptions options)
+        public SampleEvent RunSplitter(SampleEvent input)
         {
-
-            var splitter = Enumerable.Range(0, Format.ChannelCount)
-                .Select(c => new Splitter(Domain, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow, Options.NormalizerFloorRoom, Options.NormalizerHeadRoom))
-                .ToArray();
-
-            SampleEvent Transform(SampleEvent input)
+            var output = new SampleEvent(4 * Domain.Count, Format.ChannelCount, input.Time);
+            for (int c = 0; c < Format.ChannelCount; ++c)
             {
-                var outputSamples = Pool.Rent(4 * Format.ChannelCount * Domain.Count);
-                var output = new SampleEvent(outputSamples, 4 * Domain.Count, input.Time);
-
-                for (int c = 0; c < Format.ChannelCount; ++c)
-                {
-                    splitter[c].Process(input.GetChannel(c).Span, output.GetChannel(c).Span);
-                }
-
-                Pool.Return(input.Samples);
-                return output;
+                Splitter[c].Process(input.GetChannel(c).Span, output.GetChannel(c).Span);
             }
-
-            return new TransformBlock<SampleEvent, SampleEvent>(Transform, options);
-
+            input.Dispose();
+            return output;
         }
 
     }

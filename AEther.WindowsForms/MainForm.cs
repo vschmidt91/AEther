@@ -16,6 +16,7 @@ using AEther.CSCore;
 
 using SharpDX.Direct3D11;
 using System.Threading.Tasks.Dataflow;
+using System.DirectoryServices;
 
 namespace AEther.WindowsForms
 {
@@ -29,7 +30,9 @@ namespace AEther.WindowsForms
         readonly Graphics Graphics;
         readonly bool IsInitialized;
 
-        Task Task;
+        bool IsRunning;
+        bool IsRendering;
+        Task SessionTask;
         CancellationTokenSource Cancel;
         SpectrumAccumulator[] Spectrum;
         Histogram[] Histogram;
@@ -37,7 +40,6 @@ namespace AEther.WindowsForms
         readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
         DateTime LastLatencyUpdate = DateTime.MinValue;
         int InputCounter = 0;
-
 
         Shader HistogramShader => Graphics.Shaders["histogram.fx"];
         Shader SpectrumShader => Graphics.Shaders["spectrum.fx"];
@@ -73,9 +75,6 @@ namespace AEther.WindowsForms
             Spectrum = CreateSpectrum();
             Histogram = CreateHistogram();
 
-            Cancel = new CancellationTokenSource();
-            Task = RunAsync(Cancel.Token);
-
         }
 
         protected override void OnResizeEnd(EventArgs e)
@@ -87,13 +86,13 @@ namespace AEther.WindowsForms
         protected async override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            Cancel.Cancel();
-            await Task;
+            await StopAsync();
         }
 
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            Start();
             Graphics.Resize(ClientSize.Width, ClientSize.Height);
         }
 
@@ -104,12 +103,14 @@ namespace AEther.WindowsForms
                 case Keys.Space:
                     TogglePanel();
                     break;
+                case Keys.F5:
+                    await StopAsync();
+                    Start();
+                    break;
                 case Keys.F11:
                     ToggleFullscreen();
                     break;
                 case Keys.Escape:
-                    Cancel.Cancel();
-                    await Task;
                     Close();
                     break;
                 default:
@@ -124,14 +125,8 @@ namespace AEther.WindowsForms
         }
 
 
-        async Task RunAsync(CancellationToken cancel = default)
+        async Task RunAsync(string sampleSourceName, SessionOptions options, CancellationToken cancel = default)
         {
-
-            if (lbInput.SelectedItem is not string sampleSourceName)
-                return;
-
-            if (pgOptions.SelectedObject is not SessionOptions options)
-                return;
 
             SampleSource sampleSource = sampleSourceName is LoopbackEntry
                 ? new Loopback()
@@ -142,28 +137,26 @@ namespace AEther.WindowsForms
 
             void dataAvailable(object? sender, ReadOnlyMemory<byte> data)
             {
-                session.Post(data);
+                var evt = new DataEvent(data.Length, DateTime.Now);
+                data.CopyTo(evt.Data);
+                session.Writer.TryWrite(evt);
             }
 
             void stopped(object? sender, Exception? exc)
             {
-                session.Complete();
+                session.Writer.TryComplete();
             }
 
             sampleSource.OnDataAvailable += dataAvailable;
             sampleSource.OnStopped += stopped;
             cancel.Register(sampleSource.Stop);
+
+            var sessionTask = Task.Run(() => session.RunAsync(cancel), cancel);
             sampleSource.Start();
 
-            while (!session.Completion.IsCompleted)
+            IsRunning = true;
+            await foreach(var output in session.Reader.ReadAllAsync())
             {
-                SampleEvent output;
-                try
-                {
-                    output = await session.ReceiveAsync(cancel);
-                }
-                catch (InvalidOperationException) { break; }
-                catch (TaskCanceledException) { break; }
                 var latency = (DateTime.Now - output.Time).TotalMilliseconds;
                 Latency = Math.Max(Latency, latency);
                 for (int c = 0; c < format.ChannelCount; ++c)
@@ -179,8 +172,10 @@ namespace AEther.WindowsForms
                     }
                 }
                 InputCounter++;
-                session.Pool.Return(output.Samples);
-                }
+                output.Dispose();
+            }
+            await sessionTask;
+            IsRunning = false;
 
             sampleSource.Dispose();
 
@@ -206,6 +201,11 @@ namespace AEther.WindowsForms
 
             if (IsDisposed)
                 return;
+
+            if (!IsRunning)
+                return;
+
+            IsRendering = true;
 
             var now = DateTime.Now;
             if (LatencyUpdateInterval < now - LastLatencyUpdate)
@@ -237,11 +237,13 @@ namespace AEther.WindowsForms
                 InputCounter = 0;
             }
 
-            var state = lbState.SelectedItem as GraphicsState;
-            using (var frame = Graphics.RenderFrame())
+            if(lbState.SelectedItem is GraphicsState state)
             {
-                state?.Render();
+                using var frame = Graphics.RenderFrame();
+                state.Render();
             }
+
+            IsRendering = false;
 
         }
 
@@ -306,42 +308,56 @@ namespace AEther.WindowsForms
 
         }
 
-        private async void pgOptions_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        async Task StopAsync()
         {
-
             Cancel.Cancel();
-            await Task;
-
-            SpectrumAccumulator[] oldSpectrum;
-            (Spectrum, oldSpectrum) = (CreateSpectrum(), Spectrum);
-            foreach (var spectrum in oldSpectrum)
+            while (IsRunning)
+            {
+                await Task.Delay(10);
+            }
+            while (IsRendering)
+            {
+                await Task.Delay(10);
+            }
+            foreach (var spectrum in Spectrum)
             {
                 spectrum.Dispose();
             }
-
-            Histogram[] oldHistogram;
-            (Histogram, oldHistogram) = (CreateHistogram(), Histogram);
-            foreach (var histogram in oldHistogram)
+            foreach (var histogram in Histogram)
             {
                 histogram.Dispose();
             }
+        }
 
+        void Start()
+        {
+
+            if (lbInput.SelectedItem is not string sampleSourceName)
+                throw new InvalidCastException();
+
+            if (pgOptions.SelectedObject is not SessionOptions options)
+                throw new InvalidCastException();
+
+            Spectrum = CreateSpectrum();
+            Histogram = CreateHistogram();
             Cancel = new CancellationTokenSource();
-            Task = RunAsync(Cancel.Token);
+            SessionTask = Task.Run(() => RunAsync(sampleSourceName, options, Cancel.Token));
+        }
 
+        private async void pgOptions_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        {
+            if (!IsInitialized)
+                return;
+            await StopAsync();
+            Start();
         }
 
         private async void lbInput_SelectedValueChanged(object sender, EventArgs e)
         {
-
             if (!IsInitialized)
                 return;
-
-            Cancel.Cancel();
-            await Task;
-
-            Cancel = new CancellationTokenSource();
-            Task = RunAsync(Cancel.Token);
+            await StopAsync();
+            Start();
 
         }
     }

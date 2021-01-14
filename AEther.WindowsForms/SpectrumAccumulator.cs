@@ -74,6 +74,10 @@ namespace AEther.WindowsForms
 
         public override void Add(ReadOnlySpan<float> src)
         {
+            if(src.Length < Buffer.Length)
+            {
+                throw new Exception();
+            }
             for (int i = 0; i < Buffer.Length; ++i)
             {
                 var value = Convert(src[i]);

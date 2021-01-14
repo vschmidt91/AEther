@@ -22,6 +22,7 @@ namespace AEther.CLI
         {
 
             path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
+            path = new FileInfo(path).FullName;
 
             var options = new SessionOptions();
             
@@ -33,29 +34,26 @@ namespace AEther.CLI
 
             var session = new Session(sampleSource.Format, options);
 
-            sampleSource.OnDataAvailable += (sender, evt) =>
+            sampleSource.OnDataAvailable += (sender, data) =>
             {
-                session.Post(evt);
+                var evt = new DataEvent(data.Length, DateTime.Now);
+                data.CopyTo(evt.Data);
+                session.Writer.TryWrite(evt);
             };
             sampleSource.OnStopped += (sender, evt) =>
             {
-                session.Complete();
+                session.Writer.TryComplete();
             };
 
+            var sessionTask = Task.Run(() => session.RunAsync());
             sampleSource.Start();
 
-            while (!session.Completion.IsCompleted)
+            await foreach (var output in session.Reader.ReadAllAsync())
             {
-                SampleEvent output;
-                try
-                {
-                    output = await session.ReceiveAsync(CancellationToken.None);
-                }
-                catch (InvalidOperationException) { break; }
-                catch (TaskCanceledException) { break; }
                 //Console.WriteLine(JsonSerializer.Serialize(output));
-                session.Pool.Return(output.Samples);
+                output.Dispose();
             }
+            await sessionTask;
 
             sampleSource.Dispose();
 
