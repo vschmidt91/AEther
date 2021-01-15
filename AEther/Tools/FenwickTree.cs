@@ -27,7 +27,9 @@ namespace AEther
             {
                 int j = i + LSB(i + 1);
                 if (j < Size)
+                {
                     Items[j] = Add(Items[j], Items[i]);
+                }
             }
         }
 
@@ -64,7 +66,7 @@ namespace AEther
 
         public void AddItem(int i, T item)
         {
-            for(;  i < Size; i += LSB(i + 1))
+            for(; i < Size; i += LSB(i + 1))
             {
                 Items[i] = Add(Items[i], item);
             }

@@ -77,7 +77,7 @@ namespace AEther
                     }
                 }
                 Buffer.Advance(src);
-                samples = samples.Slice(src.Length);
+                samples = samples[src.Length..];
             }
         }
     }

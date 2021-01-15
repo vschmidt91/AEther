@@ -20,7 +20,7 @@ namespace AEther.WindowsForms
             : base(texture)
         { }
 
-        public void Clear(DeviceContext context = default, Vector4? color = default)
+        public void Clear(DeviceContext? context = null, Vector4? color = null)
         {
             var ctx = context ?? Resource.Device.ImmediateContext;
             ctx.ClearRenderTargetView(GetRenderTargetView(), new Color4(color ?? Vector4.Zero));

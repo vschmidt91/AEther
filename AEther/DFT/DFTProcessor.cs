@@ -27,7 +27,7 @@ namespace AEther
         };
 
         readonly IDFTFilter[] Filters;
-        readonly ParallelOptions Options;
+        readonly ParallelOptions ParallelOptions;
 
         public DFTProcessor(Domain domain, float sampleRate, bool useSIMD = true, int maxParallelism = -1)
         {
@@ -36,11 +36,11 @@ namespace AEther
                 ? WindowCandidates.First(w => 2 * w.Length - 1 <= Vector<float>.Count)
                 : HannWindow;
 
-            cosines = HannWindow;
+            //cosines = HannWindow;
 
             var window = CreateWindow(cosines);
 
-            Options = new ParallelOptions
+            ParallelOptions = new ParallelOptions
             {
                 MaxDegreeOfParallelism = maxParallelism,
             };
@@ -66,7 +66,7 @@ namespace AEther
 
         }
 
-        static double GetAWeighting(double f)
+        public static double GetAWeighting(double f)
         {
             var f2 = f * f;
             var n = Math.Pow(12194.0, 2) * f2 * f2;
@@ -78,7 +78,7 @@ namespace AEther
             return r;
         }
 
-        static float[] CreateWindow(float[] cosines)
+        public static float[] CreateWindow(float[] cosines)
         {
             var window = new float[2 * cosines.Length - 1];
             window[cosines.Length - 1] = cosines[0];
@@ -90,7 +90,7 @@ namespace AEther
             return window;
         }
 
-        public void Output(Span<float> dst)
+        public void Output(Memory<float> dst)
         {
             for (int k = 0; k < Filters.Length; ++k)
             {
@@ -99,13 +99,13 @@ namespace AEther
 
                 if (bin == 0)
                 {
-                    dst[k] = 0f;
+                    dst.Span[k] = 0f;
                 }
                 else
                 {
                     var scaled = 2 * bin / filter.Length;
-                    //dst[k] = (float)Math.Max(-10, Math.Log(scaled));
-                    dst[k] = scaled;
+                    //dst.Span[k] = (float)Math.Max(-10, Math.Log(scaled));
+                    dst.Span[k] = scaled;
                 }
             }
         }
@@ -113,17 +113,23 @@ namespace AEther
         public void Process(ReadOnlyMemory<float> samples)
         {
 
-            foreach (var filter in Filters)
+            void ProcessFilter(IDFTFilter filter)
             {
                 filter.Process(samples);
             }
 
-            //void ProcessFilter(IDFTFilter filter)
-            //{
-            //    filter.Process(samples);
-            //}
+            if (ParallelOptions.MaxDegreeOfParallelism == 1)
+            {
+                foreach (var filter in Filters)
+                {
+                    ProcessFilter(filter);
+                }
+            }
+            else
+            {
+                Parallel.ForEach(Filters, ParallelOptions, ProcessFilter);
+            }
 
-            //Parallel.ForEach(Filters, Options, ProcessFilter);
 
         }
 

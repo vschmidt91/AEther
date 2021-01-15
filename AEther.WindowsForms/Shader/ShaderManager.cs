@@ -25,7 +25,7 @@ namespace AEther.WindowsForms
 
         public IEnumerable<string> Keys => Shaders.Keys;
 
-        readonly Dictionary<string, Shader> Shaders = new Dictionary<string, Shader>();
+        readonly Dictionary<string, Shader> Shaders = new();
         readonly IncludeHandler Includes;
         readonly FileSystemWatcher? Watcher;
         readonly string BasePath;
@@ -57,15 +57,17 @@ namespace AEther.WindowsForms
 
             if (watch)
             {
-                Watcher = new FileSystemWatcher(basePath, "*.fx");
-                Watcher.NotifyFilter = NotifyFilters.Attributes
+                Watcher = new(basePath, "*.fx")
+                {
+                    NotifyFilter = NotifyFilters.Attributes
                     | NotifyFilters.CreationTime
                     | NotifyFilters.DirectoryName
                     | NotifyFilters.FileName
                     | NotifyFilters.LastAccess
                     | NotifyFilters.LastWrite
                     | NotifyFilters.Security
-                    | NotifyFilters.Size;
+                    | NotifyFilters.Size
+                };
                 Watcher.Changed += Watcher_Changed;
                 Watcher.EnableRaisingEvents = true;
             }
@@ -115,7 +117,7 @@ namespace AEther.WindowsForms
         private Shader LoadShader(string path)
         {
 
-            FileInfo file = new FileInfo(path);
+            var file = new FileInfo(path);
 
             ShaderFlags shaderFlags = ShaderFlags.None;
             EffectFlags effectFlags = EffectFlags.None;
@@ -141,10 +143,7 @@ namespace AEther.WindowsForms
             //File.WriteAllText(file.FullName + ".txt", compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering));
 #endif
 
-            var shader = new Shader(Graphics.Device, compiled.Bytecode)
-            {
-                Name = file.Name,
-            };
+            var shader = new Shader(Graphics.Device, compiled.Bytecode, file.Name);
 
             shader.ConstantBuffers[0].SetConstantBuffer(Graphics.FrameConstants.Buffer);
 
@@ -155,14 +154,14 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
 
+            GC.SuppressFinalize(this);
             foreach(var shader in Shaders.Values)
             {
                 shader.Dispose();
             }
-
+            Shaders.Clear();
             Includes.Dispose();
-            Watcher.Dispose();
-
+            Watcher?.Dispose();
         }
     }
 }

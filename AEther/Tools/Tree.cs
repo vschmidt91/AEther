@@ -15,7 +15,7 @@ namespace AEther
         public readonly T Item;
         public readonly IList<Tree<T>> Children;
 
-        public Tree(T item = default, params Tree<T>[] children)
+        public Tree(T item, params Tree<T>[] children)
             : this(item, children.ToList())
         { }
 
@@ -35,15 +35,15 @@ namespace AEther
             => f(Item, Children.Select(c => c.Fold(f)));
 
         public Tree<S> Map<S>(Func<T, S> f)
-            => new Tree<S>(f(Item), Children.Select(c => c.Map(f)));
+            => new(f(Item), Children.Select(c => c.Map(f)));
 
-        public Tree<(T, Tree<T>)> WithParents(Tree<T> parent = null)
-            => new Tree<(T, Tree<T>)>(
+        public Tree<(T, Tree<T>?)> WithParents(Tree<T>? parent = null)
+            => new(
                 (Item, parent),
                 Children.Select(d => d.WithParents(this)));
 
         public Tree<(T, int)> WithLevel(int level = 0)
-            => new Tree<(T, int)>(
+            => new(
                 (Item, level),
                 Children.Select(d => d.WithLevel(level + 1)));
 
@@ -65,21 +65,6 @@ namespace AEther
             => Children.Any()
             ? $"{Item} [{string.Join(", ", Children)}]"
             : Item?.ToString() ?? string.Empty;
-
-    }
-
-    public static class RecursionExt
-    {
-
-
-        public static Sequence<T> UnfoldToSequence<T, S>(this S seed, Func<S, (T, S)?> f)
-        {
-            var x = f(seed);
-            if (!x.HasValue)
-                return Sequence<T>.Empty.Instance;
-            var (item, tailSeed) = x.Value;
-            return new Sequence<T>.Cons(item, tailSeed.UnfoldToSequence(f));
-        }
 
     }
 

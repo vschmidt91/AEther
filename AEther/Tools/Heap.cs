@@ -38,9 +38,9 @@ namespace AEther
             return oldValue;
         }
 
-        int Left(int i) => 2 * i + 1;
-        int Right(int i) => 2 * i + 2;
-        int Parent(int i) => (i - 1) / 2;
+        static int Left(int i) => 2 * i + 1;
+        static int Right(int i) => 2 * i + 2;
+        static int Parent(int i) => (i - 1) / 2;
 
         void Swap(int i, int j)
         {

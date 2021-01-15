@@ -80,7 +80,7 @@ namespace AEther
                     States = Coefficients * States + input;
                 }
                 Buffer.Advance(src);
-                samples = samples.Slice(src.Length);
+                samples = samples[src.Length..];
             }
         }
     }

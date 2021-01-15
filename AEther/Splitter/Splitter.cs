@@ -14,8 +14,6 @@ namespace AEther
     public class Splitter
     {
 
-        static ArrayPool<float> Pool => ArrayPool<float>.Shared;
-
         readonly Domain Domain;
 
         readonly IFrequencyFilter<float> Frequency;
@@ -69,11 +67,11 @@ namespace AEther
             Ceiling = new MovingQuantile(1 - headRoom, 2f / (1 + 7 * timeResolution));
         }
 
-        public void Process(Span<float> input, Span<float> output)
+        public void Process(Memory<float> input, Memory<float> output)
         {
 
-            var src = input;
-            var dst = output;
+            var src = input.Span;
+            var dst = output.Span;
 
             Frequency.Filter(src, Buffer1);
             for (int k = 0; k < Domain.Count; ++k)

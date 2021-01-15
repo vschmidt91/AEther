@@ -16,14 +16,7 @@ namespace AEther
         static Operator Compile(UnaryOperator body)
         {
             var a = Expression.Parameter(typeof(T), "a");
-            try
-            {
-                return Expression.Lambda<Operator>(body(a), a).Compile();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return Expression.Lambda<Operator>(body(a), a).Compile();
         }
 
         public static readonly Operator Minus = Compile(a => Expression.Negate(a));
@@ -40,14 +33,7 @@ namespace AEther
         {
             var a = Expression.Parameter(typeof(T), "a");
             var b = Expression.Parameter(typeof(S), "b");
-            try
-            {
-                return Expression.Lambda<Operator>(body(a, b), a, b).Compile();
-            }
-            catch(Exception)
-            {
-                return null;
-            }
+            return Expression.Lambda<Operator>(body(a, b), a, b).Compile();
         }
 
         public static readonly Operator Add = Compile((a, b) => Expression.Add(a, b));

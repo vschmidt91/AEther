@@ -15,7 +15,7 @@ namespace AEther.Bass
         public int BufferSize { get; } = 1 << 10;
 
         int Channel;
-        byte[] Buffer;
+        byte[] Buffer = Array.Empty<byte>();
 
         public Listener(int? deviceIndex = default)
         {
@@ -65,6 +65,7 @@ namespace AEther.Bass
 
         public override void Dispose()
         {
+            GC.SuppressFinalize(this);
             ManagedBass.Bass.Free();
         }
 

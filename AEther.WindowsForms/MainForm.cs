@@ -27,53 +27,49 @@ namespace AEther.WindowsForms
         const bool UseMapping = true;
         const bool UseFloatTextures = false;
 
-        readonly Graphics Graphics;
-        readonly bool IsInitialized;
+        Shader HistogramShader => Graphics.Shaders["histogram.fx"];
+        Shader SpectrumShader => Graphics.Shaders["spectrum.fx"];
 
-        bool IsRunning;
-        bool IsRendering;
-        Task SessionTask;
-        CancellationTokenSource Cancel;
-        SpectrumAccumulator[] Spectrum;
-        Histogram[] Histogram;
+        bool IsRunning = false;
+        bool IsRendering = false;
+        CancellationTokenSource Cancel = new();
+        SpectrumAccumulator[] Spectrum = Array.Empty<SpectrumAccumulator>();
+        Histogram[] Histogram = Array.Empty<Histogram>();
         double Latency = 0;
-        readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
         DateTime LastLatencyUpdate = DateTime.MinValue;
         int InputCounter = 0;
 
-        Shader HistogramShader => Graphics.Shaders["histogram.fx"];
-        Shader SpectrumShader => Graphics.Shaders["spectrum.fx"];
-        EffectScalarVariable HistogramShiftVariable;
+        readonly Graphics Graphics;
+        readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
+        readonly EffectScalarVariable HistogramShiftVariable;
+        readonly TaskScheduler Scheduler;
 
         public MainForm()
         {
 
+            Scheduler = TaskScheduler.FromCurrentSynchronizationContext();
             InitializeComponent();
             Graphics = new Graphics(Handle);
-
+            
             HistogramShiftVariable = HistogramShader.Variables["HistogramShift"].AsScalar();
 
             var audioDevices = Recorder.GetAvailableDeviceNames();
-            lbInput.Items.Clear();
-            lbInput.Items.Add(LoopbackEntry);
-            lbInput.Items.AddRange(audioDevices.ToArray());
-            lbInput.SelectedItem = LoopbackEntry;
+            Input.Items.Clear();
+            Input.Items.Add(LoopbackEntry);
+            Input.Items.AddRange(audioDevices.ToArray());
+            Input.SelectedItem = LoopbackEntry;
 
-            lbState.Items.Clear();
-            lbState.Items.AddRange(new GraphicsState[]
+            State.Items.Clear();
+            State.Items.AddRange(new GraphicsState[]
             {
                 new ShaderState(Graphics, HistogramShader),
                 new ShaderState(Graphics, SpectrumShader),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
             });
-            lbState.SelectedIndex = 3;
+            State.SelectedIndex = 3;
 
-            pgOptions.SelectedObject = new SessionOptions();
-
-            IsInitialized = true;
-            Spectrum = CreateSpectrum();
-            Histogram = CreateHistogram();
+            Options.SelectedObject = new SessionOptions();
 
         }
 
@@ -89,11 +85,24 @@ namespace AEther.WindowsForms
             await StopAsync();
         }
 
-        protected override void OnShown(EventArgs e)
+        protected async override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            Start();
-            Graphics.Resize(ClientSize.Width, ClientSize.Height);
+            Graphics.Resize(ClientSize.Width, ClientSize.Height); 
+            
+            _ = Task.Factory.StartNew(() =>
+            {
+                while (!IsDisposed)
+                {
+                    IsRendering = true;
+                    Render();
+                    IsRendering = false;
+                    Application.DoEvents();
+                }
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, Scheduler);
+
+            await RunAsync();
+
         }
 
         protected async override void OnKeyDown(KeyEventArgs e)
@@ -105,7 +114,7 @@ namespace AEther.WindowsForms
                     break;
                 case Keys.F5:
                     await StopAsync();
-                    Start();
+                    await RunAsync();
                     break;
                 case Keys.F11:
                     ToggleFullscreen();
@@ -125,15 +134,34 @@ namespace AEther.WindowsForms
         }
 
 
-        async Task RunAsync(string sampleSourceName, SessionOptions options, CancellationToken cancel = default)
+        async Task RunAsync()
         {
+
+            Cancel = new();
+
+            string sampleSourceName = LoopbackEntry;
+            SessionOptions? options = null;
+
+            void Init()
+            {
+                sampleSourceName = (string)Input.SelectedItem;
+                options = (SessionOptions)Options.SelectedObject;
+                Spectrum = CreateSpectrum();
+                Histogram = CreateHistogram();
+            }
+
+            await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, Scheduler);
+
+            Invoke(new MethodInvoker(() =>
+            {
+            }));
 
             SampleSource sampleSource = sampleSourceName is LoopbackEntry
                 ? new Loopback()
                 : new Recorder(sampleSourceName);
 
             var format = sampleSource.Format;
-            var session = new Session(format, options);
+            var session = new Session(format, options ?? new());
 
             void dataAvailable(object? sender, ReadOnlyMemory<byte> data)
             {
@@ -149,32 +177,37 @@ namespace AEther.WindowsForms
 
             sampleSource.OnDataAvailable += dataAvailable;
             sampleSource.OnStopped += stopped;
-            cancel.Register(sampleSource.Stop);
+            Cancel.Token.Register(sampleSource.Stop);
 
-            var sessionTask = Task.Run(() => session.RunAsync(cancel), cancel);
+            var sessionTask = Task.Run(() => session.RunAsync(Cancel.Token), Cancel.Token);
             sampleSource.Start();
 
             IsRunning = true;
-            await foreach(var output in session.Reader.ReadAllAsync())
+            try
             {
-                var latency = (DateTime.Now - output.Time).TotalMilliseconds;
-                Latency = Math.Max(Latency, latency);
-                for (int c = 0; c < format.ChannelCount; ++c)
+                await foreach (var output in session.Reader.ReadAllAsync(Cancel.Token))
                 {
-                    var src = output.GetChannel(c);
-                    lock (Spectrum[c])
+                    var latency = (DateTime.Now - output.Time).TotalMilliseconds;
+                    Latency = Math.Max(Latency, latency);
+                    for (int c = 0; c < format.ChannelCount; ++c)
                     {
-                        Spectrum[c].Add(src.Span);
+                        var src = output.GetChannel(c);
+                        lock (Spectrum[c])
+                        {
+                            Spectrum[c].Add(src.Span);
+                        }
+                        lock (Histogram[c])
+                        {
+                            Histogram[c].Add(src.Span);
+                        }
                     }
-                    lock (Histogram[c])
-                    {
-                        Histogram[c].Add(src.Span);
-                    }
+                    InputCounter++;
+                    output.Dispose();
                 }
-                InputCounter++;
-                output.Dispose();
+                await sessionTask;
             }
-            await sessionTask;
+            catch(TaskCanceledException) { }
+            catch(OperationCanceledException) { }
             IsRunning = false;
 
             sampleSource.Dispose();
@@ -205,12 +238,10 @@ namespace AEther.WindowsForms
             if (!IsRunning)
                 return;
 
-            IsRendering = true;
-
             var now = DateTime.Now;
             if (LatencyUpdateInterval < now - LastLatencyUpdate)
             {
-                Text = $"Latency: {Math.Round(Latency, 1)} ms";
+                Text = $"Latencies: {Math.Round(Latency, 1)}";
                 LastLatencyUpdate = now;
                 Latency = 0;
             }
@@ -237,20 +268,18 @@ namespace AEther.WindowsForms
                 InputCounter = 0;
             }
 
-            if(lbState.SelectedItem is GraphicsState state)
+            if(State.SelectedItem is GraphicsState state)
             {
                 using var frame = Graphics.RenderFrame();
                 state.Render();
             }
-
-            IsRendering = false;
 
         }
 
         SpectrumAccumulator[] CreateSpectrum()
         {
 
-            var options = (SessionOptions)pgOptions.SelectedObject;
+            var options = (SessionOptions)Options.SelectedObject;
             var domainLength = options.Domain.Count;
             var spectrum = new SpectrumAccumulator[2];
 
@@ -279,7 +308,7 @@ namespace AEther.WindowsForms
         Histogram[] CreateHistogram()
         {
 
-            var options = (SessionOptions)pgOptions.SelectedObject;
+            var options = (SessionOptions)Options.SelectedObject;
             var domainLength = options.Domain.Count;
             var histogramLength = options.TimeResolution;
 
@@ -329,36 +358,22 @@ namespace AEther.WindowsForms
             }
         }
 
-        void Start()
+        private async void Options_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
         {
-
-            if (lbInput.SelectedItem is not string sampleSourceName)
-                throw new InvalidCastException();
-
-            if (pgOptions.SelectedObject is not SessionOptions options)
-                throw new InvalidCastException();
-
-            Spectrum = CreateSpectrum();
-            Histogram = CreateHistogram();
-            Cancel = new CancellationTokenSource();
-            SessionTask = Task.Run(() => RunAsync(sampleSourceName, options, Cancel.Token));
+            if (IsRunning)
+            {
+                await StopAsync();
+                await RunAsync();
+            }
         }
 
-        private async void pgOptions_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        private async void Input_SelectedValueChanged(object sender, EventArgs e)
         {
-            if (!IsInitialized)
-                return;
-            await StopAsync();
-            Start();
-        }
-
-        private async void lbInput_SelectedValueChanged(object sender, EventArgs e)
-        {
-            if (!IsInitialized)
-                return;
-            await StopAsync();
-            Start();
-
+            if (IsRunning)
+            {
+                await StopAsync();
+                await RunAsync();
+            }
         }
     }
 }

@@ -41,6 +41,7 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
+                GC.SuppressFinalize(this);
                 Utilities.Dispose(ref Technique);
                 foreach(var pass in Passes)
                 {
@@ -74,6 +75,7 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
+                GC.SuppressFinalize(this);
                 Utilities.Dispose(ref InputLayout);
                 Utilities.Dispose(ref Pass);
             }
@@ -91,7 +93,7 @@ namespace AEther.WindowsForms
 
         public ShaderTechnique this[int i] => Techniques[i];
         public int TechniqueCount => Techniques.Length;
-        public string Name { get; set; }
+        public readonly string Name;
 
         public readonly Dictionary<string, EffectVariable> Variables;
         public readonly Dictionary<string, EffectShaderResourceVariable> ShaderResources;
@@ -104,11 +106,12 @@ namespace AEther.WindowsForms
         Effect Effect;
         readonly ShaderTechnique[] Techniques;
 
-        public Shader(SharpDX.Direct3D11.Device device, ShaderBytecode bytecode)
+        public Shader(SharpDX.Direct3D11.Device device, ShaderBytecode bytecode, string name)
         {
 
             Bytecode = bytecode;
             Effect = new Effect(device, bytecode);
+            Name = name;
 
             Variables = Enumerable.Range(0, Effect.Description.GlobalVariableCount)
                 .Select(i => Effect.GetVariableByIndex(i))
@@ -129,29 +132,30 @@ namespace AEther.WindowsForms
 
         }
 
-        void Dispose<T>(IDictionary<string, T> dictionary)
-            where T : ComObject
-        {
-            foreach(var kvp in dictionary)
-            {
-                kvp.Value?.Dispose();
-            }
-            dictionary.Clear();
-        }
-
         public void Dispose()
         {
+
+            GC.SuppressFinalize(this);
 
             foreach (var technique in Techniques)
             {
                 technique.Dispose();
             }
 
-            Dispose(ShaderResources);
-            Dispose(DepthStencils);
-            Dispose(RenderTargets);
-            Dispose(UnorderedAccesses);
-            Dispose(Variables);
+            var comObjects = ShaderResources.Values.Cast<ComObject>()
+                .Concat(DepthStencils.Values.Cast<ComObject>())
+                .Concat(RenderTargets.Values.Cast<ComObject>())
+                .Concat(UnorderedAccesses.Values.Cast<ComObject>())
+                .Concat(Variables.Values.Cast<ComObject>());
+
+            foreach (var obj in comObjects)
+                obj.Dispose();
+
+            ShaderResources.Clear();
+            DepthStencils.Clear();
+            RenderTargets.Clear();
+            UnorderedAccesses.Clear();
+            Variables.Clear();
 
             foreach (var constantBuffer in ConstantBuffers)
             {

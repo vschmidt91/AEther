@@ -27,6 +27,7 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
+                GC.SuppressFinalize(this);
                 Graphics.Present();
             }
 
@@ -85,6 +86,7 @@ namespace AEther.WindowsForms
 
             BackBuffer = new Texture2D(Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0));
             FrameConstants = new ConstantBuffer<FrameConstants>(Device);
+
             Shaders = CreateShader();
             Quad = new Model(Device, new Grid(2, 2));
 
@@ -236,20 +238,7 @@ namespace AEther.WindowsForms
             //shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
 #endif
             var shaderPath = Path.Join(shaderDir, "data", "fx");
-            ShaderManager shader = null;
-            try
-            {
-                shader = new ShaderManager(this, shaderPath, true);
-            }
-            catch (CompilationException exc)
-            {
-#if DEBUG
-                MessageBox.Show(null, exc.Message, string.Empty);
-#else
-                System.Diagnostics.Debug.WriteLine(exc.Message);
-#endif
-            }
-            return shader;
+            return new ShaderManager(this, shaderPath, true);
         }
 
         public void SetModel(Model? model = default)

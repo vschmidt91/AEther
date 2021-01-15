@@ -15,18 +15,26 @@ namespace AEther.Benchmarks
     public class WAVBenchmark
     {
 
-        [Benchmark]
-        public Task RunA() => RunAsync(new SessionOptions
-        {
-        });
+        SessionOptions Options;
 
         [Benchmark]
-        public Task RunB() => RunAsync(new SessionOptions
+        public async Task RunA()
         {
-            MaxParallelization = 4,
-        });
+            Options = new SessionOptions();
+            await RunAsync();
+        }
 
-        public static async Task RunAsync(SessionOptions options)
+        [Benchmark]
+        public async Task RunB()
+        {
+            Options = new SessionOptions
+            {
+                MaxParallelization = 4
+            };
+            await RunAsync();
+        }
+
+        public async Task RunAsync()
         {
 
             //var path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
@@ -38,7 +46,7 @@ namespace AEther.Benchmarks
             var header = WAVHeader.FromStream(inputStream);
             var format = header.GetSampleFormat();
             var sampleSource = new SampleReader(inputStream);
-            var session = new Session(format, options);
+            var session = new Session(format, Options);
             sampleSource.OnDataAvailable += (sender, data) =>
             {
                 var evt = new DataEvent(data.Length, DateTime.Now);
@@ -51,7 +59,7 @@ namespace AEther.Benchmarks
             };
 
 
-            var outputFloats = new float[4 * options.Domain.Count];
+            var outputFloats = new float[4 * Options.Domain.Count];
             var outputBytes = new byte[sizeof(float) * outputFloats.Length];
 
             var sessionTask = Task.Run(() => session.RunAsync());
