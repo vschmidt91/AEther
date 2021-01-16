@@ -30,7 +30,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	if (distance(IN.UV, source) < .02)
 	{
 		float speed = 0.5;
-		v = float4(speed * float2(-1, cos(.5 * T)), float2(sin(T), cos(T)));
+		v = float4(speed * float2(-1, .2 * cos(.5 * T)), float2(sin(T), cos(T)));
 	}
 
 	return setBoundary(IN.UV, v);

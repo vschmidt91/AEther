@@ -14,14 +14,19 @@ namespace AEther.WindowsForms
     public class ShaderState : GraphicsState
     {
 
-        protected readonly Shader Shader;
+        readonly Shader Shader;
+        readonly string Name;
 
-        public ShaderState(Graphics graphics, Shader shader)
+        public ShaderState(Graphics graphics, Shader shader, string name)
             : base(graphics)
         {
-
             Shader = shader;
+            Name = name;
+        }
 
+        public override void Dispose()
+        {
+            GC.SuppressFinalize(this);
         }
 
         public override void Render()
@@ -36,7 +41,7 @@ namespace AEther.WindowsForms
 
         public override string ToString()
         {
-            return $"{ GetType().Name } { Shader.Name }";
+            return $"{ GetType().Name } { Name }";
         }
 
     }

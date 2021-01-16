@@ -27,8 +27,6 @@ namespace AEther.WindowsForms
         const bool UseMapping = true;
         const bool UseFloatTextures = false;
 
-        Shader HistogramShader => Graphics.Shaders["histogram.fx"];
-        Shader SpectrumShader => Graphics.Shaders["spectrum.fx"];
 
         bool IsRunning = false;
         bool IsRendering = false;
@@ -40,6 +38,8 @@ namespace AEther.WindowsForms
         int InputCounter = 0;
 
         readonly Graphics Graphics;
+        readonly Shader HistogramShader;
+        readonly Shader SpectrumShader;
         readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
         readonly EffectScalarVariable HistogramShiftVariable;
         readonly TaskScheduler Scheduler;
@@ -50,7 +50,9 @@ namespace AEther.WindowsForms
             Scheduler = TaskScheduler.FromCurrentSynchronizationContext();
             InitializeComponent();
             Graphics = new Graphics(Handle);
-            
+            HistogramShader = Graphics.CreateShader("histogram.fx");
+            SpectrumShader = Graphics.CreateShader("spectrum.fx");
+
             HistogramShiftVariable = HistogramShader.Variables["HistogramShift"].AsScalar();
 
             var audioDevices = Recorder.GetAvailableDeviceNames();
@@ -62,15 +64,14 @@ namespace AEther.WindowsForms
             State.Items.Clear();
             State.Items.AddRange(new GraphicsState[]
             {
-                new ShaderState(Graphics, HistogramShader),
-                new ShaderState(Graphics, SpectrumShader),
+                new ShaderState(Graphics, HistogramShader, "Histogramm"),
+                new ShaderState(Graphics, SpectrumShader, "Spectrum"),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
             });
             State.SelectedIndex = 3;
 
             Options.SelectedObject = new SessionOptions();
-
         }
 
         protected override void OnResizeEnd(EventArgs e)
@@ -248,6 +249,7 @@ namespace AEther.WindowsForms
 
             if (0 < InputCounter)
             {
+
                 foreach (var spectrum in Spectrum)
                 {
                     lock(spectrum)
@@ -256,6 +258,9 @@ namespace AEther.WindowsForms
                         spectrum.Clear();
                     }
                 }
+                SpectrumShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
+                SpectrumShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
+
                 foreach (var histogram in Histogram)
                 {
                     lock (histogram)
@@ -263,6 +268,9 @@ namespace AEther.WindowsForms
                         histogram.Update(Graphics.Context);
                     }
                 }
+                HistogramShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
+                HistogramShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
+
                 var histogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
                 HistogramShiftVariable.Set(histogramShift);
                 InputCounter = 0;
@@ -290,17 +298,17 @@ namespace AEther.WindowsForms
                     : new ByteSpectrum(Graphics.Device, domainLength);
             }
 
-            foreach (var key in Graphics.Shaders.Keys)
-            {
-                var shader = Graphics.Shaders[key];
-                for (var c = 0; c < spectrum.Length; ++c)
-                {
-                    if (shader.ShaderResources.TryGetValue("Spectrum" + c, out var variable))
-                    {
-                        variable.SetResource(spectrum[c].Texture.GetShaderResourceView());
-                    }
-                }
-            }
+            //foreach (var key in Graphics.Shaders.Keys)
+            //{
+            //    var shader = Graphics.Shaders[key];
+            //    for (var c = 0; c < spectrum.Length; ++c)
+            //    {
+            //        if (shader.ShaderResources.TryGetValue("Spectrum" + c, out var variable))
+            //        {
+            //            variable.SetResource(spectrum[c].Texture.GetShaderResourceView());
+            //        }
+            //    }
+            //}
 
             return spectrum;
         }
@@ -321,17 +329,17 @@ namespace AEther.WindowsForms
                     : new ByteHistogram(Graphics.Device, domainLength, histogramLength, UseMapping);
             }
 
-            foreach (var key in Graphics.Shaders.Keys)
-            {
-                var shader = Graphics.Shaders[key];
-                for (var c = 0; c < histogram.Length; ++c)
-                {
-                    if (shader.ShaderResources.TryGetValue("Histogram" + c, out var variable))
-                    {
-                        variable.SetResource(histogram[c].Texture.GetShaderResourceView());
-                    }
-                }
-            }
+            //foreach (var key in Graphics.Shaders.Keys)
+            //{
+            //    var shader = Graphics.Shaders[key];
+            //    for (var c = 0; c < histogram.Length; ++c)
+            //    {
+            //        if (shader.ShaderResources.TryGetValue("Histogram" + c, out var variable))
+            //        {
+            //            variable.SetResource(histogram[c].Texture.GetShaderResourceView());
+            //        }
+            //    }
+            //}
 
             return histogram;
 

@@ -87,7 +87,7 @@ namespace AEther.WindowsForms
             BackBuffer = new Texture2D(Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0));
             FrameConstants = new ConstantBuffer<FrameConstants>(Device);
 
-            Shaders = CreateShader();
+            Shaders = CreateShaderManager();
             Quad = new Model(Device, new Grid(2, 2));
 
         }
@@ -225,7 +225,7 @@ namespace AEther.WindowsForms
 
         }
 
-        ShaderManager CreateShader()
+        ShaderManager CreateShaderManager()
         {
 
             var assemblyPath = Assembly.GetExecutingAssembly().Location;
@@ -256,6 +256,14 @@ namespace AEther.WindowsForms
         void Present()
         {
             Chain.TryPresent(1, PresentFlags.None);
+        }
+
+        public Shader CreateShader(string key)
+        {
+            var bytecode = Shaders[key];
+            var shader = new Shader(Device, bytecode);
+            shader.ConstantBuffers[0].SetConstantBuffer(FrameConstants.Buffer);
+            return shader;
         }
 
         public FrameHandle RenderFrame()

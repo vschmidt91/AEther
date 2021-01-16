@@ -14,17 +14,19 @@ namespace AEther.WindowsForms
     public class IFSState : GraphicsState
     {
 
-        public Texture2D Source;
-        public Texture2D Target;
-        public readonly IFSElement[] Elements;
+        Texture2D Source;
+        Texture2D Target;
 
-        Shader InputShader => Graphics.Shaders["ifs-input.fx"];
-
-        Shader OutputShader => Graphics.Shaders["ifs-output.fx"];
+        readonly IFSElement[] Elements;
+        readonly Shader InputShader;
+        readonly Shader OutputShader;
 
         public IFSState(Graphics graphics)
             : base(graphics)
         {
+
+            InputShader = Graphics.CreateShader("ifs-input.fx");
+            OutputShader = Graphics.CreateShader("ifs-output.fx");
 
             var ifsSize = Math.Max(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
             ifsSize = 1 << 8;
@@ -55,10 +57,10 @@ namespace AEther.WindowsForms
                 //new IFSAffine(Graphics.Shader["ifs-sqrt.fx"]) {  Speed = -.0435f },
                 //new IFSAffine(Graphics.Shader["ifs-polar.fx"]) {  Speed = -.4935f },
                 //new IFSElement(Graphics.Shader["ifs-swirl.fx"]),
-                new IFSElement(Graphics.Shaders["ifs-hyperbolic.fx"]),
+                new IFSElement(Graphics.CreateShader("ifs-hyperbolic.fx")),
                 //new IFSElement(Graphics.Shader["ifs-sqrt.fx"]),
                 //new IFSAffine(Graphics.Shaders) {  Scale = .5f, Speed = -.1535f, OffsetScale = 2f },
-                new IFSAffine(Graphics.Shaders) {  Scale = .9f, OffsetScale = 1f },
+                new IFSAffine(Graphics) {  Scale = .9f, OffsetScale = 1f },
                 //new IFSAffine(Graphics.Shader) {  Speed = -.0256f },
                 //new IFSAffine(Graphics.Shader) {  Speed = .2125f },
                 //new IFSAffine(Graphics.Shader) { Speed = -.04f },
@@ -110,9 +112,19 @@ namespace AEther.WindowsForms
             Graphics.Context.Rasterizer.SetViewport(Graphics.BackBuffer.ViewPort);
             Graphics.Context.OutputMerger.SetRenderTargets(null, Graphics.BackBuffer.GetRenderTargetView());
             OutputShader.ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
-            Graphics.Draw(Graphics.Shaders["ifs-output.fx"]);
+            Graphics.Draw(OutputShader);
 
         }
 
+        public override void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            InputShader.Dispose();
+            OutputShader.Dispose();
+            foreach(var element in Elements)
+            {
+                element.Dispose();
+            }
+        }
     }
 }

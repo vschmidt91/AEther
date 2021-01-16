@@ -16,8 +16,8 @@ namespace AEther.WindowsForms
         public float Scale;
         public float OffsetScale;
 
-        public IFSAffine(ShaderManager shader)
-            : this(shader["ifs-affine.fx"])
+        public IFSAffine(Graphics graphics)
+            : this(graphics.CreateShader("ifs-affine.fx"))
         {
         }
 

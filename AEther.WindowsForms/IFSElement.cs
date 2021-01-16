@@ -37,6 +37,7 @@ namespace AEther.WindowsForms
 
         public virtual void Dispose()
         {
+            Shader.Dispose();
             WeightVariable.Dispose();
         }
 

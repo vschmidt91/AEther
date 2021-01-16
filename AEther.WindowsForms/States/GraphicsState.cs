@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace AEther.WindowsForms
 {
-    public abstract class GraphicsState : GraphicsComponent
+    public abstract class GraphicsState : GraphicsComponent, IDisposable
     {
 
         public GraphicsState(Graphics graphics)
             : base(graphics)
-        {
+        { }
 
-        }
+        public abstract void Dispose();
 
         public abstract void Render();
 

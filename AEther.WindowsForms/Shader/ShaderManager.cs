@@ -21,11 +21,24 @@ namespace AEther.WindowsForms
     public class ShaderManager : GraphicsComponent, IDisposable
     {
 
-        public Shader this[string key] => GetShader(key);
+        public ShaderBytecode this[string key]
+        {
+            get
+            {
+                if (Shaders.TryGetValue(key, out var shader))
+                {
+                    return shader;
+                }
+                else
+                {
+                    return Shaders[key] = LoadShader(key);
+                }
+            }
+        }
 
         public IEnumerable<string> Keys => Shaders.Keys;
 
-        readonly Dictionary<string, Shader> Shaders = new();
+        readonly Dictionary<string, ShaderBytecode> Shaders = new();
         readonly IncludeHandler Includes;
         readonly FileSystemWatcher? Watcher;
         readonly string BasePath;
@@ -50,8 +63,8 @@ namespace AEther.WindowsForms
                 var effects = Directory.EnumerateFiles(basePath, "*.fx", SearchOption.AllDirectories);
                 foreach (var effect in effects)
                 {
-                    var path = new FileInfo(effect);
-                    Shaders[path.Name] = LoadShader(path.FullName);
+                    var file = new FileInfo(effect);
+                    Shaders[file.Name] = LoadShader(file);
                 }
             }
 
@@ -82,7 +95,8 @@ namespace AEther.WindowsForms
             {
                 try
                 {
-                    Shaders[e.Name] = LoadShader(e.FullPath);
+                    var file = new FileInfo(e.FullPath);
+                    Shaders[file.Name] = LoadShader(file);
                 }
                 catch(IOException)
                 {
@@ -101,23 +115,11 @@ namespace AEther.WindowsForms
             }
         }
 
-        private Shader GetShader(string key)
-        {
-            if(Shaders.TryGetValue(key, out var shader))
-            {
-                return shader;
-            }
-            else
-            {
-                var path = Path.Join(BasePath, key);
-                return Shaders[key] = LoadShader(path);
-            }
-        }
+        public ShaderBytecode LoadShader(string key)
+            => LoadShader(new FileInfo(Path.Join(BasePath, key)));
 
-        private Shader LoadShader(string path)
+        private ShaderBytecode LoadShader(FileInfo file)
         {
-
-            var file = new FileInfo(path);
 
             ShaderFlags shaderFlags = ShaderFlags.None;
             EffectFlags effectFlags = EffectFlags.None;
@@ -139,15 +141,12 @@ namespace AEther.WindowsForms
                 throw new CompilationException(compiled.Message);
             }
 
-#if DEBUG
-            //File.WriteAllText(file.FullName + ".txt", compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering));
-#endif
+            //#if DEBUG
+            //            Debug.WriteLine(file.Name);
+            //            Debug.Write(compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering));
+            //#endif
 
-            var shader = new Shader(Graphics.Device, compiled.Bytecode, file.Name);
-
-            shader.ConstantBuffers[0].SetConstantBuffer(Graphics.FrameConstants.Buffer);
-
-            return shader;
+            return compiled.Bytecode;
 
         }
 

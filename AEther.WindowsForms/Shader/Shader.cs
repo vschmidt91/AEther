@@ -93,7 +93,6 @@ namespace AEther.WindowsForms
 
         public ShaderTechnique this[int i] => Techniques[i];
         public int TechniqueCount => Techniques.Length;
-        public readonly string Name;
 
         public readonly Dictionary<string, EffectVariable> Variables;
         public readonly Dictionary<string, EffectShaderResourceVariable> ShaderResources;
@@ -106,12 +105,11 @@ namespace AEther.WindowsForms
         Effect Effect;
         readonly ShaderTechnique[] Techniques;
 
-        public Shader(SharpDX.Direct3D11.Device device, ShaderBytecode bytecode, string name)
+        public Shader(SharpDX.Direct3D11.Device device, ShaderBytecode bytecode)
         {
 
             Bytecode = bytecode;
             Effect = new Effect(device, bytecode);
-            Name = name;
 
             Variables = Enumerable.Range(0, Effect.Description.GlobalVariableCount)
                 .Select(i => Effect.GetVariableByIndex(i))

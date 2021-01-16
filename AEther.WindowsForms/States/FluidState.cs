@@ -19,23 +19,29 @@ namespace AEther.WindowsForms
         readonly Texture2D Pressure;
         readonly Texture2D Divergence;
 
-        Shader Input => Graphics.Shaders["fluid-input.fx"];
-        Shader Advect => Graphics.Shaders["fluid-advect.fx"];
-        Shader Diffuse => Graphics.Shaders["fluid-diffuse.fx"];
-        Shader DivergenceShader => Graphics.Shaders["fluid-divergence.fx"];
-        Shader Project => Graphics.Shaders["fluid-project.fx"];
-        Shader Output => Graphics.Shaders["fluid-output.fx"];
+        readonly Shader Input;
+        readonly Shader Advect;
+        readonly Shader Diffuse;
+        readonly Shader DivergenceShader;
+        readonly Shader Project;
+        readonly Shader Output;
 
         readonly IPoissonSolver PoissonSolver;
 
         public FluidState(Graphics graphics)
             : base(graphics)
         {
+            Input = Graphics.CreateShader("fluid-input.fx");
+            Advect = Graphics.CreateShader("fluid-advect.fx");
+            Diffuse = Graphics.CreateShader("fluid-diffuse.fx");
+            DivergenceShader = Graphics.CreateShader("fluid-divergence.fx");
+            Project = Graphics.CreateShader("fluid-project.fx");
+            Output = Graphics.CreateShader("fluid-output.fx");
 
             //var width = Graphics.BackBuffer.Width;
             //var height = Graphics.BackBuffer.Height;
 
-            var width = 1 << 10;
+            var width = 1 << 11;
             var height = width;
 
             //PoissonSolver = new SOR(graphics, width, height, Format.R16_Float) { Iterations = 256, Omega = 1.8f };
@@ -46,6 +52,17 @@ namespace AEther.WindowsForms
             Pressure = Graphics.CreateTexture(width, height, Format.R16_Float);
             Divergence = Graphics.CreateTexture(width, height, Format.R16_Float);
 
+        }
+
+        public override void Dispose()
+        {
+            GC.SuppressFinalize(this);
+            Input.Dispose();
+            Advect.Dispose();
+            Diffuse.Dispose();
+            DivergenceShader.Dispose();
+            Project.Dispose();
+            Output.Dispose();
         }
 
         public override void Render()

@@ -25,24 +25,28 @@ namespace AEther.WindowsForms
         internal class CoarseGrid : GraphicsComponent, IDisposable
         {
 
-            Shader CopyShader => Graphics.Shaders["copy.fx"];
-            Shader AddShader => Graphics.Shaders["add.fx"];
-            Shader ResidualShader => Graphics.Shaders["mg-residual.fx"];
+            readonly Shader CopyShader;
+            readonly Shader AddShader;
+            readonly Shader ResidualShader;
 
             readonly Multigrid Solver;
             readonly Texture2D Solution;
             readonly Texture2D Residual;
             readonly Texture2D ResidualFine;
-            readonly EffectVectorVariable CoefficientsVariable;
 
             internal CoarseGrid(Graphics graphics, int width, int height, Format format, Vector2 scale)
                 : base(graphics)
             {
+                CopyShader = Graphics.CreateShader("copy.fx");
+                AddShader = Graphics.CreateShader("add.fx");
+                ResidualShader = Graphics.CreateShader("mg-residual.fx");
                 Solver = new Multigrid(graphics, width, height, format, scale);
                 Solution = Graphics.CreateTexture(width, height, format);
                 Residual = Graphics.CreateTexture(width, height, format);
                 ResidualFine = Graphics.CreateTexture(2 * width, 2 * height, format);
-                CoefficientsVariable = ResidualShader.Variables["Coefficients"].AsVector();
+
+                using var coeffsVariable = ResidualShader.Variables["Coefficients"].AsVector();
+                coeffsVariable.Set(4 / (scale * scale));
             }
 
             internal void Solve(Texture2D targetFine, Texture2D solutionFine, MultigridMode mode)
@@ -56,22 +60,18 @@ namespace AEther.WindowsForms
 
                 // Residual
                 Graphics.SetFullscreenTarget(ResidualFine);
-                CoefficientsVariable.Set(4 / (Solver.Scale * Solver.Scale));
                 ResidualShader.ShaderResources["Solution"].SetResource(solutionFine.GetShaderResourceView());
                 ResidualShader.ShaderResources["Target"].SetResource(targetFine.GetShaderResourceView());
                 Graphics.Draw(ResidualShader);
-
 
                 // Projection
                 Graphics.SetFullscreenTarget(Residual);
                 CopyShader.ShaderResources["Source"].SetResource(ResidualFine.GetShaderResourceView());
                 Graphics.Draw(CopyShader);
 
-
                 // Recursion
                 Solution.Clear();
                 Solver.Solve(Residual, Solution, mode);
-
 
                 // Interpolation
                 Graphics.SetFullscreenTarget(solutionFine);
@@ -82,11 +82,13 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
+                CopyShader.Dispose();
+                ResidualShader.Dispose();
+                AddShader.Dispose();
                 Solver.Dispose();
                 Residual.Dispose();
                 Solution.Dispose();
                 ResidualFine.Dispose();
-                CoefficientsVariable.Dispose();
             }
 
         }
@@ -99,7 +101,7 @@ namespace AEther.WindowsForms
 
         public readonly Vector2 Scale;
 
-        public MultigridMode Mode { get; set; } = MultigridMode.WCycle;
+        public MultigridMode Mode { get; set; } = MultigridMode.FCycle;
 
         readonly SOR Relaxation;
         readonly CoarseGrid? Coarse;
@@ -115,9 +117,9 @@ namespace AEther.WindowsForms
             Relaxation = new(graphics, width, height, format)
             {
                 Iterations = 1,
-                Omega = 1f,
-                Scale = Scale,
             };
+            Relaxation.SetOmega(1f);
+            Relaxation.SetScale(Scale);
 
             var coarseWidth = Width / 2;
             var coarseHeight = Height / 2;
