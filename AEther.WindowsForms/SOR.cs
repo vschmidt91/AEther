@@ -27,15 +27,13 @@ namespace AEther.WindowsForms
             SolverOdd = Graphics.CreateShader("poisson-sor.fx");
             Buffer = Graphics.CreateTexture(width, height, format);
 
-            using var ee = SolverEven.Variables["UpdateEven"].AsScalar();
-            using var eo = SolverEven.Variables["UpdateOdd"].AsScalar();
-            using var oe = SolverOdd.Variables["UpdateEven"].AsScalar();
-            using var oo = SolverOdd.Variables["UpdateOdd"].AsScalar();
-
-            ee.Set(true);
-            eo.Set(false);
-            oe.Set(false);
-            oo.Set(true);
+            foreach (var solver in new[] { SolverEven, SolverOdd })
+            {
+                using var even = solver.Variables["UpdateEven"].AsScalar();
+                using var odd = solver.Variables["UpdateOdd"].AsScalar();
+                even.Set(solver == SolverEven);
+                odd.Set(solver == SolverOdd);
+            }
 
             SetScale(Vector2.One);
             SetOmega(1f);
