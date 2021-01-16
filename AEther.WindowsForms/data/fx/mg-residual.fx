@@ -7,7 +7,7 @@ Texture2D<float> Target : register(t1);
 
 cbuffer EffectConstants : register(b3)
 {
-	float2 ScaleInv;
+	float2 Coefficients;
 };
 
 float PS(const PSDefaultin IN) : SV_Target
@@ -16,13 +16,13 @@ float PS(const PSDefaultin IN) : SV_Target
 	float b = Target.Sample(Point, IN.UV);
 	float u = Solution.Sample(Point, IN.UV);
 
-	float2 Ax = -2 * float2(u, u);
-	Ax.x += Solution.Sample(Point, IN.UV, int2(-1, 0));
-	Ax.x += Solution.Sample(Point, IN.UV, int2(+1, 0));
-	Ax.y += Solution.Sample(Point, IN.UV, int2(0, -1));
-	Ax.y += Solution.Sample(Point, IN.UV, int2(0, +1));
-	
-	float r = b - dot(Ax, ScaleInv);
+	float2 c = -2 * u + float2
+	(
+		Solution.Sample(Point, IN.UV, int2(-1, 0)) + Solution.Sample(Point, IN.UV, int2(+1, 0)),
+		Solution.Sample(Point, IN.UV, int2(0, -1)) + Solution.Sample(Point, IN.UV, int2(0, +1))
+	);
+
+	float r = b - dot(c, Coefficients);
 
 	return r;
 

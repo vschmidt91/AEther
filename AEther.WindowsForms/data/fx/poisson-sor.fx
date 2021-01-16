@@ -10,34 +10,28 @@ cbuffer EffectConstants : register(b3)
 {
 	bool UpdateEven;
 	bool UpdateOdd;
-	float Scale;
+	float3 Coefficients;
 	float Omega;
 };
 
 float PS(const PSDefaultin IN) : SV_Target
 {
 
-	float p = Solution.Sample(Point, IN.UV);
-	float p2 = Target.Sample(Point, IN.UV);
+	int parity = (int)dot(IN.Position.xy, 1) & 1;
+	float update = lerp(UpdateEven, UpdateOdd, parity);
 
-	p2 *= Scale;
-	p2 -= Solution.Sample(Point, IN.UV, int2(-1, 0));
-	p2 -= Solution.Sample(Point, IN.UV, int2(+1, 0));
-	p2 -= Solution.Sample(Point, IN.UV, int2(0, -1));
-	p2 -= Solution.Sample(Point, IN.UV, int2(0, +1));
+	float3 c = float3
+	(
+		Solution.Sample(Point, IN.UV, int2(-1, 0)) + Solution.Sample(Point, IN.UV, int2(+1, 0)),
+		Solution.Sample(Point, IN.UV, int2(0, -1)) + Solution.Sample(Point, IN.UV, int2(0, +1)),
+		Target.Sample(Point, IN.UV)
+	);
+	float p1 = Solution.Sample(Point, IN.UV);
+	float p2 = dot(c, Coefficients);
+	float p3 = lerp(p1, p2, Omega);
+	float p4 = lerp(p1, p3, update);
 
-	p2 *= -.25 * Omega;
-
-	p2 += (1 - Omega) * p;
-	
-	int2 idx = IN.Position.xy;
-	int parity = dot(idx, 1) & 1;
-	if ((parity == 0) & UpdateEven)
-		p = p2;
-	if ((parity == 1) & UpdateOdd)
-		p = p2;
-
-	return p;
+	return p4;
 
 }
 

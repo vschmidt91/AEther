@@ -64,7 +64,7 @@ namespace AEther.WindowsForms
                 //new IFSAffine(Graphics.Shader) { Speed = -.04f },
             };
 
-            Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), Color4.White);
+            Source.Clear(Color4.White);
 
         }
 
@@ -93,7 +93,7 @@ namespace AEther.WindowsForms
             //for (int n = 0; n < 8; ++n)
             {
 
-                Graphics.Context.ClearRenderTargetView(Target.GetRenderTargetView(), new Color4(SharpDX.Vector4.Zero));
+                Target.Clear();
                 Graphics.Context.Rasterizer.SetViewport(Target.ViewPort);
                 foreach(var element in Elements)
                 {

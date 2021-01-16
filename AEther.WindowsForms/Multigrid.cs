@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,79 +25,86 @@ namespace AEther.WindowsForms
         internal class CoarseGrid : GraphicsComponent, IDisposable
         {
 
+            Shader CopyShader => Graphics.Shaders["copy.fx"];
+            Shader AddShader => Graphics.Shaders["add.fx"];
             Shader ResidualShader => Graphics.Shaders["mg-residual.fx"];
-            Shader Copy => Graphics.Shaders["copy.fx"];
-            Shader Add => Graphics.Shaders["add.fx"];
 
-            internal readonly Multigrid Solver;
-            internal readonly Texture2D Residual;
-            internal readonly Texture2D ResidualFine;
-            internal readonly Texture2D Solution;
-            internal readonly EffectVectorVariable ScaleVariable;
+            readonly Multigrid Solver;
+            readonly Texture2D Solution;
+            readonly Texture2D Residual;
+            readonly Texture2D ResidualFine;
+            readonly EffectVectorVariable CoefficientsVariable;
 
-            internal CoarseGrid(Graphics graphics, int width, int height, Vector2 scale)
+            internal CoarseGrid(Graphics graphics, int width, int height, Format format, Vector2 scale)
                 : base(graphics)
             {
-                Solver = new Multigrid(graphics, width, height, scale);
-                Residual = Graphics.CreateTexture(width, height, Format.R16_Float);
-                Solution = Graphics.CreateTexture(width, height, Format.R16_Float);
-                ResidualFine = Graphics.CreateTexture(2 * width, 2 * height, Format.R16_Float);
-                ScaleVariable = ResidualShader.Variables["ScaleInv"].AsVector();
+                Solver = new Multigrid(graphics, width, height, format, scale);
+                Solution = Graphics.CreateTexture(width, height, format);
+                Residual = Graphics.CreateTexture(width, height, format);
+                ResidualFine = Graphics.CreateTexture(2 * width, 2 * height, format);
+                CoefficientsVariable = ResidualShader.Variables["Coefficients"].AsVector();
             }
 
-            internal void Solve(Texture2D target, Texture2D solution, MultigridMode mode)
+            internal void Solve(Texture2D targetFine, Texture2D solutionFine, MultigridMode mode)
             {
 
-                // Residual
+                Debug.Assert(ResidualFine.Size == solutionFine.Size);
+                Debug.Assert(ResidualFine.Size == targetFine.Size);
+                Debug.Assert(ResidualFine.Size == 2 * Residual.Size);
+                Debug.Assert(Residual.Size == Solution.Size);
+                Debug.Assert(solutionFine.Size == 2 * Solution.Size);
 
+                // Residual
                 Graphics.SetFullscreenTarget(ResidualFine);
-                ScaleVariable.Set(.5f / Solver.Scale);
-                ResidualShader.ShaderResources["Solution"].AsShaderResource().SetResource(solution.GetShaderResourceView());
-                ResidualShader.ShaderResources["Target"].AsShaderResource().SetResource(target.GetShaderResourceView());
+                CoefficientsVariable.Set(4 / (Solver.Scale * Solver.Scale));
+                ResidualShader.ShaderResources["Solution"].SetResource(solutionFine.GetShaderResourceView());
+                ResidualShader.ShaderResources["Target"].SetResource(targetFine.GetShaderResourceView());
                 Graphics.Draw(ResidualShader);
 
-                // Projection
 
+                // Projection
                 Graphics.SetFullscreenTarget(Residual);
-                Copy.ShaderResources["Source"].AsShaderResource().SetResource(ResidualFine.GetShaderResourceView());
-                Graphics.Draw(Copy);
+                CopyShader.ShaderResources["Source"].SetResource(ResidualFine.GetShaderResourceView());
+                Graphics.Draw(CopyShader);
+
 
                 // Recursion
-
+                Solution.Clear();
                 Solver.Solve(Residual, Solution, mode);
 
-                // Interpolation
 
-                Graphics.SetFullscreenTarget(solution);
-                Add.ShaderResources["Source"].AsShaderResource().SetResource(Solution.GetShaderResourceView());
-                Graphics.Draw(Add);
+                // Interpolation
+                Graphics.SetFullscreenTarget(solutionFine);
+                AddShader.ShaderResources["Source"].SetResource(Solution.GetShaderResourceView());
+                Graphics.Draw(AddShader);
 
             }
 
             public void Dispose()
             {
                 Solver.Dispose();
-                ScaleVariable.Dispose();
+                Residual.Dispose();
+                Solution.Dispose();
+                ResidualFine.Dispose();
+                CoefficientsVariable.Dispose();
             }
 
         }
 
-        public const int MinSize = 16;
+        public const int CoarsestSize = 32;
+        public const int CoarsestIterations = 8;
 
         public readonly int Width;
         public readonly int Height;
 
         public readonly Vector2 Scale;
 
-        public int Presmoothing { get; set; } = 1;
-        public int Postsmoothing { get; set; } = 1;
-        public MultigridMode Mode { get; set; } = MultigridMode.VCycle;
+        public MultigridMode Mode { get; set; } = MultigridMode.WCycle;
 
         readonly SOR Relaxation;
         readonly CoarseGrid? Coarse;
 
-
-        public Multigrid(Graphics graphics, int width, int height, Vector2? scale = null)
+        public Multigrid(Graphics graphics, int width, int height, Format format, Vector2? scale = null)
             : base(graphics)
         {
 
@@ -104,66 +112,76 @@ namespace AEther.WindowsForms
             Height = height;
             Scale = scale ?? Vector2.One;
 
-            Relaxation = new SOR(graphics, Width, Height)
+            Relaxation = new(graphics, width, height, format)
             {
+                Iterations = 1,
                 Omega = 1f,
                 Scale = Scale,
             };
 
-            if (MinSize < Math.Min(Width, Height))
+            var coarseWidth = Width / 2;
+            var coarseHeight = Height / 2;
+            var coarseScale = Scale * 2;
+
+            if (CoarsestSize < Math.Min(coarseWidth, coarseHeight))
             {
-                Coarse = new CoarseGrid(graphics, Width / 2, Height / 2, Scale * 2);
+                Coarse = new(graphics, coarseWidth, coarseHeight, format, coarseScale);
             }
             else
             {
-                Coarse = null;
+                Relaxation.Iterations = CoarsestIterations;
             }
 
 
         }
 
         public void Solve(Texture2D target, Texture2D destination)
-            => Solve(target, destination, Mode);
+        {
+            Solve(target, destination, Mode);
+        }
 
-        public void Solve(Texture2D target, Texture2D destination, MultigridMode mode)
+        public void Solve(Texture2D target, Texture2D solution, MultigridMode mode)
         {
 
-            Graphics.Context.ClearRenderTargetView(destination.GetRenderTargetView(), new Color4(0f));
+            Debug.Assert(target.Size == solution.Size);
 
-            // Relaxation
-            Relaxation.Iterations = Presmoothing;
-            Relaxation.Solve(target, destination);
-
-            if (Coarse != null)
+            if (Coarse is null)
+            {
+                Relaxation.Solve(target, solution);
+            }
+            else
             {
 
-                // Recursion
-                switch(mode)
+                Relaxation.Solve(target, solution);
+
+                switch (mode)
                 {
                     case MultigridMode.VCycle:
-                        Coarse.Solve(target, destination, MultigridMode.VCycle);
+                        Coarse.Solve(target, solution, MultigridMode.VCycle);
                         break;
                     case MultigridMode.FCycle:
-                        Coarse.Solve(target, destination, MultigridMode.FCycle);
-                        Coarse.Solve(target, destination, MultigridMode.VCycle);
+                        Coarse.Solve(target, solution, MultigridMode.FCycle);
+                        Relaxation.Solve(target, solution);
+                        Coarse.Solve(target, solution, MultigridMode.VCycle);
                         break;
                     case MultigridMode.WCycle:
-                        Coarse.Solve(target, destination, MultigridMode.WCycle);
-                        Coarse.Solve(target, destination, MultigridMode.WCycle);
+                        Coarse.Solve(target, solution, MultigridMode.WCycle);
+                        Relaxation.Solve(target, solution);
+                        Coarse.Solve(target, solution, MultigridMode.WCycle);
                         break;
                 }
 
-            }
+                Relaxation.Solve(target, solution);
 
-            // Relaxation
-            Relaxation.Iterations = Postsmoothing;
-            Relaxation.Solve(target, destination);
+            }
 
         }
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Coarse?.Dispose();
+            Relaxation.Dispose();
         }
 
     }

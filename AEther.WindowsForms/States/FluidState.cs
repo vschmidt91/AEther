@@ -14,8 +14,6 @@ namespace AEther.WindowsForms
     public class FluidState : GraphicsState
     {
 
-        public const int Size = 1 << 8;
-
         Texture2D Velocity;
         Texture2D VelocityNew;
         readonly Texture2D Pressure;
@@ -37,19 +35,16 @@ namespace AEther.WindowsForms
             //var width = Graphics.BackBuffer.Width;
             //var height = Graphics.BackBuffer.Height;
 
-            var width = 1 << 8;
+            var width = 1 << 10;
             var height = width;
 
-            //PoissonSolver = new SOR(graphics, Size, Size) { Iterations = 256, Omega = 1.8f };
-            PoissonSolver = new Multigrid(graphics, width, height);
+            //PoissonSolver = new SOR(graphics, width, height, Format.R16_Float) { Iterations = 256, Omega = 1.8f };
+            PoissonSolver = new Multigrid(graphics, width, height, Format.R16_Float);
 
             Velocity = Graphics.CreateTexture(width, height, Format.R16G16B16A16_Float);
             VelocityNew = Graphics.CreateTexture(width, height, Format.R16G16B16A16_Float);
             Pressure = Graphics.CreateTexture(width, height, Format.R16_Float);
             Divergence = Graphics.CreateTexture(width, height, Format.R16_Float);
-
-            Graphics.Context.ClearRenderTargetView(Velocity.GetRenderTargetView(), new Color4(0f));
-
 
         }
 
@@ -68,9 +63,9 @@ namespace AEther.WindowsForms
         {
 
             Graphics.SetFullscreenTarget(VelocityNew);
-            Input.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
-            //Input.ShaderResources["Spectrum0"].AsShaderResource().SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
-            //Input.ShaderResources["Spectrum1"].AsShaderResource().SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
+            Input.ShaderResources["Velocity"].SetResource(Velocity.GetShaderResourceView());
+            //Input.ShaderResources["Spectrum0"].SetResource(Graphics.Spectrum[0].Texture.GetShaderResourceView());
+            //Input.ShaderResources["Spectrum1"].SetResource(Graphics.Spectrum[1].Texture.GetShaderResourceView());
             Graphics.Draw(Input);
 
             (Velocity, VelocityNew) = (VelocityNew, Velocity);
@@ -81,7 +76,7 @@ namespace AEther.WindowsForms
         {
 
             Graphics.SetFullscreenTarget(VelocityNew);
-            Advect.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
+            Advect.ShaderResources["Velocity"].SetResource(Velocity.GetShaderResourceView());
             Graphics.Draw(Advect);
 
             (Velocity, VelocityNew) = (VelocityNew, Velocity);
@@ -92,7 +87,7 @@ namespace AEther.WindowsForms
         {
 
             Graphics.SetFullscreenTarget(VelocityNew);
-            Diffuse.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
+            Diffuse.ShaderResources["Velocity"].SetResource(Velocity.GetShaderResourceView());
             Graphics.Draw(Diffuse);
 
             (Velocity, VelocityNew) = (VelocityNew, Velocity);
@@ -103,14 +98,15 @@ namespace AEther.WindowsForms
         {
 
             Graphics.SetFullscreenTarget(Divergence);
-            DivergenceShader.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
+            DivergenceShader.ShaderResources["Velocity"].SetResource(Velocity.GetShaderResourceView());
             Graphics.Draw(DivergenceShader);
 
+            Pressure.Clear();
             PoissonSolver.Solve(Divergence, Pressure);
 
             Graphics.SetFullscreenTarget(VelocityNew);
-            Project.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
-            Project.ShaderResources["Pressure"].AsShaderResource().SetResource(Pressure.GetShaderResourceView());
+            Project.ShaderResources["Velocity"].SetResource(Velocity.GetShaderResourceView());
+            Project.ShaderResources["Pressure"].SetResource(Pressure.GetShaderResourceView());
             Graphics.Draw(Project);
 
             (Velocity, VelocityNew) = (VelocityNew, Velocity);
@@ -121,7 +117,7 @@ namespace AEther.WindowsForms
         {
 
             Graphics.SetFullscreenTarget(Graphics.BackBuffer);
-            Output.ShaderResources["Velocity"].AsShaderResource().SetResource(Velocity.GetShaderResourceView());
+            Output.ShaderResources["Velocity"].SetResource(Velocity.GetShaderResourceView());
             Graphics.Draw(Output);
 
         }
