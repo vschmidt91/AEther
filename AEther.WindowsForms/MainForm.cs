@@ -77,16 +77,17 @@ namespace AEther.WindowsForms
         protected override void OnResizeEnd(EventArgs e)
         {
             base.OnResizeEnd(e);
-            Graphics?.Resize(ClientSize.Width, ClientSize.Height);
+            Graphics.Resize(ClientSize.Width, ClientSize.Height);
         }
 
         protected async override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
             await StopAsync();
+            Graphics.Dispose();
         }
 
-        protected async override void OnShown(EventArgs e)
+        protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
             Graphics.Resize(ClientSize.Width, ClientSize.Height); 
@@ -102,7 +103,7 @@ namespace AEther.WindowsForms
                 }
             }, CancellationToken.None, TaskCreationOptions.LongRunning, Scheduler);
 
-            await RunAsync();
+            _ = Task.Run(RunAsync);
 
         }
 
@@ -115,7 +116,7 @@ namespace AEther.WindowsForms
                     break;
                 case Keys.F5:
                     await StopAsync();
-                    await RunAsync();
+                    _ = Task.Run(RunAsync);
                     break;
                 case Keys.F11:
                     ToggleFullscreen();
@@ -152,10 +153,6 @@ namespace AEther.WindowsForms
             }
 
             await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, Scheduler);
-
-            Invoke(new MethodInvoker(() =>
-            {
-            }));
 
             SampleSource sampleSource = sampleSourceName is LoopbackEntry
                 ? new Loopback()
@@ -370,7 +367,7 @@ namespace AEther.WindowsForms
             if (IsRunning)
             {
                 await StopAsync();
-                await RunAsync();
+                _ = Task.Run(RunAsync);
             }
         }
 
@@ -379,7 +376,7 @@ namespace AEther.WindowsForms
             if (IsRunning)
             {
                 await StopAsync();
-                await RunAsync();
+                _ = Task.Run(RunAsync);
             }
         }
     }
