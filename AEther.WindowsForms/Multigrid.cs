@@ -99,31 +99,28 @@ namespace AEther.WindowsForms
         public readonly int Width;
         public readonly int Height;
 
-        public readonly Vector2 Scale;
-
-        public MultigridMode Mode { get; set; } = MultigridMode.FCycle;
+        public MultigridMode Mode { get; set; } = MultigridMode.VCycle;
 
         readonly SOR Relaxation;
         readonly CoarseGrid? Coarse;
 
-        public Multigrid(Graphics graphics, int width, int height, Format format, Vector2? scale = null)
+        public Multigrid(Graphics graphics, int width, int height, Format format, Vector2 scale)
             : base(graphics)
         {
 
             Width = width;
             Height = height;
-            Scale = scale ?? Vector2.One;
 
             Relaxation = new(graphics, width, height, format)
             {
                 Iterations = 1,
             };
             Relaxation.SetOmega(1f);
-            Relaxation.SetScale(Scale);
+            Relaxation.SetScale(scale);
 
             var coarseWidth = Width / 2;
             var coarseHeight = Height / 2;
-            var coarseScale = Scale * 2;
+            var coarseScale = scale * 2;
 
             if (CoarsestSize < Math.Min(coarseWidth, coarseHeight))
             {

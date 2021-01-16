@@ -41,11 +41,19 @@ namespace AEther.WindowsForms
             //var width = Graphics.BackBuffer.Width;
             //var height = Graphics.BackBuffer.Height;
 
-            var width = 1 << 11;
+            var width = 1 << 10;
             var height = width;
 
+            //using var scaleAdvect = Advect.Variables["Scale"].AsVector();
+            //using var scaleDivergence = DivergenceShader.Variables["Scale"].AsVector();
+            //using var scaleProject = Project.Variables["Scale"].AsVector();
+
+            //scaleAdvect.Set(scale);
+            //scaleDivergence.Set(scale);
+            //scaleProject.Set(scale);
+
             //PoissonSolver = new SOR(graphics, width, height, Format.R16_Float) { Iterations = 256, Omega = 1.8f };
-            PoissonSolver = new Multigrid(graphics, width, height, Format.R16_Float);
+            PoissonSolver = new Multigrid(graphics, width, height, Format.R16_Float, Vector2.One);
 
             Velocity = Graphics.CreateTexture(width, height, Format.R16G16B16A16_Float);
             VelocityNew = Graphics.CreateTexture(width, height, Format.R16G16B16A16_Float);

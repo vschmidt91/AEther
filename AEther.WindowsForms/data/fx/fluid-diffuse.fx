@@ -10,7 +10,7 @@ Texture2D<float4> Velocity : register(t0);
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
-	float o = 1.0;
+	float o = 0.5;
 	float _o2 = 1.0 / (o * o);
 
 	float4 v = 0;
