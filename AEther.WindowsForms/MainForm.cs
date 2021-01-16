@@ -180,12 +180,11 @@ namespace AEther.WindowsForms
             sampleSource.OnStopped += stopped;
             Cancel.Token.Register(sampleSource.Stop);
 
-            var sessionTask = Task.Run(() => session.RunAsync(Cancel.Token), Cancel.Token);
-            sampleSource.Start();
-
             IsRunning = true;
             try
             {
+                var sessionTask = Task.Run(() => session.RunAsync(Cancel.Token), Cancel.Token);
+                sampleSource.Start();
                 await foreach (var output in session.Reader.ReadAllAsync(Cancel.Token))
                 {
                     var latency = (DateTime.Now - output.Time).TotalMilliseconds;
