@@ -42,12 +42,12 @@ namespace AEther.WindowsForms
         readonly Shader SpectrumShader;
         readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
         readonly EffectScalarVariable HistogramShiftVariable;
-        readonly TaskScheduler Scheduler;
+        readonly TaskScheduler UIScheduler;
 
         public MainForm()
         {
 
-            Scheduler = TaskScheduler.FromCurrentSynchronizationContext();
+            UIScheduler = TaskScheduler.FromCurrentSynchronizationContext();
             InitializeComponent();
             Graphics = new Graphics(Handle);
             HistogramShader = Graphics.CreateShader("histogram.fx");
@@ -101,7 +101,7 @@ namespace AEther.WindowsForms
                     IsRendering = false;
                     Application.DoEvents();
                 }
-            }, CancellationToken.None, TaskCreationOptions.LongRunning, Scheduler);
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, UIScheduler);
 
             _ = Task.Run(RunAsync);
 
@@ -152,41 +152,26 @@ namespace AEther.WindowsForms
                 Histogram = CreateHistogram();
             }
 
-            await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, Scheduler);
+            await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, UIScheduler);
 
-            SampleSource sampleSource = sampleSourceName is LoopbackEntry
+            using SampleSource sampleSource = sampleSourceName is LoopbackEntry
                 ? new Loopback()
                 : new Recorder(sampleSourceName);
 
-            var format = sampleSource.Format;
-            var session = new Session(format, options ?? new());
+            var session = new Session(sampleSource, options ?? new());
 
-            void dataAvailable(object? sender, ReadOnlyMemory<byte> data)
-            {
-                var evt = new DataEvent(data.Length, DateTime.Now);
-                data.CopyTo(evt.Data);
-                session.Writer.TryWrite(evt);
-            }
-
-            void stopped(object? sender, Exception? exc)
-            {
-                session.Writer.TryComplete();
-            }
-
-            sampleSource.OnDataAvailable += dataAvailable;
-            sampleSource.OnStopped += stopped;
             Cancel.Token.Register(sampleSource.Stop);
+            var outputs = session.RunAsync();
 
             IsRunning = true;
+            sampleSource.Start();
             try
             {
-                var sessionTask = Task.Run(() => session.RunAsync(Cancel.Token), Cancel.Token);
-                sampleSource.Start();
-                await foreach (var output in session.Reader.ReadAllAsync(Cancel.Token))
+                await foreach (var output in outputs)
                 {
                     var latency = (DateTime.Now - output.Time).TotalMilliseconds;
                     Latency = Math.Max(Latency, latency);
-                    for (int c = 0; c < format.ChannelCount; ++c)
+                    for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                     {
                         var src = output.GetChannel(c);
                         lock (Spectrum[c])
@@ -201,13 +186,9 @@ namespace AEther.WindowsForms
                     InputCounter++;
                     output.Dispose();
                 }
-                await sessionTask;
             }
-            catch(TaskCanceledException) { }
             catch(OperationCanceledException) { }
             IsRunning = false;
-
-            sampleSource.Dispose();
 
         }
 

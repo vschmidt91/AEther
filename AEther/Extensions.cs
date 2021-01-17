@@ -26,9 +26,9 @@ namespace AEther
             Reader = reader;
         }
 
-        public void AdvanceTo(SequencePosition consumed, SequencePosition observed)
+        public void AdvanceTo(SequencePosition consumed, SequencePosition? observed = null)
         {
-            Reader.AdvanceTo(consumed, observed);
+            Reader.AdvanceTo(consumed, observed ?? consumed);
         }
 
     }

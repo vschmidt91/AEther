@@ -40,34 +40,20 @@ namespace AEther.Benchmarks
             //var path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
             var path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "..", "..", "..", "..", "TestFiles", "test_sine.wav");
             path = new FileInfo(path).FullName;
-            var inputStream = File.OpenRead(path);
-            var outputStream = new MemoryStream();
+            using var inputStream = File.OpenRead(path);
+            using var outputStream = new MemoryStream();
+            using var sampleSource = new SampleReader(inputStream);
 
-            var header = WAVHeader.FromStream(inputStream);
-            var format = header.GetSampleFormat();
-            var sampleSource = new SampleReader(inputStream);
-            var session = new Session(format, Options);
-            sampleSource.OnDataAvailable += (sender, data) =>
-            {
-                var evt = new DataEvent(data.Length, DateTime.Now);
-                data.CopyTo(evt.Data);
-                session.Writer.TryWrite(evt);
-            };
-            sampleSource.OnStopped += (sender, evt) =>
-            {
-                session.Writer.TryComplete();
-            };
-
-
+            var session = new Session(sampleSource, Options);
             var outputFloats = new float[4 * Options.Domain.Count];
             var outputBytes = new byte[sizeof(float) * outputFloats.Length];
 
-            var sessionTask = Task.Run(() => session.RunAsync());
+            var outputs = session.RunAsync();
             sampleSource.Start();
 
-            await foreach(var output in session.Reader.ReadAllAsync())
+            await foreach(var output in outputs)
             {
-                for (int c = 0; c < format.ChannelCount; ++c)
+                for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                 {
                     var src = output.GetChannel(c);
                     src.CopyTo(outputFloats);
@@ -76,9 +62,6 @@ namespace AEther.Benchmarks
                 }
                 output.Dispose();
             }
-            await sessionTask;
-
-            sampleSource.Dispose();
 
         }
 

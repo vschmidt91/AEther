@@ -5,19 +5,13 @@ using System.Text;
 
 namespace AEther
 {
-    public readonly struct WAVHeader
+    public record WAVHeader
+    (
+        RIFFHeader RIFF,
+        FormatHeader Format,
+        DataHeader Data
+    )
     {
-
-        public readonly RIFFHeader RIFF;
-        public readonly FormatHeader Format;
-        public readonly DataHeader Data;
-
-        public WAVHeader(RIFFHeader riff, FormatHeader format, DataHeader data)
-        {
-            RIFF = riff;
-            Format = format;
-            Data = data;
-        }
 
         public static WAVHeader FromStream(Stream stream)
         {

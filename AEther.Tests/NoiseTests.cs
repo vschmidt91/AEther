@@ -23,26 +23,17 @@ namespace AEther.Tests
         [Test]
         public async Task TestWhiteNoise()
         {
+
             using var wav = File.OpenRead("data/pinknoise.wav");
-            var sampleSource = new SampleReader(wav);
-            var format = sampleSource.Format;
+            using var sampleSource = new SampleReader(wav);
+            var session = new Session(sampleSource);
 
-            var session = new Session(format);
-            sampleSource.OnDataAvailable += (sender, data) =>
-            {
-                var evt = new DataEvent(data.Length, DateTime.Now);
-                data.CopyTo(evt.Data);
-                session.Writer.TryWrite(evt);
-            };
-
-            var sessionTask = Task.Run(() => session.RunAsync());
+            var outputs = session.RunAsync();
             sampleSource.Start();
-
-            await foreach (var output in session.Reader.ReadAllAsync())
+            await foreach (var output in outputs)
             {
                 output.Dispose();
             }
-            await sessionTask;
 
         }
     }

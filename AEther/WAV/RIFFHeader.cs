@@ -1,23 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
 namespace AEther
 {
-    public readonly struct RIFFHeader
+    public record RIFFHeader
+    (
+        string RIFF,
+        uint Length,
+        string WAVE
+    )
     {
-
-        public readonly string RIFF;
-        public readonly uint Length;
-        public readonly string WAVE;
-
-        public RIFFHeader(string riff, uint length, string wave)
-        {
-            RIFF = riff;
-            Length = length;
-            WAVE = wave;
-        }
 
         public static RIFFHeader FromStream(BinaryReader reader)
         {

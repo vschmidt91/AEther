@@ -6,17 +6,12 @@ using System.Text;
 
 namespace AEther
 {
-    public readonly struct DataHeader
+    public record DataHeader
+    (
+        string Signature,
+        uint Length
+    )
     {
-
-        public readonly string Signature;
-        public readonly uint Length;
-
-        public DataHeader(string signature, uint length)
-        {
-            Signature = signature;
-            Length = length;
-        }
 
         public static DataHeader FromStream(BinaryReader reader)
         {

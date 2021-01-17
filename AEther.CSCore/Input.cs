@@ -73,6 +73,7 @@ namespace AEther.CSCore
         public override void Stop()
         {
             Device.Stop();
+            base.Stop();
         }
 
         public override void Dispose()

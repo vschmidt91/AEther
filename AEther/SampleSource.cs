@@ -21,7 +21,10 @@ namespace AEther
 
         public abstract void Start();
 
-        public abstract void Stop();
+        public virtual void Stop()
+        {
+            OnStopped?.Invoke(this, null);
+        }
 
         public abstract void Dispose();
 

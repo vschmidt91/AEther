@@ -33,7 +33,7 @@ namespace AEther
         public int TimeResolution { get; set; } = 1 << 8;
 
         [Category("DFT")]
-        public int MaxParallelization { get; set; } = -1;
+        public int MaxParallelization { get; set; } = 1;
 
         [Category("DFT")]
         public bool UseSIMD { get; set; } = true;

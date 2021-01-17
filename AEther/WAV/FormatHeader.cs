@@ -6,29 +6,18 @@ using System.Threading.Channels;
 
 namespace AEther
 {
-    public readonly struct FormatHeader
+    public record FormatHeader
+    (
+        string FMT,
+        uint Length,
+        WAVFormatTag Tag,
+        ushort ChannelCount,
+        uint SamplesPerSecond,
+        uint BytesPerSecond,
+        ushort BlockLength,
+        ushort BitsPerSample
+    )
     {
-
-        public readonly string FMT;
-        public readonly uint Length;
-        public readonly WAVFormatTag Tag;
-        public readonly ushort ChannelCount;
-        public readonly uint SamplesPerSecond;
-        public readonly uint BytesPerSecond;
-        public readonly ushort BlockLength;
-        public readonly ushort BitsPerSample;
-
-        public FormatHeader(string fmt, uint length, WAVFormatTag tag, ushort channelCount, uint samplesPerSecond, ushort bitsPerSample, uint? bytesPerSecond = default, ushort? blockLength = default)
-        {
-            FMT = fmt;
-            Length = length;
-            Tag = tag;
-            ChannelCount = channelCount;
-            SamplesPerSecond = samplesPerSecond;
-            BitsPerSample = bitsPerSample;
-            BlockLength = blockLength ?? (ushort)((BitsPerSample + 7) / 8 * ChannelCount);
-            BytesPerSecond = bytesPerSecond ?? (SamplesPerSecond * BlockLength);
-        }
 
         public static FormatHeader FromStream(BinaryReader reader)
         {
@@ -40,7 +29,7 @@ namespace AEther
             var bytesPerSecond = reader.ReadUInt32();
             var blockLength = reader.ReadUInt16();
             var bitsPerSample = reader.ReadUInt16();
-            return new FormatHeader(fmt, length, tag, channelCount, samplesPerSecond, bitsPerSample, bytesPerSecond, blockLength);
+            return new FormatHeader(fmt, length, tag, channelCount, samplesPerSecond, bytesPerSecond, blockLength, bitsPerSample);
         }
 
         public void WriteToStream(BinaryWriter writer)

@@ -25,9 +25,6 @@ namespace AEther.CSCore
             return new WasapiLoopbackCapture(latency, format, priority);
         }
 
-        public override string ToString()
-            => "Loopback";
-
 
     }
 }

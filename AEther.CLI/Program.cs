@@ -13,53 +13,53 @@ using System.Text.Json;
 using System.CommandLine;
 using System.Buffers;
 using System.Threading;
-
-using AEther.CSCore;
+using System.Security.Cryptography;
 
 namespace AEther.CLI
 {
     class Program
     {
-        static async Task<int> Main(string? path = null)
+        static async Task Main(string path)
         {
 
-            path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
+            path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_sine.wav");
             path = new FileInfo(path).FullName;
 
-            var options = new SessionOptions();
-            
-            SampleSource sampleSource;
-            if (path == null)
-                sampleSource = new CSCore.Loopback();
-            else
-                sampleSource = new SampleReader(File.OpenRead(path));
-
-            var session = new Session(sampleSource.Format, options);
-
-            sampleSource.OnDataAvailable += (sender, data) =>
+            var options = new SessionOptions
             {
-                var evt = new DataEvent(data.Length, DateTime.Now);
-                data.CopyTo(evt.Data);
-                session.Writer.TryWrite(evt);
-            };
-            sampleSource.OnStopped += (sender, evt) =>
-            {
-                session.Writer.TryComplete();
+                //TimeResolution = 10,
             };
 
-            var sessionTask = Task.Run(() => session.RunAsync());
+            using var inputStream = Console.OpenStandardInput();
+            using var outputStream = new MemoryStream();
+            //using var standardOutput = Console.OpenStandardOutput();
+            using var sampleSource = new SampleReader(File.OpenRead(path))
+            {
+                //BufferSize = 1 << 10,
+            };
+
+            var session = new Session(sampleSource, options);
+            var hash = MD5.Create();
+
+            var outputs = session.RunAsync();
+
             sampleSource.Start();
 
-            await foreach (var output in session.Reader.ReadAllAsync())
+            await foreach (var output in outputs)
             {
-                //Console.WriteLine(JsonSerializer.Serialize(output));
+                var byteCount = sizeof(float) * output.SampleCount;
+                var buffer = ArrayPool<byte>.Shared.Rent(byteCount);
+                Buffer.BlockCopy(output.Samples, 0, buffer, 0, byteCount);
+
+                Console.WriteLine(BitConverter.ToString(hash.ComputeHash(buffer, 0, byteCount)));
+                await outputStream.WriteAsync(buffer.AsMemory(0, byteCount));
+
+                ArrayPool<byte>.Shared.Return(buffer);
+
                 output.Dispose();
             }
-            await sessionTask;
 
-            sampleSource.Dispose();
-
-            return 0;
+            Console.WriteLine(outputStream.Length);
 
         }
 
