@@ -32,9 +32,7 @@ namespace AEther.WindowsForms
         public override void Render()
         {
 
-            Graphics.SetModel(null);
-            Graphics.Context.Rasterizer.SetViewport(Graphics.BackBuffer.ViewPort);
-            Graphics.Context.OutputMerger.SetRenderTargets(null, Graphics.BackBuffer.GetRenderTargetView());
+            Graphics.SetFullscreenTarget(Graphics.BackBuffer);
             Graphics.Draw(Shader);
 
         }

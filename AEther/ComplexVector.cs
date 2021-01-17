@@ -10,14 +10,14 @@ namespace AEther
         where T : struct
     {
 
-        public static readonly ComplexVector<T> Zero = new ComplexVector<T>(Vector<T>.Zero, Vector<T>.Zero);
-        public static readonly ComplexVector<T> One = new ComplexVector<T>(Vector<T>.One, Vector<T>.Zero);
-        public static readonly ComplexVector<T> ImaginaryOne = new ComplexVector<T>(Vector<T>.Zero, Vector<T>.One);
+        public static readonly ComplexVector<T> Zero = new(Vector<T>.Zero, Vector<T>.Zero);
+        public static readonly ComplexVector<T> One = new(Vector<T>.One, Vector<T>.Zero);
+        public static readonly ComplexVector<T> ImaginaryOne = new(Vector<T>.Zero, Vector<T>.One);
 
         public readonly Vector<T> Real;
         public readonly Vector<T> Imaginary;
 
-        public static int Count = Vector<T>.Count;
+        public static int Count => Vector<T>.Count;
 
         public (T, T) this[int i] => (Real[i], Imaginary[i]);
 
@@ -43,31 +43,31 @@ namespace AEther
             => $"({Real} + i * {Imaginary})";
 
         public static ComplexVector<T> operator +(ComplexVector<T> a, ComplexVector<T> b)
-            => new ComplexVector<T>(a.Real + b.Real, a.Imaginary + b.Imaginary);
+            => new(a.Real + b.Real, a.Imaginary + b.Imaginary);
 
         public static ComplexVector<T> operator +(Vector<T> a, ComplexVector<T> b)
-            => new ComplexVector<T>(a + b.Real, b.Imaginary);
+            => new(a + b.Real, b.Imaginary);
 
         public static ComplexVector<T> operator +(ComplexVector<T> a, Vector<T> b)
-            => new ComplexVector<T>(a.Real + b, a.Imaginary);
+            => new(a.Real + b, a.Imaginary);
 
         public static ComplexVector<T> operator -(ComplexVector<T> a, ComplexVector<T> b)
-            => new ComplexVector<T>(a.Real - b.Real, a.Imaginary - b.Imaginary);
+            => new(a.Real - b.Real, a.Imaginary - b.Imaginary);
 
         public static ComplexVector<T> operator *(ComplexVector<T> a, ComplexVector<T> b)
-            => new ComplexVector<T>(a.Real * b.Real - a.Imaginary * b.Imaginary, a.Real * b.Imaginary + a.Imaginary * b.Real);
+            => new(a.Real * b.Real - a.Imaginary * b.Imaginary, a.Real * b.Imaginary + a.Imaginary * b.Real);
 
         public static ComplexVector<T> operator *(Vector<T> a, ComplexVector<T> b)
-            => new ComplexVector<T>(a * b.Real, a * b.Imaginary);
+            => new(a * b.Real, a * b.Imaginary);
 
         public static ComplexVector<T> operator *(ComplexVector<T> a, Vector<T> b)
-            => new ComplexVector<T>(a.Real * b, a.Imaginary * b);
+            => new(a.Real * b, a.Imaginary * b);
 
         public static ComplexVector<T> operator *(T a, ComplexVector<T> b)
-            => new ComplexVector<T>(a * b.Real, a * b.Imaginary);
+            => new(a * b.Real, a * b.Imaginary);
 
         public static ComplexVector<T> operator *(ComplexVector<T> a, T b)
-            => new ComplexVector<T>(a.Real * b, a.Imaginary * b);
+            => new(a.Real * b, a.Imaginary * b);
 
     }
 }

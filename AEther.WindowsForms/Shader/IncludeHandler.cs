@@ -16,12 +16,14 @@ namespace AEther.WindowsForms
         public class ShadowType : IDisposable
         {
             public void Dispose()
-            { }
+            {
+                GC.SuppressFinalize(this);
+            }
         }
 
         public IDisposable Shadow { get; set; } = new ShadowType();
 
-        private Dictionary<string, string> Includes;
+        readonly Dictionary<string, string> Includes;
 
         public IncludeHandler(Dictionary<string, string> includes)
         {
@@ -36,6 +38,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Includes.Clear();
         }
 

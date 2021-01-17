@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 
@@ -46,7 +46,7 @@ namespace AEther.WindowsForms
                 ResidualFine = Graphics.CreateTexture(2 * width, 2 * height, format);
 
                 using var coeffsVariable = ResidualShader.Variables["Coefficients"].AsVector();
-                coeffsVariable.Set(4 / (scale * scale));
+                coeffsVariable.Set(new Vector2(4) / (scale * scale));
             }
 
             internal void Solve(Texture2D targetFine, Texture2D solutionFine, MultigridMode mode)
@@ -115,7 +115,6 @@ namespace AEther.WindowsForms
             {
                 Iterations = 1,
             };
-            Relaxation.SetOmega(1f);
             Relaxation.SetScale(scale);
 
             var coarseWidth = Width / 2;

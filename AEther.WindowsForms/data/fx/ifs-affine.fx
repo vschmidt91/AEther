@@ -4,7 +4,7 @@
 
 Texture2D<float4> Source : register(t0);
 
-cbuffer EffectConstants : register(b2)
+cbuffer EffectConstants : register(b1)
 {
 	float4 Weight;
 	float4 Transform;

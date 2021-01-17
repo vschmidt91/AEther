@@ -28,8 +28,8 @@ namespace AEther.WindowsForms
             InputShader = Graphics.CreateShader("ifs-input.fx");
             OutputShader = Graphics.CreateShader("ifs-output.fx");
 
-            var ifsSize = Math.Max(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
-            ifsSize = 1 << 8;
+            //var ifsSize = Math.Max(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
+            var ifsSize = 1 << 8;
 
             var ifsDescription = new Texture2DDescription
             {
@@ -44,8 +44,9 @@ namespace AEther.WindowsForms
                 SampleDescription = new SampleDescription(1, 0),
                 Usage = ResourceUsage.Default,
             };
-            Source = new Texture2D(new SharpDX.Direct3D11.Texture2D(Graphics.Device, ifsDescription));
-            Target = new Texture2D(new SharpDX.Direct3D11.Texture2D(Graphics.Device, ifsDescription));
+
+            Source = Graphics.CreateTexture(ifsDescription);
+            Target = Graphics.CreateTexture(ifsDescription);
 
             Elements = new IFSElement[]
             {
@@ -57,7 +58,7 @@ namespace AEther.WindowsForms
                 //new IFSAffine(Graphics.Shader["ifs-sqrt.fx"]) {  Speed = -.0435f },
                 //new IFSAffine(Graphics.Shader["ifs-polar.fx"]) {  Speed = -.4935f },
                 //new IFSElement(Graphics.Shader["ifs-swirl.fx"]),
-                new IFSElement(Graphics.CreateShader("ifs-hyperbolic.fx")),
+                new IFSElement(Graphics, "ifs-hyperbolic.fx"),
                 //new IFSElement(Graphics.Shader["ifs-sqrt.fx"]),
                 //new IFSAffine(Graphics.Shaders) {  Scale = .5f, Speed = -.1535f, OffsetScale = 2f },
                 new IFSAffine(Graphics) {  Scale = .9f, OffsetScale = 1f },
@@ -74,8 +75,6 @@ namespace AEther.WindowsForms
         public override void Render()
         {
 
-            Graphics.SetModel(null);
-
             var t = (float)DateTime.Now.TimeOfDay.TotalSeconds;
 
             var sumWeight = Vector4.Zero;
@@ -87,8 +86,7 @@ namespace AEther.WindowsForms
             //sumWeight = .25f * Vector4.Dot(sumWeight, Vector4.One) * Vector4.One;
 
 
-            Graphics.Context.Rasterizer.SetViewport(Source.ViewPort);
-            Graphics.Context.OutputMerger.SetRenderTargets(null, Source.GetRenderTargetView());
+            Graphics.SetFullscreenTarget(Source);
             Graphics.Draw(InputShader);
 
             //Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), Color4.White);
@@ -96,21 +94,18 @@ namespace AEther.WindowsForms
             {
 
                 Target.Clear();
-                Graphics.Context.Rasterizer.SetViewport(Target.ViewPort);
+                Graphics.SetFullscreenTarget(Target);
                 foreach(var element in Elements)
                 {
-                    Graphics.Context.OutputMerger.SetRenderTargets(null, Target.GetRenderTargetView());
-                    element.Shader.ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
-                    element.WeightVariable.Set(element.Weight / sumWeight);
-                    Graphics.Draw(element.Shader);
+                    element.Weight /= sumWeight;
+                    element.Draw(Source);
                 }
 
                 (Source, Target) = (Target, Source);
 
             }
 
-            Graphics.Context.Rasterizer.SetViewport(Graphics.BackBuffer.ViewPort);
-            Graphics.Context.OutputMerger.SetRenderTargets(null, Graphics.BackBuffer.GetRenderTargetView());
+            Graphics.SetFullscreenTarget(Graphics.BackBuffer);
             OutputShader.ShaderResources["Source"].SetResource(Source.GetShaderResourceView());
             Graphics.Draw(OutputShader);
 

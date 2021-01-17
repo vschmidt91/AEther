@@ -12,26 +12,11 @@ using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using Device = SharpDX.Direct3D11.Device;
-using Vector4 = System.Numerics.Vector4;
 
 namespace AEther.WindowsForms
 {
     public class Graphics
     {
-        public class FrameHandle : GraphicsComponent, IDisposable
-        {
-
-            public FrameHandle(Graphics graphics)
-                : base(graphics)
-            { }
-
-            public void Dispose()
-            {
-                GC.SuppressFinalize(this);
-                Graphics.Present();
-            }
-
-        }
 
         public bool IsFullscreen
         {
@@ -43,7 +28,7 @@ namespace AEther.WindowsForms
                 }
                 else
                 {
-                    Chain.GetFullscreenState(out var state, out var _);
+                    Chain.GetFullscreenState(out var state, out _);
                     return state;
                 }
             }
@@ -54,14 +39,15 @@ namespace AEther.WindowsForms
 
         }
 
-        public ModeDescription NativeMode { get; protected set; }
+        public readonly ModeDescription NativeMode;
+
         public Texture2D BackBuffer { get; protected set; }
-        public ShaderManager Shaders { get; protected set; }
-        public DeviceContext Context => Device.ImmediateContext;
 
-        public readonly Device Device;
-        public readonly ConstantBuffer<FrameConstants> FrameConstants;
+        DeviceContext Context => Device.ImmediateContext;
 
+        readonly Device Device;
+        readonly ConstantBuffer<FrameConstants> FrameConstants;
+        readonly ShaderManager Shaders;
         readonly DeviceDebug? Debug;
         readonly SwapChain Chain;
         readonly Model Quad;
@@ -71,7 +57,42 @@ namespace AEther.WindowsForms
         public Graphics(IntPtr handle)
         {
 
-            (Device, Chain) = CreateDevice(handle);
+
+            var format = Format.R8G8B8A8_UNorm;
+            var modeFlags = DisplayModeEnumerationFlags.Scaling;
+            using var dxgiFactory = new Factory1();
+            using var dxgiAdapater = dxgiFactory.GetAdapter(0);
+            using var output = dxgiAdapater.GetOutput(0);
+            NativeMode = output.GetDisplayModeList(format, modeFlags)
+                .OrderByDescending(m => m.Width)
+                .ThenByDescending(m => m.Height)
+                .ThenByDescending(m => m.RefreshRate.Numerator / m.RefreshRate.Denominator)
+                .First();
+
+            var desc = new SwapChainDescription()
+            {
+                BufferCount = 1,
+                ModeDescription = NativeMode,
+                IsWindowed = true,
+                OutputHandle = handle,
+                SampleDescription = new SampleDescription(1, 0),
+                SwapEffect = SwapEffect.Discard,
+                Usage = Usage.RenderTargetOutput,
+                Flags = SwapChainFlags.AllowModeSwitch,
+            };
+
+            DeviceCreationFlags deviceFlags = DeviceCreationFlags.None;
+#if DEBUG
+            deviceFlags |= DeviceCreationFlags.Debug;
+#endif
+
+            SharpDX.Direct3D11.Device.CreateWithSwapChain(
+                DriverType.Hardware,
+                deviceFlags,
+                new[] { FeatureLevel.Level_10_0 },
+                desc,
+                out Device,
+                out Chain);
 
             using (var factory = Chain.GetParent<Factory>())
             {
@@ -166,7 +187,7 @@ namespace AEther.WindowsForms
             CpuAccessFlags accessFlags = CpuAccessFlags.None,
             ResourceOptionFlags optionFlags = ResourceOptionFlags.None,
             ResourceUsage usage = ResourceUsage.Default)
-             => new(new SharpDX.Direct3D11.Texture2D(Device, new Texture2DDescription
+             => CreateTexture(new Texture2DDescription
              {
                  ArraySize = 1,
                  BindFlags = bindFlags,
@@ -178,52 +199,10 @@ namespace AEther.WindowsForms
                  OptionFlags = optionFlags,
                  SampleDescription = new SampleDescription(1, 0),
                  Usage = usage,
-             }));
+             });
 
-        (Device, SwapChain) CreateDevice(IntPtr handle, Format? format = default)
-        {
-
-            var modeFormat = format ?? Format.R8G8B8A8_UNorm;
-            var modeFlags = DisplayModeEnumerationFlags.Scaling;
-            using var dxgiFactory = new Factory1();
-            using var dxgiAdapater = dxgiFactory.GetAdapter(0);
-            using var output = dxgiAdapater.GetOutput(0);
-            var modes = output.GetDisplayModeList(modeFormat, modeFlags);
-            var nativeWidth = modes.Max(m => m.Width);
-            var nativeHeight = modes.Max(m => m.Height);
-            var nativeRate = modes.Max(m => m.RefreshRate.Numerator / m.RefreshRate.Denominator);
-            var targetMode = new ModeDescription(nativeWidth, nativeHeight, new Rational(nativeRate, 1), modeFormat);
-            output.GetClosestMatchingMode(null, targetMode, out var nativeMode);
-            NativeMode = nativeMode;
-
-            var desc = new SwapChainDescription()
-            {
-                BufferCount = 1,
-                ModeDescription = NativeMode,
-                IsWindowed = true,
-                OutputHandle = handle,
-                SampleDescription = new SampleDescription(1, 0),
-                SwapEffect = SwapEffect.Discard,
-                Usage = Usage.RenderTargetOutput,
-                Flags = SwapChainFlags.AllowModeSwitch,
-            };
-
-            DeviceCreationFlags deviceFlags = DeviceCreationFlags.None;
-#if DEBUG
-            deviceFlags |= DeviceCreationFlags.Debug;
-#endif
-
-            Device.CreateWithSwapChain(
-                DriverType.Hardware,
-                deviceFlags,
-                new[] { FeatureLevel.Level_10_0 },
-                desc,
-                out var device,
-                out var chain);
-
-            return (device, chain);
-
-        }
+        public Texture2D CreateTexture(Texture2DDescription description)
+            => new(new SharpDX.Direct3D11.Texture2D(Device, description));
 
         ShaderManager CreateShaderManager()
         {
@@ -253,7 +232,7 @@ namespace AEther.WindowsForms
             }
         }
 
-        void Present()
+        public void Present()
         {
             Chain.TryPresent(1, PresentFlags.None);
         }

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 
@@ -13,6 +13,13 @@ namespace AEther.WindowsForms
 
     public class FluidState : GraphicsState
     {
+
+        readonly EffectScalarVariable DiffusionVariable;
+        public float Diffusion
+        {
+            get => DiffusionVariable.GetFloat();
+            set => DiffusionVariable.Set(value);
+        }
 
         Texture2D Velocity;
         Texture2D VelocityNew;
@@ -38,19 +45,13 @@ namespace AEther.WindowsForms
             Project = Graphics.CreateShader("fluid-project.fx");
             Output = Graphics.CreateShader("fluid-output.fx");
 
+            DiffusionVariable = Diffuse.Variables["Variance"].AsScalar();
+
             //var width = Graphics.BackBuffer.Width;
             //var height = Graphics.BackBuffer.Height;
 
             var width = 1 << 10;
             var height = width;
-
-            //using var scaleAdvect = Advect.Variables["Scale"].AsVector();
-            //using var scaleDivergence = DivergenceShader.Variables["Scale"].AsVector();
-            //using var scaleProject = Project.Variables["Scale"].AsVector();
-
-            //scaleAdvect.Set(scale);
-            //scaleDivergence.Set(scale);
-            //scaleProject.Set(scale);
 
             //PoissonSolver = new SOR(graphics, width, height, Format.R16_Float) { Iterations = 256, Omega = 1.8f };
             PoissonSolver = new Multigrid(graphics, width, height, Format.R16_Float, Vector2.One);
@@ -65,6 +66,7 @@ namespace AEther.WindowsForms
         public override void Dispose()
         {
             GC.SuppressFinalize(this);
+            DiffusionVariable.Dispose();
             Input.Dispose();
             Advect.Dispose();
             Diffuse.Dispose();
@@ -78,7 +80,10 @@ namespace AEther.WindowsForms
 
             RenderInput();
             RenderAdvect();
-            //RenderDiffuse();
+            if(0 < Diffusion)
+            {
+                RenderDiffuse();
+            }
             RenderProject();
             RenderOutput();
 

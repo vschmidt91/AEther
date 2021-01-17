@@ -11,9 +11,10 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	float4 v = Velocity.Sample(Point, IN.UV);
 
 	float2 uv = IN.UV - DT * v.xy;
-	float4 v2 = Velocity.Sample(Linear, uv);
+	v = Velocity.Sample(Linear, uv);
 
-	return setBoundary(IN.UV, v2);
+	v *= getBoundary(IN.UV);
+	return v;
 
 }
 

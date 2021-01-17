@@ -5,7 +5,7 @@
 Texture2D<float> Solution : register(t0);
 Texture2D<float> Target : register(t1);
 
-cbuffer EffectConstants : register(b3)
+cbuffer EffectConstants : register(b1)
 {
 	float2 Coefficients;
 };

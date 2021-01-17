@@ -17,7 +17,6 @@ namespace AEther
         Complex State;
 
         readonly Complex Coefficient;
-        readonly Complex[] CoefficientPow;
         readonly float Frequency;
         readonly float DFTFrequency;
         readonly float Q;
@@ -35,10 +34,6 @@ namespace AEther
             var length = (int)Math.Round(M / DFTFrequency);
             Buffer = RingBuffer<float>.Create(length);
             Coefficient = Complex.Exp(2 * Math.PI * Complex.ImaginaryOne * M / Length);
-
-            CoefficientPow = Enumerable.Range(0, length + 1)
-                .Select(i => Complex.Exp(2 * Math.PI * Complex.ImaginaryOne * i * M / Length))
-                .ToArray();
 
         }
 
@@ -82,7 +77,7 @@ namespace AEther
                 //State = CoefficientPow[src.Length] * State + new Complex(addRe, addIm);
 
                 Buffer.Advance(src);
-                samples = samples.Slice(src.Length);
+                samples = samples[src.Length..];
 
             }
         }

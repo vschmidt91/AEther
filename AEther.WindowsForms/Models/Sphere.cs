@@ -32,7 +32,7 @@ namespace AEther.WindowsForms
                 {
                     int x = i % w;
                     int y = i / h;
-                    Vector2 uv = new Vector2()
+                    Vector2 uv = new()
                     {
                         X = -1 + 2 * y / (float)(h - 1),
                         Y = -1 + 2 * x / (float)(w - 1),

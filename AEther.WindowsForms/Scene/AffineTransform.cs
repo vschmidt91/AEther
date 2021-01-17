@@ -11,7 +11,7 @@ namespace AEther.WindowsForms
     public readonly struct AffineTransform
     {
 
-        public static readonly AffineTransform Identity = new AffineTransform(Vector3.Zero, Quaternion.Identity, 1f);
+        public static readonly AffineTransform Identity = new(Vector3.Zero, Quaternion.Identity, 1f);
 
         public readonly Vector3 Translation;
         public readonly float Scale;
@@ -34,7 +34,7 @@ namespace AEther.WindowsForms
             var translation = a.Translation + a.Scale * Vector3.Transform(b.Translation, a.Rotation);
             var rotation = a.Rotation * b.Rotation;
             var scale = a.Scale * b.Scale;
-            return new AffineTransform(translation, rotation, scale);
+            return new(translation, rotation, scale);
         }
 
     }

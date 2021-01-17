@@ -10,7 +10,7 @@ namespace AEther.WindowsForms
     public readonly struct AffineMomentum
     {
 
-        public static readonly AffineMomentum Identity = new AffineMomentum(Vector3.Zero, Vector3.Zero, 0f);
+        public static readonly AffineMomentum Identity = new(Vector3.Zero, Vector3.Zero, 0f);
 
         public readonly Vector3 Translation;
         public readonly Vector3 Rotation;

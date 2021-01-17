@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Numerics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using SharpDX;
-using SharpDX.Direct3D11;
 using SharpDX.DXGI;
+using SharpDX.Direct3D11;
 
 namespace AEther.WindowsForms
 {
@@ -19,6 +19,20 @@ namespace AEther.WindowsForms
         readonly Texture2D Buffer;
         readonly Shader SolverEven;
         readonly Shader SolverOdd;
+
+        public float Omega
+        {
+            get => OmegaVariableEven.GetFloat();
+            set
+            {
+                OmegaVariableEven.Set(value);
+                OmegaVariableOdd.Set(value);
+            }
+        }
+
+        readonly EffectScalarVariable OmegaVariableEven;
+        readonly EffectScalarVariable OmegaVariableOdd;
+
 
         public SOR(Graphics graphics, int width, int height, Format format)
             : base(graphics)
@@ -35,8 +49,11 @@ namespace AEther.WindowsForms
                 odd.Set(solver == SolverOdd);
             }
 
+            OmegaVariableEven = SolverEven.Variables["Omega"].AsScalar();
+            OmegaVariableOdd = SolverOdd.Variables["Omega"].AsScalar();
+
             SetScale(Vector2.One);
-            SetOmega(1f);
+            Omega = 1f;
         }
 
         public void SetScale(Vector2 scale)
@@ -47,15 +64,6 @@ namespace AEther.WindowsForms
             {
                 using var v = solver.Variables["Coefficients"].AsVector();
                 v.Set(c);
-            }
-        }
-
-        public void SetOmega(float omega)
-        {
-            foreach (var solver in new[] { SolverEven, SolverOdd })
-            {
-                using var v = solver.Variables["Omega"].AsScalar();
-                v.Set(omega);
             }
         }
 
@@ -83,6 +91,8 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
             GC.SuppressFinalize(this);
+            OmegaVariableEven.Dispose();
+            OmegaVariableOdd.Dispose();
             Buffer.Dispose();
             SolverEven.Dispose();
             SolverOdd.Dispose();

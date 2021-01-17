@@ -31,7 +31,7 @@ namespace AEther.WindowsForms
                 {
                     foreach (int z in Idx)
                     {
-                        Vector4 clipPos = new Vector4(-1 + 2 * x, -1 + 2 * y, z, 1);
+                        Vector4 clipPos = new(-1 + 2 * x, -1 + 2 * y, z, 1);
                         Vector4 worldPos = Vector4.Transform(clipPos, invViewProjection);
                         bounds[x, y, z] = worldPos.XYZ() / worldPos.W;
                     }

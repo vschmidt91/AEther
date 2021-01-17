@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SharpDX.Direct3D11;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -28,7 +29,7 @@ namespace AEther.WindowsForms
         }
 
         public static Vector3 Exp(this Vector3 t)
-            => new Vector3
+            => new()
             {
                 X = (float)Math.Exp(t.X),
                 Y = (float)Math.Exp(t.Y),
@@ -36,7 +37,7 @@ namespace AEther.WindowsForms
             };
         
         public static Vector3 Abs(this Vector3 t)
-            => new Vector3
+            => new()
             {
                 X = Math.Abs(t.X),
                 Y = Math.Abs(t.Y),
@@ -44,7 +45,7 @@ namespace AEther.WindowsForms
             };
         
         public static Vector3 Sign(this Vector3 t)
-            => new Vector3
+            => new()
             {
                 X = Math.Sign(t.X),
                 Y = Math.Sign(t.Y),
@@ -55,7 +56,7 @@ namespace AEther.WindowsForms
             => t.Pow(new Vector3(pow));
         
         public static Vector3 Pow(this Vector3 t, Vector3 pow)
-            => new Vector3
+            => new()
             {
                 X = (float)Math.Pow(t.X, pow.X),
                 Y = (float)Math.Pow(t.Y, pow.Y),
@@ -67,14 +68,6 @@ namespace AEther.WindowsForms
             var size = SharpDX.Vector3.Max(SharpDX.Vector3.Zero, bounds.Maximum - bounds.Minimum);
             return size.X * size.Y * size.Z;
         }
-
-        public static Vector3 XYZ(this Vector4 v)
-            => new Vector3
-            {
-                X = v.X,
-                Y = v.Y,
-                Z = v.Z,
-            };
         
         public static float NearPlane(this Matrix4x4 p)
             => -p.M43 / p.M33;
@@ -86,14 +79,12 @@ namespace AEther.WindowsForms
             => Quaternion.CreateFromYawPitchRoll(v.X, v.Y, v.Z);
 
         public static Vector3 ToEulerAngles(this Quaternion q)
-        {
-            return new Vector3
+        => new()
             {
-                X = (float)Math.Atan2(2 * (q.W * q.X + q.Y * q.Z), 1 - 2 * (q.X * q.X + q.Y * q.Y)),
-                Y = (float)Math.Asin(2 * (q.W * q.Y - q.X * q.Z)),
-                Z = (float)Math.Atan2(2 * (q.W * q.Z + q.X * q.Y), 1 - 2 * (q.Y * q.Y + q.Z * q.Z)),
-            };
-        }
+            X = (float)Math.Atan2(2 * (q.W * q.X + q.Y * q.Z), 1 - 2 * (q.X * q.X + q.Y * q.Y)),
+            Y = (float)Math.Asin(2 * (q.W * q.Y - q.X * q.Z)),
+            Z = (float)Math.Atan2(2 * (q.W * q.Z + q.X * q.Y), 1 - 2 * (q.Y * q.Y + q.Z * q.Z)),
+        };
 
         public static Vector3 GetAxisWithMaximumAngle(this Vector3 v)
         {
@@ -130,14 +121,23 @@ namespace AEther.WindowsForms
                 W = random.NextFloat(),
             } * (max - min);
 
+        public static Vector4 ToVector4(this SharpDX.Mathematics.Interop.RawVector4 v)
+            => new(v.X, v.Y, v.Z, v.W);
+
+        public static Vector2 XY(this Vector4 v)
+            => new(v.X, v.Y);
+
+        public static Vector3 XYZ(this Vector4 v)
+            => new(v.X, v.Y, v.Z);
+
         public static Vector2 ToVector2(this float[] v)
-            => new Vector2(v[0], v[1]);
+            => new(v[0], v[1]);
 
         public static Vector3 ToVector3(this float[] v)
-            => new Vector3(v[0], v[1], v[2]);
+            => new(v[0], v[1], v[2]);
 
         public static Vector4 ToVector4(this float[] v)
-            => new Vector4(v[0], v[1], v[2], v[3]);
+            => new(v[0], v[1], v[2], v[3]);
 
     }
 }

@@ -18,6 +18,7 @@ float PS(const PSDefaultin IN) : SV_Target
 	float div = .5 * (dx + dy);
 #endif
 
+	div *= getBoundary(IN.UV);
 	return div;
 
 }

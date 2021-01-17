@@ -24,7 +24,7 @@ namespace AEther.WindowsForms
 
         public abstract void Add(ReadOnlySpan<float> values);
 
-        public abstract int Update(DeviceContext context);
+        public abstract int Update();
 
         public void Dispose()
         {
@@ -39,13 +39,13 @@ namespace AEther.WindowsForms
 
         readonly T[] Buffer;
 
-        protected SpectrumAccumulator(Device device, int length, SharpDX.DXGI.Format format)
-            : base(CreateTexture(device, length, format))
+        protected SpectrumAccumulator(Graphics graphics, int length, SharpDX.DXGI.Format format)
+            : base(CreateTexture(graphics, length, format))
         {
             Buffer = new T[4 * length];
         }
 
-        static Texture2D CreateTexture(Device device, int length, SharpDX.DXGI.Format format)
+        static Texture2D CreateTexture(Graphics graphics, int length, SharpDX.DXGI.Format format)
         {
             var desc = new Texture2DDescription
             {
@@ -60,7 +60,7 @@ namespace AEther.WindowsForms
                 MipLevels = 1,
                 ArraySize = 1,
             };
-            return new Texture2D(new SharpDX.Direct3D11.Texture2D(device, desc));
+            return graphics.CreateTexture(desc);
         }
 
         public override void Clear()
@@ -85,11 +85,10 @@ namespace AEther.WindowsForms
             }
         }
 
-        public override int Update(DeviceContext context)
+        public override int Update()
         {
-            var map = Texture.Map(context);
+            using var map = Texture.Map();
             map.WriteRange(Buffer, 0, Buffer.Length);
-            map.Dispose();
             return Buffer.Length * Marshal.SizeOf<T>();
         }
 
@@ -98,8 +97,8 @@ namespace AEther.WindowsForms
     public class ByteSpectrum : SpectrumAccumulator<byte>
     {
 
-        public ByteSpectrum(Device device, int length)
-            : base(device, length, SharpDX.DXGI.Format.R8G8B8A8_UNorm)
+        public ByteSpectrum(Graphics graphics, int length)
+            : base(graphics, length, SharpDX.DXGI.Format.R8G8B8A8_UNorm)
         { }
 
         protected override byte Combine(byte src, byte dst)
@@ -113,8 +112,8 @@ namespace AEther.WindowsForms
     public class FloatSpectrum : SpectrumAccumulator<float>
     {
 
-        public FloatSpectrum(Device device, int length)
-            : base(device, length, SharpDX.DXGI.Format.R32G32B32A32_Float)
+        public FloatSpectrum(Graphics graphics, int length)
+            : base(graphics, length, SharpDX.DXGI.Format.R32G32B32A32_Float)
         { }
 
         protected override float Combine(float src, float dst)

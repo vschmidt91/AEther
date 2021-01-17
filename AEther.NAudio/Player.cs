@@ -14,7 +14,7 @@ namespace AEther.NAudio
     public static class Player
     {
 
-        static WaveStream CreateInput(string path)
+        public static WaveStream CreateInput(string path)
         {
             var file = new FileInfo(path);
             return file.Extension switch

@@ -87,6 +87,7 @@ namespace AEther.NAudio
 
         public override void Dispose()
         {
+            GC.SuppressFinalize(this);
             Device.Dispose();
         }
 

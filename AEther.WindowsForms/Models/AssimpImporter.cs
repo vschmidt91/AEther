@@ -15,9 +15,9 @@ namespace AEther.WindowsForms
     public class AssimpAssetImporter : IAssetImporter
     {
 
-        static readonly AssimpContext Context = new AssimpContext();
+        static readonly AssimpContext Context = new();
 
-        readonly Dictionary<Type, Func<string, object>> Handler = new Dictionary<Type, Func<string, object>>
+        readonly Dictionary<Type, Func<string, object>> Handler = new()
         {
             { typeof(Mesh[]), ImportMesh },
             { typeof(BitmapData), ImportTexture },
@@ -53,10 +53,10 @@ namespace AEther.WindowsForms
             var scene = Context.ImportFile(path, flags);
 
             Vector3 toSharpDX(Vector3D v)
-                => new Vector3(v.X, v.Y, v.Z);
+                => new(v.X, v.Y, v.Z);
 
             Vector2 toSharpDX2(Vector3D v)
-                => new Vector2(v.X, v.Y);
+                => new(v.X, v.Y);
 
             return scene.Meshes
                 .Select(m => new Mesh(

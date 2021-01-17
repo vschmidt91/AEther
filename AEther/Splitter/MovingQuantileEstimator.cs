@@ -38,7 +38,7 @@ namespace AEther
                 dst[k] = 0.5f * Filter(src[k]);
             }
 
-            State = src[src.Length - 1];
+            State = src[^1];
             for (int k = src.Length - 1; 0 <= k; --k)
             {
                 dst[k] += 0.5f * Filter(src[k]);

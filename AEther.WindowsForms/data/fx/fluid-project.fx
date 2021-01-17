@@ -23,7 +23,8 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	
 	v.xy -= pg;
 
-	return setBoundary(IN.UV, v);
+	v *= getBoundary(IN.UV);
+	return v;
 
 }
 

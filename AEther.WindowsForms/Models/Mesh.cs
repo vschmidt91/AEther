@@ -10,7 +10,7 @@ namespace AEther.WindowsForms
     public class Mesh
     {
 
-        public static readonly Mesh Empty = new Mesh(new Vertex[0], new uint[0]);
+        public static readonly Mesh Empty = new(Array.Empty<Vertex>(), Array.Empty<uint>());
 
         public readonly Vertex[] Vertices;
         public readonly uint[] Indices;

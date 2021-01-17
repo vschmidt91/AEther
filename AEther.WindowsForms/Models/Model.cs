@@ -45,6 +45,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Utilities.Dispose(ref VertexBuffer);
             Utilities.Dispose(ref IndexBuffer);
         }

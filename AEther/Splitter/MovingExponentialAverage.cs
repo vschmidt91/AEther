@@ -20,7 +20,7 @@ namespace AEther
         }
 
         public static MovingExponentialAverage FromWindow(int window)
-            => new MovingExponentialAverage(2f / (1 + window));
+            => new(2f / (1 + window));
 
         public void Clear()
         {
@@ -42,7 +42,7 @@ namespace AEther
                 dst.Span[k] = 0.5f * Filter(src[k]);
             }
 
-            State = src[src.Length - 1];
+            State = src[^1];
             for (int k = src.Length - 1; 0 <= k; --k)
             {
                 dst.Span[k] += 0.5f * Filter(src[k]);

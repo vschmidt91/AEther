@@ -27,10 +27,11 @@ namespace AEther.WindowsForms
 
         public abstract void Add(ReadOnlySpan<float> src);
 
-        public abstract int Update(DeviceContext context);
+        public abstract int Update();
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Texture.Dispose();
         }
 
@@ -54,15 +55,15 @@ namespace AEther.WindowsForms
         int UpdatePosition;
         int WritePosition;
 
-        public Histogram(SharpDX.Direct3D11.Device device, Format format, int width, int height, bool useMapping)
-            : base(CreateTexture(device, format, width, height, useMapping))
+        public Histogram(Graphics graphics, Format format, int width, int height, bool useMapping)
+            : base(CreateTexture(graphics, format, width, height, useMapping))
         {
 
             UseMapping = useMapping;
 
             if(useMapping)
             {
-                var map = Texture.Map(device.ImmediateContext);
+                var map = Texture.Map();
                 Pitch = (int)map.Pitch;
                 map.Dispose();
             }
@@ -78,9 +79,9 @@ namespace AEther.WindowsForms
             WritePosition = 0;
 
         }
-        static Texture2D CreateTexture(SharpDX.Direct3D11.Device device, Format format, int width, int height, bool useMapping)
+        static Texture2D CreateTexture(Graphics graphics, Format format, int width, int height, bool useMapping)
         {
-            return new Texture2D(new SharpDX.Direct3D11.Texture2D(device, new Texture2DDescription
+            var desc = new Texture2DDescription
             {
                 ArraySize = 1,
                 BindFlags = BindFlags.ShaderResource,
@@ -92,7 +93,8 @@ namespace AEther.WindowsForms
                 Width = width,
                 Height = height,
                 SampleDescription = new SampleDescription(1, 0),
-            }));
+            };
+            return graphics.CreateTexture(desc);
         }
 
         protected abstract T Convert(float value);
@@ -117,7 +119,7 @@ namespace AEther.WindowsForms
         int GetBandwidth(ResourceRegion region)
             => Format.SizeOfInBytes() * (region.Bottom - region.Top) * (region.Right - region.Left);
 
-        public override int Update(DeviceContext context)
+        public override int Update()
         {
 
             var bandwidth = 0;
@@ -148,7 +150,7 @@ namespace AEther.WindowsForms
             if (UseMapping)
             {
 
-                var map = Texture.Map(context);
+                var map = Texture.Map();
                 map.Write(Buffer);
                 bandwidth += (int)map.Length;
                 UpdatePosition = WritePosition;
@@ -161,7 +163,7 @@ namespace AEther.WindowsForms
                 foreach (var (from, to) in GetIntervals())
                 {
                     var region = new ResourceRegion(0, from, 0, Width, to, 1);
-                    Texture.Update(context, Buffer, 0, region);
+                    Texture.Update(Buffer, 0, region);
                     bandwidth += GetBandwidth(region);
                 }
 
@@ -179,8 +181,8 @@ namespace AEther.WindowsForms
     public class FloatHistogram : Histogram<float>
     {
 
-        public FloatHistogram(SharpDX.Direct3D11.Device device, int width, int height, bool useMapping)
-            : base(device, Format.R32G32B32A32_Float, width, height, useMapping)
+        public FloatHistogram(Graphics graphics, int width, int height, bool useMapping)
+            : base(graphics, Format.R32G32B32A32_Float, width, height, useMapping)
         { }
 
         protected override float Convert(float value) => value;
@@ -190,8 +192,8 @@ namespace AEther.WindowsForms
     public class ByteHistogram : Histogram<byte>
     {
 
-        public ByteHistogram(SharpDX.Direct3D11.Device device, int width, int height, bool useMapping)
-            : base(device, Format.R8G8B8A8_UNorm, width, height, useMapping)
+        public ByteHistogram(Graphics graphics, int width, int height, bool useMapping)
+            : base(graphics, Format.R8G8B8A8_UNorm, width, height, useMapping)
         { }
 
         protected override byte Convert(float value) => (byte)(255f * value.Clamp(0, 1));

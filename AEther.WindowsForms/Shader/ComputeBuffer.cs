@@ -94,6 +94,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Utilities.Dispose(ref UAView);
             Utilities.Dispose(ref SRView);
             Utilities.Dispose(ref Buffer);

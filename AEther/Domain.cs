@@ -37,9 +37,7 @@ namespace AEther
 
         public override bool Equals(object? obj)
         {
-
-            Domain? other = obj as Domain;
-            if(other is null)
+            if (obj is not Domain other)
                 return base.Equals(obj);
 
             return other.MinValue == MinValue

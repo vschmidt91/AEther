@@ -250,7 +250,7 @@ namespace AEther.WindowsForms
                 {
                     lock(spectrum)
                     {
-                        spectrum.Update(Graphics.Context);
+                        spectrum.Update();
                         spectrum.Clear();
                     }
                 }
@@ -261,7 +261,7 @@ namespace AEther.WindowsForms
                 {
                     lock (histogram)
                     {
-                        histogram.Update(Graphics.Context);
+                        histogram.Update();
                     }
                 }
                 HistogramShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
@@ -290,8 +290,8 @@ namespace AEther.WindowsForms
             for (var c = 0; c < spectrum.Length; ++c)
             {
                 spectrum[c] = UseFloatTextures
-                    ? new FloatSpectrum(Graphics.Device, domainLength)
-                    : new ByteSpectrum(Graphics.Device, domainLength);
+                    ? new FloatSpectrum(Graphics, domainLength)
+                    : new ByteSpectrum(Graphics, domainLength);
             }
 
             //foreach (var key in Graphics.Shaders.Keys)
@@ -321,8 +321,8 @@ namespace AEther.WindowsForms
             for (var c = 0; c < histogram.Length; ++c)
             {
                 histogram[c] = UseFloatTextures
-                    ? new FloatHistogram(Graphics.Device, domainLength, histogramLength, UseMapping)
-                    : new ByteHistogram(Graphics.Device, domainLength, histogramLength, UseMapping);
+                    ? new FloatHistogram(Graphics, domainLength, histogramLength, UseMapping)
+                    : new ByteHistogram(Graphics, domainLength, histogramLength, UseMapping);
             }
 
             //foreach (var key in Graphics.Shaders.Keys)

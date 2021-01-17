@@ -16,13 +16,13 @@ namespace AEther.WindowsForms
 
         static readonly int[] MultiSampleLevelCandididates = new[] { 1, 2, 4, 8 };
 
-        public readonly Dictionary<Format, ComputeShaderFormatSupport> ComputeShaderFormats = new Dictionary<Format, ComputeShaderFormatSupport>();
+        public readonly Dictionary<Format, ComputeShaderFormatSupport> ComputeShaderFormats = new();
         public readonly FeatureDataD3D11Options D3D11Features;
         public readonly FeatureDataD3D11Options1 D3D11Features1;
         public readonly FeatureDataD3D11Options2 D3D11Features2;
         public readonly FeatureDataD3D11Options3 D3D11Features3;
-        public readonly Dictionary<Format, FormatSupport> Formats = new Dictionary<Format, FormatSupport>();
-        public readonly Dictionary<Format, Dictionary<int, int>> MultiSampleLevel = new Dictionary<Format, Dictionary<int, int>>();
+        public readonly Dictionary<Format, FormatSupport> Formats = new();
+        public readonly Dictionary<Format, Dictionary<int, int>> MultiSampleLevel = new();
         public readonly bool FullNonPow2Textures;
         public readonly FeatureDataShaderMinimumPrecisionSupport ShaderMinimumPrecision;
         public readonly bool Threading;

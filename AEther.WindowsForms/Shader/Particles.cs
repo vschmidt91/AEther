@@ -11,7 +11,7 @@ namespace AEther.WindowsForms
     public class Particles : ComputeBuffer
     {
 
-        public Vector4 Attractor = new Vector4(0, 0, 0, 1);
+        public Vector4 Attractor = Vector4.UnitW;
         public Vector3 Color = Vector3.One;
         public float Emission = 1;
 

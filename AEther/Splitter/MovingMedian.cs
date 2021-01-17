@@ -101,7 +101,7 @@ namespace AEther
                 return Filter(float.PositiveInfinity);
         }
 
-        int BinarySearch(float[] data, float value)
+        static int BinarySearch(float[] data, float value)
         {
 
             int low = 0;
@@ -128,13 +128,13 @@ namespace AEther
 
         }
 
-        void ClearValue(float value)
+        public void ClearValue(float value)
         {
             Array.Fill(Buffer, value);
             Array.Fill(Sorted, value);
         }
 
-        void ClearRef()
+        public void ClearRef()
         {
             Position = 0;
             Array.Clear(Buffer, 0, Buffer.Length);
@@ -143,7 +143,7 @@ namespace AEther
                 FilterNone();
         }
 
-        void ClearOpt()
+        public void ClearOpt()
         {
 
             Position = 0;
@@ -159,14 +159,12 @@ namespace AEther
 
         }
 
-        void Check()
+        public void Check()
         {
-#if DEBUG
             var b = new float[Width];
             Array.Copy(Buffer, 0, b, 0, Width);
             Array.Sort(b);
             Debug.Assert(Sorted.SequenceEqual(b));
-#endif
         }
 
     }

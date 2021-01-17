@@ -5,14 +5,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 using SharpDX;
-using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
-using SharpDX.D3DCompiler;
 
 namespace AEther.WindowsForms
 {
     public class GraphicsResource<T> : IDisposable
-        where T : SharpDX.Direct3D11.Resource
+        where T : Resource
     {
 
         public string DebugName
@@ -95,15 +93,15 @@ namespace AEther.WindowsForms
             return SRView;
         }
 
-        public ContextMapping Map(DeviceContext context, int? subResource = default, MapMode? mode = default, MapFlags? flags = default)
+        public ContextMapping Map(int? subResource = default, MapMode? mode = default, MapFlags? flags = default)
         {
-            return new ContextMapping(context, Resource, subResource, mode, flags);
+            return new ContextMapping(Resource, subResource, mode, flags);
         }
 
-        public void Update<S>(DeviceContext context, S[] data, int subResource = 0, ResourceRegion? region = null)
+        public void Update<S>(S[] data, int subResource = 0, ResourceRegion? region = null)
             where S : struct
         {
-            context.UpdateSubresource(data, Resource, subResource, 0, 0, region);
+            Resource.Device.ImmediateContext.UpdateSubresource(data, Resource, subResource, 0, 0, region);
         }
 
         public void Dispose()

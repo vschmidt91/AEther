@@ -19,10 +19,9 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	float4 r = Spectrum1.Sample(Linear, uv);
 	float4 s = lerp(l, r, lr);
 
-	return float4(s.rgb * rcp(length(p)), 1);
-
-	//return float4(abs(normalize(p)), 0, 1);
-	return float4(.03 * abs(rcp(p)), 0, 1);
+	//return float4(s.rgb * rcp(length(p)), 1);
+	return float4(abs(normalize(p)), 0, 1);
+	//return float4(.03 * abs(rcp(p)), 0, 1);
 
 }
 

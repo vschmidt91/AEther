@@ -37,7 +37,7 @@ namespace AEther
             };
 
         public SampleFormat GetSampleFormat()
-            => new SampleFormat(GetSampleType(), (int)Format.SamplesPerSecond, Format.ChannelCount);
+            => new(GetSampleType(), (int)Format.SamplesPerSecond, Format.ChannelCount);
 
     }
 }

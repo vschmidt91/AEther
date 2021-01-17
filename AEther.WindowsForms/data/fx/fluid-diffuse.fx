@@ -7,11 +7,13 @@
 
 Texture2D<float4> Velocity : register(t0);
 
+cbuffer EffectConstants : register(b1)
+{
+	float Variance;
+};
+
 float4 PS(const PSDefaultin IN) : SV_Target
 {
-
-	float o = 0.5;
-	float _o2 = 1.0 / (o * o);
 
 	float4 v = 0;
 	float w = 0;
@@ -20,14 +22,15 @@ float4 PS(const PSDefaultin IN) : SV_Target
 		for (int dy = -KERNEL_SIZE; dy <= +KERNEL_SIZE; ++dy)
 		{
 			float f = dx * dx + dy * dy;
-			f = exp(-.5 * f * _o2);
+			f = exp(-.5 * f / Variance);
 			v += f * Velocity.Sample(Point, IN.UV, int2(dx, dy));
 			w += f;
 		}
 	}
 	v /= w;
 
-	return setBoundary(IN.UV, v);
+	v *= getBoundary(IN.UV);
+	return v;
 
 }
 

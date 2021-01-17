@@ -10,20 +10,26 @@ using Vector4 = System.Numerics.Vector4;
 
 namespace AEther.WindowsForms
 {
-    public class IFSElement : IDisposable
+    public class IFSElement : GraphicsComponent, IDisposable
     {
 
-        public readonly EffectVectorVariable WeightVariable;
-        public readonly Shader Shader;
+        public Vector4 Weight
+        {
+            get => WeightVariable.GetFloatVector().ToVector4();
+            set => WeightVariable.Set(value);
+        }
 
-        public Vector4 Weight { get; set; } = Vector4.One;
+        readonly EffectVectorVariable WeightVariable;
+        protected readonly Shader Shader;
+
         public float Speed { get; set; } = .1f;
 
-        public IFSElement(Shader shader)
+        public IFSElement(Graphics graphics, string shader)
+            : base(graphics)
         {
-            Shader = shader;
+            Shader = Graphics.CreateShader(shader);
             WeightVariable = Shader.Variables["Weight"].AsVector();
-            WeightVariable.GetVector<Vector4>();
+            Weight = Vector4.One;
         }
 
         public virtual void Update(float t)
@@ -35,8 +41,15 @@ namespace AEther.WindowsForms
             //    .ToVector4();
         }
 
+        public virtual void Draw(Texture2D source)
+        {
+            Shader.ShaderResources["Source"].SetResource(source.GetShaderResourceView());
+            Graphics.Draw(Shader);
+        }
+
         public virtual void Dispose()
         {
+            GC.SuppressFinalize(this);
             Shader.Dispose();
             WeightVariable.Dispose();
         }

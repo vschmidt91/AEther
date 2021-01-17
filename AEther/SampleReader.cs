@@ -29,6 +29,7 @@ namespace AEther
 
         public override void Dispose()
         {
+            GC.SuppressFinalize(this);
             Input.Dispose();
         }
 

@@ -77,7 +77,7 @@ namespace AEther
             => data.Concat(data.SelectMany(x => unfold(x).SelectDeep(unfold)));
 
         public static Vector3 Abs(this Vector3 t)
-            => new Vector3
+            => new()
             {
                 X = Math.Abs(t.X),
                 Y = Math.Abs(t.Y),
@@ -85,7 +85,7 @@ namespace AEther
             };
 
         public static Matrix4x4 ToDiagonalMatrix(this Vector4 v)
-            => new Matrix4x4(
+            => new(
                 v.X, 0, 0, 0,
                 0, v.Y, 0, 0,
                 0, 0, v.Z, 0,
