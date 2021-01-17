@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AEther.WindowsForms", "AEth
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AEther.NAudio", "AEther.NAudio\AEther.NAudio.csproj", "{D67E66B6-493A-478A-B116-0B5A30C16A90}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AEther.CSCore", "AEther.CSCore\AEther.CSCore.csproj", "{19357A38-648A-4B6B-8850-23FB53117C3B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AEther.CLI", "AEther.CLI\AEther.CLI.csproj", "{1D7C2841-9A2A-470A-B9CE-2F351BC38483}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AEther.Bass", "AEther.Bass\AEther.Bass.csproj", "{454D2A8B-27C4-4DF8-A655-38914BE2B1DD}"
@@ -24,6 +22,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TestFiles\test_input.wav = TestFiles\test_input.wav
 		TestFiles\test_sine.wav = TestFiles\test_sine.wav
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AEther.CSCore", "AEther.CSCore\AEther.CSCore.csproj", "{284C9EF5-2AA8-4A58-9202-A8BD151FCCAF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -43,10 +43,6 @@ Global
 		{D67E66B6-493A-478A-B116-0B5A30C16A90}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D67E66B6-493A-478A-B116-0B5A30C16A90}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D67E66B6-493A-478A-B116-0B5A30C16A90}.Release|Any CPU.Build.0 = Release|Any CPU
-		{19357A38-648A-4B6B-8850-23FB53117C3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{19357A38-648A-4B6B-8850-23FB53117C3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{19357A38-648A-4B6B-8850-23FB53117C3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{19357A38-648A-4B6B-8850-23FB53117C3B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1D7C2841-9A2A-470A-B9CE-2F351BC38483}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1D7C2841-9A2A-470A-B9CE-2F351BC38483}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D7C2841-9A2A-470A-B9CE-2F351BC38483}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -63,6 +59,10 @@ Global
 		{F7E3FE8C-8B2F-45A4-8542-1EFA073FEE30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F7E3FE8C-8B2F-45A4-8542-1EFA073FEE30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F7E3FE8C-8B2F-45A4-8542-1EFA073FEE30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{284C9EF5-2AA8-4A58-9202-A8BD151FCCAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{284C9EF5-2AA8-4A58-9202-A8BD151FCCAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{284C9EF5-2AA8-4A58-9202-A8BD151FCCAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{284C9EF5-2AA8-4A58-9202-A8BD151FCCAF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -33,7 +33,7 @@ namespace AEther
         public int TimeResolution { get; set; } = 1 << 8;
 
         [Category("DFT")]
-        public int MaxParallelization { get; set; } = 1;
+        public int MaxParallelization { get; set; } = -1;
 
         [Category("DFT")]
         public bool UseSIMD { get; set; } = true;
@@ -48,7 +48,7 @@ namespace AEther
         public float NormalizerFloorRoom { get; set; } = 0f;
 
         [Category("Normalizer")]
-        public float NormalizerHeadRoom { get; set; } = .05f;
+        public float NormalizerHeadRoom { get; set; } = 0f;
 
         public static SessionOptions ReadFromFile(string path)
         {

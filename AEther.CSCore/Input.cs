@@ -1,4 +1,6 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Pipelines;
@@ -75,6 +77,7 @@ namespace AEther.CSCore
 
         public override void Dispose()
         {
+            GC.SuppressFinalize(this);
             Device.Dispose();
         }
 

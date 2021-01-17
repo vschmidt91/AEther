@@ -238,7 +238,7 @@ namespace AEther.WindowsForms
             var now = DateTime.Now;
             if (LatencyUpdateInterval < now - LastLatencyUpdate)
             {
-                Text = $"Latencies: {Math.Round(Latency, 1)}";
+                Text = $"Latency: {Math.Round(Latency, 1)} ms";
                 LastLatencyUpdate = now;
                 Latency = 0;
             }

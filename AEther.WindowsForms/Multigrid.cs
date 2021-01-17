@@ -114,8 +114,9 @@ namespace AEther.WindowsForms
             Relaxation = new(graphics, width, height, format)
             {
                 Iterations = 1,
+                Scale = scale,
+                Omega = 1f,
             };
-            Relaxation.SetScale(scale);
 
             var coarseWidth = Width / 2;
             var coarseHeight = Height / 2;

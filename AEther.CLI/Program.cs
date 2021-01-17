@@ -14,6 +14,8 @@ using System.CommandLine;
 using System.Buffers;
 using System.Threading;
 
+using AEther.CSCore;
+
 namespace AEther.CLI
 {
     class Program

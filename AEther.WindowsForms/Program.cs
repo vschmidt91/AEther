@@ -9,8 +9,6 @@ using System.Runtime;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-using SharpDX.Windows;
-
 namespace AEther.WindowsForms
 {
     static class Program

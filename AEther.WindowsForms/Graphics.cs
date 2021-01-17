@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using SharpDX;
+using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
@@ -110,6 +111,12 @@ namespace AEther.WindowsForms
 
             Shaders = CreateShaderManager();
             Quad = new Model(Device, new Grid(2, 2));
+
+            //foreach(var shader in Shaders.Keys)
+            //{
+            //    var src = Shaders[shader].Disassemble(DisassemblyFlags.None);
+            //    File.WriteAllText(Path.Join("disassembly", shader + ".txt"), src);
+            //}
 
         }
 
@@ -288,10 +295,6 @@ namespace AEther.WindowsForms
 
         public void Draw(Shader shader, int? numInstances = default, int? techniqueIndex = default, int? indexOffset = default, int? vertexOffset = default, int? instanceOffset = default)
         {
-
-            //Context.InputAssembler.GetIndexBuffer(out var indexBuffer, out var _, out var indexBufferOffset);
-            //var indexOffsetValue = indexOffset ?? indexBufferOffset;
-            //var indexCount = indexBuffer.Description.SizeInBytes / sizeof(uint) - indexOffsetValue;
 
             var technique = shader[techniqueIndex ?? 0];
             for(int passIndex = 0; passIndex < technique.PassCount; ++passIndex)
