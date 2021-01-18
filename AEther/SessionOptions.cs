@@ -44,12 +44,6 @@ namespace AEther
         [Category("Splitter")]
         public float TimeWindow { get; set; } = .03f;
 
-        [Category("Normalizer")]
-        public float NormalizerFloorRoom { get; set; } = 0f;
-
-        [Category("Normalizer")]
-        public float NormalizerHeadRoom { get; set; } = 0f;
-
         public static SessionOptions ReadFromFile(string path)
         {
 

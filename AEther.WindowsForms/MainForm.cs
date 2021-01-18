@@ -69,7 +69,7 @@ namespace AEther.WindowsForms
                 new FluidState(Graphics),
                 new IFSState(Graphics),
             });
-            State.SelectedIndex = 3;
+            State.SelectedIndex = 0;
 
             Options.SelectedObject = new SessionOptions();
         }

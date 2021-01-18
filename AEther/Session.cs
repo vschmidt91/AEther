@@ -30,6 +30,7 @@ namespace AEther
         readonly byte[] Batch;
         readonly DFTProcessor[] DFT;
         readonly Splitter[] Splitter;
+        readonly MovingQuantileEstimator Ceiling;
 
         public Session(SampleSource source, SessionOptions? options = null)
         {
@@ -44,8 +45,9 @@ namespace AEther
                 .Select(c => new DFTProcessor(Domain, Format.SampleRate, Options.UseSIMD, Options.MaxParallelization))
                 .ToArray();
             Splitter = Enumerable.Range(0, Format.ChannelCount)
-                .Select(c => new Splitter(Domain, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow, Options.NormalizerFloorRoom, Options.NormalizerHeadRoom))
+                .Select(c => new Splitter(Domain, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow))
                 .ToArray();
+            Ceiling = new MovingQuantileEstimator(.9f, .01f);
 
         }
 
@@ -161,12 +163,26 @@ namespace AEther
 
         public async ValueTask RunDFTAsync(SampleEvent input, ChannelWriter<SampleEvent> outputs, CancellationToken cancel)
         {
+
+            var ceiling = Ceiling.Filter(input.Samples[0..input.SampleCount].Select(Math.Abs).Max());
+
             var output = new SampleEvent(Domain.Count, Format.ChannelCount, input.Time);
 
             for (var c = 0; c < Format.ChannelCount; ++c)
             {
-                DFT[c].Process(input.GetChannel(c));
-                DFT[c].Output(output.GetChannel(c));
+                var inputChannel = input.GetChannel(c);
+                var outputChannel = output.GetChannel(c);
+
+                if (0 < ceiling)
+                {
+                    for (var i = 0; i < inputChannel.Length; ++i)
+                    {
+                        inputChannel.Span[i] *= 4 / ceiling;
+                    }
+                }
+
+                DFT[c].Process(inputChannel);
+                DFT[c].Output(outputChannel);
             }
 
             input.Dispose();

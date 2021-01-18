@@ -22,19 +22,15 @@ namespace AEther
         readonly IFrequencyFilter<float> Frequency2;
         readonly ITimeFilter<float>[] Time2;
 
-        readonly float FloorRoom;
-        readonly MovingQuantile Ceiling;
-
         readonly float[] Buffer1;
         readonly float[] Buffer2;
         readonly float[] Buffer3;
         readonly float[] Buffer4;
 
-        public Splitter(Domain domain, float timeResolution, float frequencyWindow, float timeWindow, float floorRoom, float headRoom)
+        public Splitter(Domain domain, float timeResolution, float frequencyWindow, float timeWindow)
         {
 
             Domain = domain;
-            FloorRoom = floorRoom;
 
             int halfSizeFrequency = (int)(frequencyWindow * domain.Resolution);
             int halfSizeTime = (int)(timeWindow * timeResolution);
@@ -63,11 +59,9 @@ namespace AEther
             Time2 = Enumerable.Range(0, domain.Count)
                 .Select(k => new MovingMedian(1 + halfSizeTime))
                 .ToArray();
-
-            Ceiling = new MovingQuantile(1 - headRoom, 2f / (1 + 7 * timeResolution));
         }
 
-        public void Process(Memory<float> input, Memory<float> output)
+        public void Process(ReadOnlyMemory<float> input, Memory<float> output)
         {
 
             var src = input.Span;
@@ -81,7 +75,6 @@ namespace AEther
             }
             Frequency2.Filter(Buffer2, Buffer4);
 
-            var currentCeiling = float.NegativeInfinity;
             for (int k = 0; k < Domain.Count; ++k)
             {
 
@@ -89,37 +82,8 @@ namespace AEther
 
                 y[0] = Math.Max(0, Buffer2[k] - Buffer4[k]);
                 y[1] = Math.Max(0, Buffer1[k] - Buffer3[k]);
-                //y[2] = Math.Max(0, src[k] - Math.Max(y[0], y[1]))
                 y[2] = Math.Max(0, src[k] - y[0] - y[1]);
-                //y[3] = 0;
-
-                //y[0] = Math.Max(buffer2[k], buffer4[k]);
-                //y[1] = Math.Max(buffer1[k], buffer3[k]);
-                //y[2] = 0;
                 y[3] = 0;
-
-                for(int i = 0; i < 4; ++i)
-                {
-                    currentCeiling = Math.Max(currentCeiling, y[i]);
-                }
-
-                //for (int i = 0; i < 4; ++i)
-                //{
-                //    y[i] = y[i].Clip(0f, 1f);
-                //}
-            }
-
-            var ceiling = Ceiling.Filter(currentCeiling);
-
-            for (int k = 0; k < Domain.Count; ++k)
-            {
-
-                var y = dst.Slice(4 * k, 4);
-
-                for (int i = 0; i < 4; ++i)
-                {
-                    y[i] = ((1 + FloorRoom) * (y[i] / ceiling) - FloorRoom).Clamp(0, 1);
-                }
             }
 
         }
