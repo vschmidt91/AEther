@@ -59,6 +59,7 @@ namespace AEther
             Time2 = Enumerable.Range(0, domain.Count)
                 .Select(k => new MovingMedian(1 + halfSizeTime))
                 .ToArray();
+
         }
 
         public void Process(ReadOnlyMemory<float> input, Memory<float> output)
@@ -84,6 +85,12 @@ namespace AEther
                 y[1] = Math.Max(0, Buffer1[k] - Buffer3[k]);
                 y[2] = Math.Max(0, src[k] - y[0] - y[1]);
                 y[3] = 0;
+
+                float a = src[k] / (y[0] + y[1] + y[2]);
+                y[0] *= a;
+                y[1] *= a;
+                y[2] *= a;
+
             }
 
         }

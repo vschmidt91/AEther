@@ -22,21 +22,15 @@ namespace AEther.CLI
         static async Task Main(string path)
         {
 
-            path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_sine.wav");
+            path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
             path = new FileInfo(path).FullName;
 
-            var options = new SessionOptions
-            {
-                //TimeResolution = 10,
-            };
+            var options = new SessionOptions();
 
             using var inputStream = Console.OpenStandardInput();
             using var outputStream = new MemoryStream();
             //using var standardOutput = Console.OpenStandardOutput();
-            using var sampleSource = new SampleReader(File.OpenRead(path))
-            {
-                //BufferSize = 1 << 10,
-            };
+            using var sampleSource = new SampleReader(File.OpenRead(path));
 
             var session = new Session(sampleSource, options);
             var hash = MD5.Create();
@@ -58,8 +52,6 @@ namespace AEther.CLI
 
                 output.Dispose();
             }
-
-            Console.WriteLine(outputStream.Length);
 
         }
 

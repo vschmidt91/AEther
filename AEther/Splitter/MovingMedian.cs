@@ -67,26 +67,22 @@ namespace AEther
             if (++Position == Buffer.Length)
                 Position = 0;
 
-            if (value != oldValue)
+            //int i = BinarySearch(Sorted, oldValue);
+            int i = Array.BinarySearch(Sorted, oldValue);
+
+            if (value < oldValue)
             {
-
-                int i = BinarySearch(Sorted, oldValue);
-
-                if (value < oldValue)
-                {
-                    while (i > 0 && value < Sorted[i - 1])
-                        Sorted[i] = Sorted[--i];
-
-                }
-                else
-                {
-                    while (i < Buffer.Length - 1 && Sorted[i + 1] < value)
-                        Sorted[i] = Sorted[++i];
-                }
-
-                Sorted[i] = value;
+                while (i > 0 && value < Sorted[i - 1])
+                    Sorted[i] = Sorted[--i];
 
             }
+            else if (oldValue < value)
+            {
+                while (i < Buffer.Length - 1 && Sorted[i + 1] < value)
+                    Sorted[i] = Sorted[++i];
+            }
+
+            Sorted[i] = value;
 
             return Sorted[HalfWidth];
 
@@ -101,7 +97,7 @@ namespace AEther
                 return Filter(float.PositiveInfinity);
         }
 
-        static int BinarySearch(float[] data, float value)
+        public static int BinarySearch(float[] data, float value)
         {
 
             int low = 0;
