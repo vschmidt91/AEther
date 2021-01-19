@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -13,8 +15,8 @@ namespace AEther
         public readonly int HalfWidth;
         public int Width => 2 * HalfWidth + 1;
 
-        readonly float[] Sorted;
-        readonly float[] Buffer;
+        public readonly float[] Sorted;
+        public readonly float[] Buffer;
 
         int Position;
         bool NoneFlag;
@@ -64,25 +66,23 @@ namespace AEther
             float oldValue = Buffer[Position];
             Buffer[Position] = value;
 
-            if (++Position == Buffer.Length)
+            Position++;
+            if (Position == Buffer.Length)
                 Position = 0;
 
-            //int i = BinarySearch(Sorted, oldValue);
-            int i = Array.BinarySearch(Sorted, oldValue);
+            var left = oldValue < value;
+            var i = BinarySearch(Sorted, oldValue, left);
+            var j = BinarySearch(Sorted, value, !left);
 
-            if (value < oldValue)
+            if (oldValue < value)
             {
-                while (i > 0 && value < Sorted[i - 1])
-                    Sorted[i] = Sorted[--i];
-
+                Array.Copy(Sorted, i + 1, Sorted, i, j - i);
             }
-            else if (oldValue < value)
+            else if (value < oldValue)
             {
-                while (i < Buffer.Length - 1 && Sorted[i + 1] < value)
-                    Sorted[i] = Sorted[++i];
+                Array.Copy(Sorted, j, Sorted, j + 1, i - j);
             }
-
-            Sorted[i] = value;
+            Sorted[j] = value;
 
             return Sorted[HalfWidth];
 
@@ -97,30 +97,46 @@ namespace AEther
                 return Filter(float.PositiveInfinity);
         }
 
-        public static int BinarySearch(float[] data, float value)
+        public static int BinarySearch(float[] data, float value, bool left = true)
+            => left
+                ? BinarySearchLeft(data, value)
+                : BinarySearchRight(data, value);
+
+        public static int BinarySearchRight(float[] data, float value)
         {
 
-            int low = 0;
-            int high = data.Length - 1;
-            int mid;
-            float midValue;
+            var l = 0;
+            var r = data.Length;
 
-            while (low + 1 < high)
+            while(l < r)
             {
-                mid = (low + high) / 2;
-                midValue = data[mid];
-                if (value < midValue)
-                    high = mid - 1;
-                else if (midValue < value)
-                    low = mid + 1;
+                var m = (l + r) / 2;
+                if (value < data[m])
+                    r = m;
                 else
-                    return mid;
+                    l = m + 1;
             }
 
-            if (low + 1 == high && data[low] < value)
-                return low + 1;
-            else
-                return low;
+            return r - 1;
+
+        }
+
+        public static int BinarySearchLeft(float[] data, float value)
+        {
+
+            var l = 0;
+            var r = data.Length;
+
+            while (l < r)
+            {
+                var m = (l + r) / 2;
+                if (data[m] < value)
+                    l = m + 1;
+                else
+                    r = m;
+            }
+
+            return l;
 
         }
 
@@ -145,22 +161,14 @@ namespace AEther
             Position = 0;
             for (int i = 0; i < Width; ++i)
             {
-                Buffer[i] = ((i & 1) == 0)
-                    ? float.PositiveInfinity
-                    : float.NegativeInfinity;
+                Buffer[i] = ((i & 1) == 1)
+                    ? float.NegativeInfinity
+                    : float.PositiveInfinity;
                 Sorted[i] = i < HalfWidth
                     ? float.NegativeInfinity
                     : float.PositiveInfinity;
             }
 
-        }
-
-        public void Check()
-        {
-            var b = new float[Width];
-            Array.Copy(Buffer, 0, b, 0, Width);
-            Array.Sort(b);
-            Debug.Assert(Sorted.SequenceEqual(b));
         }
 
     }

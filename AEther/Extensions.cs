@@ -66,9 +66,7 @@ namespace AEther
 
         public static void Swap<T>(this T[] values, int i, int j)
         {
-            T tmp = values[i];
-            values[i] = values[j];
-            values[j] = tmp;
+            (values[i], values[j]) = (values[j], values[i]);
         }
 
         public static int NextMultipleOf(this int n, int k) => ((n - 1) / k + 1) * k;
