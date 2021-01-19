@@ -15,10 +15,8 @@ namespace AEther
 
         public int Size => Data.Length;
 
-        public T this[int i] => Data[Position - i + (Position < i ? Size : 0)];
-
-        public T[] Data;
-        public int Position;
+        readonly T[] Data;
+        int Position;
 
         public RingBuffer(int size, int? position = default)
             : this(new T[size], position)
@@ -43,11 +41,8 @@ namespace AEther
         {
             var count = Math.Min(Data.Length - Position, length);
             var memory = Data.AsMemory(Position, count);
-            Position += count;
-            if (Data.Length <= Position)
-            {
-                Position = 0;
-            }
+            Interlocked.Add(ref Position, count);
+            Interlocked.CompareExchange(ref Position, 0, Data.Length);
             return memory;
         }
 
