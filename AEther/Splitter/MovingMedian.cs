@@ -63,16 +63,15 @@ namespace AEther
         public float Filter(float value)
         {
 
-            float oldValue = Buffer[Position];
+            var oldValue = Buffer[Position];
             Buffer[Position] = value;
 
             Position++;
             if (Position == Buffer.Length)
                 Position = 0;
 
-            var left = oldValue < value;
-            var i = BinarySearch(Sorted, oldValue, left);
-            var j = BinarySearch(Sorted, value, !left);
+            var i = BinarySearch(Sorted, oldValue, oldValue < value);
+            var j = BinarySearch(Sorted, value, value < oldValue);
 
             if (oldValue < value)
             {

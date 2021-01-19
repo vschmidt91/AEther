@@ -177,7 +177,7 @@ namespace AEther
                 {
                     for (var i = 0; i < inputChannel.Length; ++i)
                     {
-                        inputChannel.Span[i] *= 4 / ceiling;
+                        inputChannel.Span[i] *= 6 / ceiling;
                     }
                 }
 

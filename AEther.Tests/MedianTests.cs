@@ -19,11 +19,11 @@ namespace AEther.Tests
         [Test]
         public void TestMedian()
         {
-            var width = 1;
+            var width = 10;
             var median = new MovingMedian(width);
             var b = new float[width];
             var rng = new Random(0);
-            for (var i = 0; i < 1 << 15; ++i)
+            for (var i = 0; i < 1 << 20; ++i)
             {
                 median.Filter((float)rng.NextDouble());
                 var expected = median.Buffer.OrderBy(v => v).ToArray();
