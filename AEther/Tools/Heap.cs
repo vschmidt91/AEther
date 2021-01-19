@@ -8,11 +8,10 @@ namespace AEther
 {
     public abstract class Heap<T> : IEnumerable<T>
     {
-        private const int InitialCapacity = 0;
         private const int GrowFactor = 2;
         private const int MinGrow = 1;
 
-        T[] Items = new T[InitialCapacity];
+        T[] Items = Array.Empty<T>();
         private int Tail = 0;
 
         public int Count => Tail;

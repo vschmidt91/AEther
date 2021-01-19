@@ -70,18 +70,20 @@ namespace AEther
             if (Position == Buffer.Length)
                 Position = 0;
 
-            var i = BinarySearch(Sorted, oldValue, oldValue < value);
-            var j = BinarySearch(Sorted, value, value < oldValue);
-
             if (oldValue < value)
             {
+                var i = BinarySearchLeft(Sorted, oldValue);
+                var j = BinarySearchRight(Sorted, value);
                 Array.Copy(Sorted, i + 1, Sorted, i, j - i);
+                Sorted[j] = value;
             }
             else if (value < oldValue)
             {
+                var i = BinarySearchRight(Sorted, oldValue);
+                var j = BinarySearchLeft(Sorted, value);
                 Array.Copy(Sorted, j, Sorted, j + 1, i - j);
+                Sorted[j] = value;
             }
-            Sorted[j] = value;
 
             return Sorted[HalfWidth];
 

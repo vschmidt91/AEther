@@ -20,15 +20,14 @@ namespace AEther
         public T[] Data;
         public int Position;
 
+        public RingBuffer(int size, int? position = default)
+            : this(new T[size], position)
+        { }
+
         public RingBuffer(T[] data, int? position = default)
         {
             Data = data;
             Position = position ?? 0;
-        }
-
-        public static RingBuffer<T> Create(int size, int? position = default)
-        {
-            return new RingBuffer<T>(new T[size], position);
         }
 
         public T Add(T value)
@@ -40,23 +39,16 @@ namespace AEther
             return oldValue;
         }
 
-        public void Advance(ReadOnlyMemory<T> values)
+        public Memory<T> GetMemory(int length)
         {
-            var dst = Data.AsMemory(Position, values.Length);
-            values.CopyTo(dst);
-            Position += values.Length;
+            var count = Math.Min(Data.Length - Position, length);
+            var memory = Data.AsMemory(Position, count);
+            Position += count;
             if (Data.Length <= Position)
             {
                 Position = 0;
             }
-        }
-
-        public (ReadOnlyMemory<T>, ReadOnlyMemory<T>) Add(ReadOnlyMemory<T> values)
-        {
-            var count = Math.Min(Data.Length - Position, values.Length);
-            var src = values.Slice(0, count);
-            var dst = Data.AsMemory(Position, count);
-            return (src, dst);
+            return memory;
         }
 
     }

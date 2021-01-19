@@ -33,7 +33,7 @@ namespace AEther
             M = (int)Math.Round(Q);
             States = new Complex[Window.Length];
             var length = (int)Math.Round(M / DFTFrequency);
-            Buffer = RingBuffer<float>.Create(length);
+            Buffer = new(length);
             Coefficients = new Complex[Window.Length];
             for (int j = 0; j < Window.Length; ++j)
             {
@@ -67,17 +67,17 @@ namespace AEther
         {
             while (0 < samples.Length)
             {
-                var (src, dst) = Buffer.Add(samples);
-                for (var i = 0; i < src.Length; ++i)
+                var dst = Buffer.GetMemory(samples.Length);
+                for (var i = 0; i < dst.Length; ++i)
                 {
-                    var input = src.Span[i] - dst.Span[i];
+                    var input = samples.Span[i] - dst.Span[i];
                     for (int j = 0; j < Window.Length; ++j)
                     {
                         States[j] = Coefficients[j] * States[j] + input;
                     }
                 }
-                Buffer.Advance(src);
-                samples = samples[src.Length..];
+                samples[0..dst.Length].CopyTo(dst);
+                samples = samples[dst.Length..];
             }
         }
     }

@@ -38,7 +38,7 @@ namespace AEther
 
         public static async IAsyncEnumerable<PipeHandle> ReadAllAsync(this PipeReader reader, [EnumeratorCancellation]CancellationToken cancel = default)
         {
-            while (true)
+            while (!cancel.IsCancellationRequested)
             {
                 var result = await reader.ReadAsync(cancel);
                 if (result.IsCompleted || result.IsCanceled)

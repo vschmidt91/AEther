@@ -23,7 +23,7 @@ namespace AEther.Tests
             var median = new MovingMedian(width);
             var b = new float[width];
             var rng = new Random(0);
-            for (var i = 0; i < 1 << 20; ++i)
+            for (var i = 0; i < 1 << 15; ++i)
             {
                 median.Filter((float)rng.NextDouble());
                 var expected = median.Buffer.OrderBy(v => v).ToArray();

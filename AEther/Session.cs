@@ -27,6 +27,7 @@ namespace AEther
         public readonly SampleSource Source;
         public readonly Domain Domain;
 
+        readonly int BatchSize;
         readonly byte[] Batch;
         readonly DFTProcessor[] DFT;
         readonly Splitter[] Splitter;
@@ -39,8 +40,8 @@ namespace AEther
             Domain = Options.Domain;
             Source = source;
 
-            var batchSize = Format.SampleRate / Options.TimeResolution;
-            Batch = new byte[batchSize * Format.Size];
+            BatchSize = Format.SampleRate / Options.TimeResolution;
+            Batch = new byte[BatchSize * Format.Size];
             DFT = Enumerable.Range(0, Format.ChannelCount)
                 .Select(c => new DFTProcessor(Domain, Format.SampleRate, Options.UseSIMD, Options.MaxParallelization))
                 .ToArray();
@@ -75,7 +76,7 @@ namespace AEther
             {
                 await foreach (var input in samplePipe.Reader.ReadAllAsync(cancel))
                 {
-                    await RunBatcherAsync(input, batcherChannel.Writer, cancel);
+                    RunBatcher(input, batcherChannel.Writer);
                 }
                 batcherChannel.Writer.Complete();
             }, cancel);
@@ -83,7 +84,7 @@ namespace AEther
             {
                 await foreach (var input in batcherChannel.Reader.ReadAllAsync(cancel))
                 {
-                    await RunDFTAsync(input, dftChannel.Writer, cancel);
+                    RunDFT(input, dftChannel.Writer);
                 }
                 dftChannel.Writer.Complete();
             }, cancel);
@@ -91,7 +92,7 @@ namespace AEther
             {
                 await foreach (var input in dftChannel.Reader.ReadAllAsync(cancel))
                 {
-                    await RunSplitterAsync(input, splitterChannel.Writer, cancel);
+                    RunSplitter(input, splitterChannel.Writer);
                 }
                 splitterChannel.Writer.Complete();
             }, cancel);
@@ -128,14 +129,13 @@ namespace AEther
             }
         }
 
-        public async ValueTask RunBatcherAsync(PipeHandle input, ChannelWriter<SampleEvent> outputs, CancellationToken cancel)
+        public void RunBatcher(PipeHandle input, ChannelWriter<SampleEvent> outputs)
         {
-            var batchSize = Batch.Length / Format.Size;
             long offset = 0;
             for (; offset + Batch.Length < input.Data.Length; offset += Batch.Length)
             {
                 input.Data.Slice(offset, Batch.Length).CopyTo(Batch);
-                var output = new SampleEvent(batchSize, Format.ChannelCount, DateTime.Now);
+                var output = new SampleEvent(BatchSize, Format.ChannelCount, DateTime.Now);
                 for (var c = 0; c < Format.ChannelCount; ++c)
                 {
                     var channel = output.GetChannel(c);
@@ -144,9 +144,10 @@ namespace AEther
                         channel.Span[i] = GetSample(Batch, i, c);
                     }
                 }
-                await outputs.WriteAsync(output, cancel);
+                outputs.TryWrite(output);
+                //await outputs.WriteAsync(output, cancel);
             }
-            input.AdvanceTo(input.Data.GetPosition(offset));
+            input.AdvanceTo(input.Data.GetPosition(offset), input.Data.End);
         }
 
         private float GetSample(byte[] source, int sampleIndex, int channel)
@@ -161,7 +162,7 @@ namespace AEther
             };
         }
 
-        public async ValueTask RunDFTAsync(SampleEvent input, ChannelWriter<SampleEvent> outputs, CancellationToken cancel)
+        public void RunDFT(SampleEvent input, ChannelWriter<SampleEvent> outputs)
         {
 
             var ceiling = Ceiling.Filter(input.Samples[0..input.SampleCount].Select(Math.Abs).Max());
@@ -186,10 +187,10 @@ namespace AEther
             }
 
             input.Dispose();
-            await outputs.WriteAsync(output, cancel);
+            outputs.TryWrite(output);
         }
 
-        public async ValueTask RunSplitterAsync(SampleEvent input, ChannelWriter<SampleEvent> outputs, CancellationToken cancel)
+        public void RunSplitter(SampleEvent input, ChannelWriter<SampleEvent> outputs)
         {
             var output = new SampleEvent(4 * Domain.Count, Format.ChannelCount, input.Time);
 
@@ -199,7 +200,7 @@ namespace AEther
             }
 
             input.Dispose();
-            await outputs.WriteAsync(output, cancel);
+            outputs.TryWrite(output);
         }
 
     }

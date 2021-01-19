@@ -36,7 +36,7 @@ namespace AEther
             M = (int)Math.Round(Q);
             States = ComplexVector<float>.Zero;
             var length = (int)Math.Round(M / DFTFrequency);
-            Buffer = RingBuffer<float>.Create(length);
+            Buffer = new(length);
             Coefficients = ComplexVector<float>.Zero;
             var coeff = new Complex[ComplexVector<float>.Count];
             for (int j = 0; j < window.Length; ++j)
@@ -73,14 +73,14 @@ namespace AEther
         {
             while (0 < samples.Length)
             {
-                var (src, dst) = Buffer.Add(samples);
-                for (var i = 0; i < src.Length; ++i)
+                var dst = Buffer.GetMemory(samples.Length);
+                for (var i = 0; i < dst.Length; ++i)
                 {
-                    var input = new Vector<float>(src.Span[i] - dst.Span[i]);
+                    var input = new Vector<float>(samples.Span[i] - dst.Span[i]);
                     States = Coefficients * States + input;
                 }
-                Buffer.Advance(src);
-                samples = samples[src.Length..];
+                samples[0..dst.Length].CopyTo(dst);
+                samples = samples[dst.Length..];
             }
         }
     }
