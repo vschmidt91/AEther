@@ -141,22 +141,25 @@ namespace AEther.WindowsForms
 
             Cancel = new();
 
-            string sampleSourceName = LoopbackEntry;
             SessionOptions? options = null;
+            SampleSource? sampleSource = null;
 
             void Init()
             {
-                sampleSourceName = (string)Input.SelectedItem;
-                options = (SessionOptions)Options.SelectedObject;
-                Spectrum = CreateSpectrum();
-                Histogram = CreateHistogram();
+                var sampleSourceName = Input.SelectedItem.ToString();
+                sampleSource = sampleSourceName is LoopbackEntry
+                    ? new Loopback()
+                    : new Recorder(sampleSourceName);
+
+                options = Options.SelectedObject as SessionOptions;
+                Spectrum = CreateSpectrum(sampleSource.Format.ChannelCount, options.FrequencyResolution);
+                Histogram = CreateHistogram(sampleSource.Format.ChannelCount, options.Domain.Count, options.TimeResolution);
             }
 
             await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, UIScheduler);
 
-            using SampleSource sampleSource = sampleSourceName is LoopbackEntry
-                ? new Loopback()
-                : new Recorder(sampleSourceName);
+            if (sampleSource is null)
+                return;
 
             var session = new Session(sampleSource, options ?? new());
 
@@ -171,13 +174,17 @@ namespace AEther.WindowsForms
                 {
                     var latency = (DateTime.Now - output.Time).TotalMilliseconds;
                     Latency = Math.Max(Latency, latency);
-                    for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
+                    for (int c = 0; c < Spectrum.Length; ++c)
                     {
                         var src = output.GetChannel(c);
                         lock (Spectrum[c])
                         {
                             Spectrum[c].Add(src.Span);
                         }
+                    }
+                    for (int c = 0; c < Histogram.Length; ++c)
+                    {
+                        var src = output.GetChannel(c);
                         lock (Histogram[c])
                         {
                             Histogram[c].Add(src.Span);
@@ -187,7 +194,9 @@ namespace AEther.WindowsForms
                     output.Dispose();
                 }
             }
-            catch(OperationCanceledException) { }
+            catch(Exception) { }
+
+            sampleSource.Dispose();
             IsRunning = false;
 
         }
@@ -261,65 +270,28 @@ namespace AEther.WindowsForms
 
         }
 
-        SpectrumAccumulator[] CreateSpectrum()
+        SpectrumAccumulator[] CreateSpectrum(int channelCount, int noteCount)
         {
-
-            var options = (SessionOptions)Options.SelectedObject;
-            var domainLength = options.Domain.Count;
-            var spectrum = new SpectrumAccumulator[2];
-
+            var spectrum = new SpectrumAccumulator[channelCount];
             for (var c = 0; c < spectrum.Length; ++c)
             {
                 spectrum[c] = UseFloatTextures
-                    ? new FloatSpectrum(Graphics, domainLength)
-                    : new ByteSpectrum(Graphics, domainLength);
+                    ? new FloatSpectrum(Graphics, noteCount)
+                    : new ByteSpectrum(Graphics, noteCount);
             }
-
-            //foreach (var key in Graphics.Shaders.Keys)
-            //{
-            //    var shader = Graphics.Shaders[key];
-            //    for (var c = 0; c < spectrum.Length; ++c)
-            //    {
-            //        if (shader.ShaderResources.TryGetValue("Spectrum" + c, out var variable))
-            //        {
-            //            variable.SetResource(spectrum[c].Texture.GetShaderResourceView());
-            //        }
-            //    }
-            //}
-
             return spectrum;
         }
 
-        Histogram[] CreateHistogram()
+        Histogram[] CreateHistogram(int channelCount, int noteCount, int historyCount)
         {
-
-            var options = (SessionOptions)Options.SelectedObject;
-            var domainLength = options.Domain.Count;
-            var histogramLength = options.TimeResolution;
-
-            var histogram = new Histogram[2];
-
+            var histogram = new Histogram[channelCount];
             for (var c = 0; c < histogram.Length; ++c)
             {
                 histogram[c] = UseFloatTextures
-                    ? new FloatHistogram(Graphics, domainLength, histogramLength, UseMapping)
-                    : new ByteHistogram(Graphics, domainLength, histogramLength, UseMapping);
+                    ? new FloatHistogram(Graphics, noteCount, historyCount, UseMapping)
+                    : new ByteHistogram(Graphics, noteCount, historyCount, UseMapping);
             }
-
-            //foreach (var key in Graphics.Shaders.Keys)
-            //{
-            //    var shader = Graphics.Shaders[key];
-            //    for (var c = 0; c < histogram.Length; ++c)
-            //    {
-            //        if (shader.ShaderResources.TryGetValue("Histogram" + c, out var variable))
-            //        {
-            //            variable.SetResource(histogram[c].Texture.GetShaderResourceView());
-            //        }
-            //    }
-            //}
-
             return histogram;
-
         }
 
         async Task StopAsync()

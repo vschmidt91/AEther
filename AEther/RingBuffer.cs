@@ -32,8 +32,11 @@ namespace AEther
         {
             var oldValue = Data[Position];
             Data[Position] = value;
-            Interlocked.Increment(ref Position);
-            Interlocked.CompareExchange(ref Position, 0, Data.Length);
+            Position++;
+            if (Position == Data.Length)
+            {
+                Position = 0;
+            }
             return oldValue;
         }
 
@@ -41,8 +44,11 @@ namespace AEther
         {
             var count = Math.Min(Data.Length - Position, length);
             var memory = Data.AsMemory(Position, count);
-            Interlocked.Add(ref Position, count);
-            Interlocked.CompareExchange(ref Position, 0, Data.Length);
+            Position += count;
+            if (Position == Data.Length)
+            {
+                Position = 0;
+            }
             return memory;
         }
 

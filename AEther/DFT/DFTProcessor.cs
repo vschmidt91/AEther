@@ -122,12 +122,7 @@ namespace AEther
             {
                 foreach (var filter in Filters)
                 {
-                    try
-                    {
-                        ProcessFilter(filter);
-                    }
-                    catch(ArgumentOutOfRangeException exc)
-                    { }
+                    ProcessFilter(filter);
                 }
             }
             else
