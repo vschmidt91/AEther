@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using System.Collections.Concurrent;
 using System.Linq;
 
+using AEther.DMX;
 using AEther.CSCore;
 
 using SharpDX.Direct3D11;
@@ -26,7 +27,6 @@ namespace AEther.WindowsForms
         const string LoopbackEntry = "Loopback";
         const bool UseMapping = true;
         const bool UseFloatTextures = false;
-
 
         bool IsRunning = false;
         bool IsRendering = false;
@@ -43,6 +43,8 @@ namespace AEther.WindowsForms
         readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
         readonly EffectScalarVariable HistogramShiftVariable;
         readonly TaskScheduler UIScheduler;
+
+        readonly DMXController DMX;
 
         public MainForm()
         {
@@ -72,6 +74,9 @@ namespace AEther.WindowsForms
             State.SelectedIndex = 0;
 
             Options.SelectedObject = new SessionOptions();
+
+            DMX = new DMXController("COM4");
+
         }
 
         protected override void OnResizeEnd(EventArgs e)
@@ -171,6 +176,8 @@ namespace AEther.WindowsForms
                 {
                     var latency = (DateTime.Now - output.Time).TotalMilliseconds;
                     Latency = Math.Max(Latency, latency);
+
+                    DMX.Process(output);
                     for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                     {
                         var src = output.GetChannel(c);
@@ -183,6 +190,7 @@ namespace AEther.WindowsForms
                             Histogram[c].Add(src.Span);
                         }
                     }
+
                     InputCounter++;
                     output.Dispose();
                 }
