@@ -59,7 +59,7 @@ namespace AEther
                 var (re, im) = windowed[j];
                 result += new Complex(re, im);
             }
-            return result;
+            return result / Buffer.Size;
         }
 
         public void Process(float newSample)

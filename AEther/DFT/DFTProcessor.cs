@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -20,10 +21,10 @@ namespace AEther
 
         public static readonly float[][] WindowCandidates = new[]
         {
-            NuttalWindow,
-            BlackmanWindow,
-            HannWindow,
             RectWindow,
+            HannWindow,
+            BlackmanWindow,
+            NuttalWindow,
         };
 
         readonly IDFTFilter[] Filters;
@@ -31,12 +32,14 @@ namespace AEther
 
         public DFTProcessor(Domain domain, float sampleRate, bool useSIMD = true, int maxParallelism = -1)
         {
+            
+            Console.WriteLine(Vector<float>.Count);
 
             var cosines = useSIMD
-                ? WindowCandidates.First(w => 2 * w.Length - 1 <= Vector<float>.Count)
+                ? WindowCandidates.Last(w => 2 * w.Length - 1 <= Vector<float>.Count)
                 : HannWindow;
 
-            //cosines = HannWindow;
+            //cosines = RectWindow;
 
             var window = CreateWindow(cosines);
 
@@ -47,22 +50,23 @@ namespace AEther
 
             if (cosines.Length == 1)
             {
-                Filters = Enumerable.Range(0, domain.Count)
-                    .Select(k => new DFTFilter(domain[k], domain.Resolution, sampleRate))
+                Filters = domain
+                    .Select(f => new DFTFilter(f, domain.Resolution, sampleRate))
                     .ToArray();
             }
             else if (useSIMD)
             {
-                Filters = Enumerable.Range(0, domain.Count)
-                    .Select(k => new WindowedDFTFilterSIMD(domain[k], domain.Resolution, sampleRate, window))
+                Filters = domain
+                    .Select(f => new WindowedDFTFilterSIMD(f, domain.Resolution, sampleRate, window))
                     .ToArray();
             }
             else
             {
-                Filters = Enumerable.Range(0, domain.Count)
-                    .Select(k => new WindowedDFTFilter(domain[k], domain.Resolution, sampleRate, window))
+                Filters = domain
+                    .Select(f => new WindowedDFTFilter(f, domain.Resolution, sampleRate, window))
                     .ToArray();
             }
+
 
         }
 
@@ -95,18 +99,9 @@ namespace AEther
             for (int k = 0; k < Filters.Length; ++k)
             {
                 var filter = Filters[k];
-                var bin = (float)filter.GetOutput().Magnitude;
+                var bin = 2 * filter.GetOutput().Magnitude;
+                dst.Span[k] = (float)Math.Log10(Math.Max(1e-10, bin));
 
-                if (bin == 0)
-                {
-                    dst.Span[k] = 0f;
-                }
-                else
-                {
-                    var scaled = 2 * bin / filter.Length;
-                    //dst.Span[k] = (float)Math.Max(-10, Math.Log(scaled));
-                    dst.Span[k] = scaled;
-                }
             }
         }
 

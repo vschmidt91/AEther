@@ -27,6 +27,8 @@ namespace AEther
         readonly float[] Buffer3;
         readonly float[] Buffer4;
 
+        readonly float[] KeyWeights;
+
         public Splitter(Domain domain, float timeResolution, float frequencyWindow, float timeWindow)
         {
 
@@ -35,6 +37,7 @@ namespace AEther
             int halfSizeFrequency = (int)(frequencyWindow * domain.Resolution);
             int halfSizeTime = (int)(timeWindow * timeResolution);
 
+            KeyWeights = new float[Domain.Resolution];
             Buffer1 = new float[Domain.Count];
             Buffer2 = new float[Domain.Count];
             Buffer3 = new float[Domain.Count];
@@ -76,22 +79,32 @@ namespace AEther
             }
             Frequency2.Filter(Buffer2, Buffer4);
 
+            Array.Clear(KeyWeights, 0, KeyWeights.Length);
+
             for (int k = 0; k < Domain.Count; ++k)
             {
 
                 var y = dst.Slice(4 * k, 4);
 
-                y[0] = Math.Max(0, Buffer2[k] - Buffer4[k]);
-                y[1] = Math.Max(0, Buffer1[k] - Buffer3[k]);
-                y[2] = Math.Max(0, src[k] - y[0] - y[1]);
+                var sinuoids = Math.Max(0, Buffer2[k] - Buffer4[k]);
+                var transients = Math.Max(0, Buffer1[k] - Buffer3[k]);
+
+                KeyWeights[k % KeyWeights.Length] += sinuoids * Domain.Resolution / Domain.Count;
+
+                y[0] = sinuoids;
+                y[1] = transients;
+                y[2] = 0;
                 y[3] = 0;
 
-                float a = src[k] / (y[0] + y[1] + y[2]);
-                y[0] *= a;
-                y[1] *= a;
-                y[2] *= a;
-
             }
+
+            //var key = Array.IndexOf(KeyWeights, KeyWeights.Max()) / (float)KeyWeights.Length;
+
+            //for (int k = 0; k < Domain.Count; ++k)
+            //{
+            //    var y = dst.Slice(4 * k, 4);
+            //    y[2] = KeyWeights[k % KeyWeights.Length];
+            //}
 
         }
 

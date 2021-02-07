@@ -39,7 +39,7 @@ namespace AEther
 
         public Complex GetOutput()
         {
-            return State;
+            return State / Buffer.Size;
         }
 
         public void Process(float newSample)

@@ -52,7 +52,7 @@ namespace AEther
 
         }
 
-        public IAsyncEnumerable<SampleEvent> RunAsync(CancellationToken cancel = default)
+        public async IAsyncEnumerable<SampleEvent> RunAsync([EnumeratorCancellation] CancellationToken cancel = default)
         {
 
             var samplePipe = new Pipe();
@@ -97,14 +97,14 @@ namespace AEther
                 splitterChannel.Writer.Complete();
             }, cancel);
 
-            return splitterChannel.Reader.ReadAllAsync(cancel);
+            //return splitterChannel.Reader.ReadAllAsync(cancel);
 
-            //await foreach(var output in splitterChannel.Reader.ReadAllAsync(cancel))
-            //{
-            //    yield return output;
-            //}
+            await foreach (var output in splitterChannel.Reader.ReadAllAsync(cancel))
+            {
+                yield return output;
+            }
 
-            //await Task.WhenAll(batcherTask, dftTask, splitterTask);
+            await Task.WhenAll(batcherTask, dftTask, splitterTask);
 
         }
 
@@ -174,13 +174,13 @@ namespace AEther
                 var inputChannel = input.GetChannel(c);
                 var outputChannel = output.GetChannel(c);
 
-                if (0 < ceiling)
-                {
-                    for (var i = 0; i < inputChannel.Length; ++i)
-                    {
-                        inputChannel.Span[i] *= 6 / ceiling;
-                    }
-                }
+                //if (0 < ceiling)
+                //{
+                //    for (var i = 0; i < inputChannel.Length; ++i)
+                //    {
+                //        inputChannel.Span[i] *= 1f / ceiling;
+                //    }
+                //}
 
                 DFT[c].Process(inputChannel);
                 DFT[c].Output(outputChannel);

@@ -27,15 +27,14 @@ namespace AEther.WindowsForms
         const bool UseMapping = true;
         const bool UseFloatTextures = false;
 
-
         bool IsRunning = false;
         bool IsRendering = false;
         CancellationTokenSource Cancel = new();
         SpectrumAccumulator[] Spectrum = Array.Empty<SpectrumAccumulator>();
         Histogram[] Histogram = Array.Empty<Histogram>();
-        double Latency = 0;
+        double Latency;
         DateTime LastLatencyUpdate = DateTime.MinValue;
-        int InputCounter = 0;
+        int InputCounter;
 
         readonly Graphics Graphics;
         readonly Shader HistogramShader;
@@ -152,14 +151,11 @@ namespace AEther.WindowsForms
                     : new Recorder(sampleSourceName);
 
                 options = Options.SelectedObject as SessionOptions;
-                Spectrum = CreateSpectrum(sampleSource.Format.ChannelCount, options.FrequencyResolution);
+                Spectrum = CreateSpectrum(sampleSource.Format.ChannelCount, options.Domain.Count);
                 Histogram = CreateHistogram(sampleSource.Format.ChannelCount, options.Domain.Count, options.TimeResolution);
             }
 
             await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, UIScheduler);
-
-            if (sampleSource is null)
-                return;
 
             var session = new Session(sampleSource, options ?? new());
 
@@ -228,7 +224,7 @@ namespace AEther.WindowsForms
             var now = DateTime.Now;
             if (LatencyUpdateInterval < now - LastLatencyUpdate)
             {
-                Text = $"Latency: {Math.Round(Latency, 1)} ms";
+                Text = $"Latency: {Math.Round(Latency, 0)} ms";
                 LastLatencyUpdate = now;
                 Latency = 0;
             }

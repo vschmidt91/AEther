@@ -21,10 +21,10 @@ namespace AEther
         public int BufferCapacity { get; set; } = -1;
 
         [Category("Domain")]
-        public float MinFrequency { get; set; } = 30f;
+        public float MinFrequency { get; set; } = 27.5f;
 
         [Category("Domain")]
-        public float MaxFrequency { get; set; } = 12000f;
+        public float MaxFrequency { get; set; } = 16000f;
 
         [Category("Domain")]
         public int FrequencyResolution { get; set; } = 12;

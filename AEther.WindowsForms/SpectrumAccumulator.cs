@@ -37,7 +37,7 @@ namespace AEther.WindowsForms
         where T : struct 
     {
 
-        readonly T[] Buffer;
+        public readonly T[] Buffer;
 
         protected SpectrumAccumulator(Graphics graphics, int length, SharpDX.DXGI.Format format)
             : base(CreateTexture(graphics, length, format))

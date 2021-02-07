@@ -50,7 +50,7 @@ namespace AEther
             {
                 result += Window[j] * States[j];
             }
-            return result;
+            return result / Buffer.Size;
         }
 
         public void Process(float newSample)
