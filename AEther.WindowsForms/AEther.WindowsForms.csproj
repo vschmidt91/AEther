@@ -140,6 +140,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AEther.CSCore\AEther.CSCore.csproj" />
+    <ProjectReference Include="..\AEther.DMX\AEther.DMX.csproj" />
     <ProjectReference Include="..\AEther.NAudio\AEther.NAudio.csproj" />
     <ProjectReference Include="..\AEther\AEther.csproj" />
   </ItemGroup>
