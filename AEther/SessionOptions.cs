@@ -24,7 +24,7 @@ namespace AEther
         public float MinFrequency { get; set; } = 27.5f;
 
         [Category("Domain")]
-        public float MaxFrequency { get; set; } = 16000f;
+        public float MaxFrequency { get; set; } = 12000f;
 
         [Category("Domain")]
         public int FrequencyResolution { get; set; } = 12;

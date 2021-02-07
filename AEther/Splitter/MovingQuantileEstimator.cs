@@ -48,8 +48,8 @@ namespace AEther
 
         public override float Filter(float value)
         {
-            var mix = Math.Max(Mix, Math.Abs(State));
-            State += Mix * mix * (Math.Sign(value - State) + 2 * Quantile - 1);
+            //var mix = Math.Max(Mix, Math.Abs(State));
+            State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);
             //State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);
             if (float.IsNaN(value))
                 throw new Exception();

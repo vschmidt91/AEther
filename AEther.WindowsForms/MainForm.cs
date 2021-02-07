@@ -44,7 +44,7 @@ namespace AEther.WindowsForms
         readonly EffectScalarVariable HistogramShiftVariable;
         readonly TaskScheduler UIScheduler;
 
-        readonly DMXController DMX;
+        DMXController DMX;
 
         public MainForm()
         {
@@ -74,8 +74,6 @@ namespace AEther.WindowsForms
             State.SelectedIndex = 0;
 
             Options.SelectedObject = new SessionOptions();
-
-            DMX = new DMXController("COM4");
 
         }
 
@@ -164,6 +162,7 @@ namespace AEther.WindowsForms
             await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, UIScheduler);
 
             var session = new Session(sampleSource, options ?? new());
+            var dmx = new DMXController("COM4", options.Domain, 5 * options.TimeResolution);
 
             Cancel.Token.Register(sampleSource.Stop);
             var outputs = session.RunAsync();
@@ -177,7 +176,7 @@ namespace AEther.WindowsForms
                     var latency = (DateTime.Now - output.Time).TotalMilliseconds;
                     Latency = Math.Max(Latency, latency);
 
-                    DMX.Process(output);
+                    dmx.Process(output);
                     for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                     {
                         var src = output.GetChannel(c);
@@ -201,6 +200,7 @@ namespace AEther.WindowsForms
             }
             catch(Exception) { }
 
+            await dmx.DisposeAsync();
             sampleSource.Dispose();
             IsRunning = false;
 

@@ -101,7 +101,6 @@ namespace AEther
                 var filter = Filters[k];
                 var bin = 2 * filter.GetOutput().Magnitude;
                 dst.Span[k] = (float)Math.Log10(Math.Max(1e-10, bin));
-
             }
         }
 

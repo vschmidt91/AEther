@@ -165,22 +165,12 @@ namespace AEther
         public void RunDFT(SampleEvent input, ChannelWriter<SampleEvent> outputs)
         {
 
-            var ceiling = Ceiling.Filter(input.Samples[0..input.SampleCount].Select(Math.Abs).Max());
-
             var output = new SampleEvent(Domain.Count, Format.ChannelCount, input.Time);
 
             for (var c = 0; c < Format.ChannelCount; ++c)
             {
                 var inputChannel = input.GetChannel(c);
                 var outputChannel = output.GetChannel(c);
-
-                //if (0 < ceiling)
-                //{
-                //    for (var i = 0; i < inputChannel.Length; ++i)
-                //    {
-                //        inputChannel.Span[i] *= 1f / ceiling;
-                //    }
-                //}
 
                 DFT[c].Process(inputChannel);
                 DFT[c].Output(outputChannel);
