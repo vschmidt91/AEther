@@ -10,33 +10,27 @@ namespace AEther.NAudio
     public class Recorder : Input
     {
 
-        readonly string Name;
+        public Recorder(string deviceName)
+            : base(CreateDevice(deviceName))
+        { }
 
-        public Recorder(WaveInCapabilities device)
-            : base(CreateDevice(device))
-        {
-            Name = device.ProductName;
-        }
-
-        public static WaveInCapabilities[] GetAvailableDevices()
+        public static string[] GetAvailableDeviceNames()
         {
             return Enumerable.Range(0, WaveIn.DeviceCount)
                 .Select(i => WaveIn.GetCapabilities(i))
+                .Select(d => d.ProductName)
                 .ToArray();
         }
 
-        static WaveIn CreateDevice(WaveInCapabilities device)
+        static WaveIn CreateDevice(string deviceName)
         {
-            var devices = GetAvailableDevices();
-            var deviceIndex = Array.FindIndex(devices, d => d.NameGuid == device.NameGuid);
+            var devices = GetAvailableDeviceNames();
+            var deviceIndex = Array.FindIndex(devices, d => d == deviceName);
             return new WaveIn()
             {
                 DeviceNumber = deviceIndex
             };
         }
-
-        public override string ToString()
-            => Name;
 
     }
 }

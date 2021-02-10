@@ -44,6 +44,15 @@ namespace AEther
         [Category("Splitter")]
         public float TimeWindow { get; set; } = .03f;
 
+        [Category("DMX")]
+        public int DMXPort { get; set; } = 4;
+
+        [Category("DMX")]
+        public float SinuoidThreshold { get; set; } = 0.1f;
+
+        [Category("DMX")]
+        public float TransientThreshold { get; set; } = 0.05f;
+
         public static SessionOptions ReadFromFile(string path)
         {
 

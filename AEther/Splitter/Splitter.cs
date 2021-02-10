@@ -93,6 +93,7 @@ namespace AEther
 
                 y[0] = sinuoids;
                 y[1] = transients;
+                //y[2] = 1 + .1f * src[k];
                 y[2] = 0;
                 y[3] = 0;
 

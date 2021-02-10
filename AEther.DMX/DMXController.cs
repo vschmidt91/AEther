@@ -17,22 +17,27 @@ namespace AEther.DMX
         readonly Task WriterTask;
         readonly CancellationTokenSource Cancel;
         readonly byte[] Frame;
+        readonly DMXChannel[] Channels;
+        readonly Domain Domain;
+
+        readonly float[] KeyWeights;
+        int Key;
+
         readonly MovingQuantileEstimator SinuoidFilter;
         readonly MovingQuantileEstimator TransientFilter;
 
-        readonly DMXChannel[] Channels = EuroliteLEDMultiFXBar.Create();
+        public float SinuoidThreshold;
+        public float TransientThreshold;
 
-        public int Key;
-
-        readonly Domain Domain;
-        readonly float[] KeyWeights;
-
-        public DMXController(string comPort, Domain domain, int timeResolution)
+        public DMXController(string comPort, Domain domain)
         {
+            Channels = EuroliteLEDMultiFXBar.Create();
             Domain = domain;
+
+            SinuoidFilter = new MovingQuantileEstimator(.95f, .003f);
+            TransientFilter = new MovingQuantileEstimator(.95f, .003f);
+
             KeyWeights = new float[Domain.Resolution];
-            SinuoidFilter = new MovingQuantileEstimator(.95f, 2f / timeResolution);
-            TransientFilter = new MovingQuantileEstimator(.95f, 2f / timeResolution);
             var ports = SerialPort.GetPortNames();
             Serial = new SerialPort(comPort, Baudrate)
             {
@@ -61,41 +66,44 @@ namespace AEther.DMX
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
             for (int k = 0; k < Domain.Count; ++k)
             {
-                var y = evt.Samples.AsSpan(4 * k, 4);
-                KeyWeights[k % KeyWeights.Length] += y[0] * Domain.Resolution / Domain.Count;
+                KeyWeights[k % KeyWeights.Length] += evt.Samples[4 * k];
             }
-            var key = Array.IndexOf(KeyWeights, KeyWeights.Max());
+            var newWeight = KeyWeights.Max();
+            var newKey = Array.IndexOf(KeyWeights, newWeight);
+            //if(newKey != Key && 1.3 * KeyWeights[Key] < newWeight)
+            {
+                Key = newKey;
+            }
+
+            var sum = new float[4];
+            var scale = sum.Length / (float)evt.SampleCount;
+            for (var i = 0; i < evt.SampleCount; ++i)
+            {
+                sum[i % sum.Length] += scale * evt.Samples[i];
+            }
+
+            //var sinuoid = sum[0] / SinuoidThreshold;
+            //var transients = sum[1] / TransientThreshold;
+
+            var sinuoid = sum[0] / SinuoidFilter.Filter(sum[0]);
+            var transients = sum[1] / TransientFilter.Filter(sum[1]);
 
             Array.Clear(Frame, 0, Frame.Length);
-            var sum = new float[4];
-            for(var i = 0; i < evt.SampleCount; ++i)
-            {
-                sum[i % sum.Length] += evt.Samples[i];
-            }
-            for (var i = 0; i < sum.Length; ++i)
-            {
-                sum[i] *= sum.Length / (float)evt.SampleCount;
-            }
-
-            //var sinuoid = sum[0] / SinuoidFilter.Filter(sum[0]);
-            //var transients = sum[1] / TransientFilter.Filter(sum[1]);
-            var sinuoid = sum[0] / 0.1f;
-            var transients = sum[1] / 0.35f;
-            //var sinuoid = sum[0] / Math.Max(0.1f, SinuoidFilter.Filter(sum[0]));
-            //var transients = sum[1] / Math.Max(0.3f, TransientFilter.Filter(sum[1]));
-
             for (var i = 0; i < Channels.Length; ++i)
             {
                 var channel = Channels[i];
                 if(channel is DMXChannelDiscrete discrete)
                 {
-                    if(sinuoid < 1)
+                    if (sinuoid < 1)
                     {
-                        discrete.Index = 0;
+                        //discrete.Index = 0;
                     }
-                    else if (1 < discrete.Count)
+                    else
                     {
-                        discrete.Index = 1 + (key % (discrete.Count - 1));
+                        if(1 < discrete.Count)
+                        {
+                            discrete.Index = 1 + (Key % (discrete.Count - 1));
+                        }
                     }
                 }
                 else if(channel is DMXChannelContinuous continuous)
@@ -105,38 +113,6 @@ namespace AEther.DMX
                 Frame[i + 1] = channel.ByteValue;
             }
 
-            //var sinuoids = (byte)(255 * sum[0]);
-
-            //byte transients = 0;
-            //if(.2 < sum[1])
-            //{
-            //    transients = 20;
-            //}
-            //else if (.1 < sum[1])
-            //{
-            //    transients = 200;
-            //}
-
-            ////var transients = (byte)(sum[1] / transientFiltered switch
-            ////{
-            ////    < 1f => 20,
-            ////    _ => 200,
-            ////});
-            ////var transients = (byte)(transientFiltered < sum[1] ? 20 : 200);
-
-            //var noise = (byte)(255 * sum[2]);
-            //var residual = (byte)(255 * sum[3]);
-            //Frame[1] = noise;
-            //Frame[2] = noise;
-            //Frame[3] = 0;
-            //Frame[4] = noise;
-            //Frame[5] = 0;
-            //Frame[6] = sinuoids;
-            //Frame[7] = 0;
-            //Frame[8] = sinuoids;
-            //Frame[9] = transients;
-            ////Frame[9] = (byte)(15f * 255 * sum[1]);
-            //Frame[10] = 0;
         }
 
         public async ValueTask DisposeAsync()

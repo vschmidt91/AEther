@@ -13,7 +13,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 
 using AEther.DMX;
-using AEther.CSCore;
+using AEther.NAudio;
 
 using SharpDX.Direct3D11;
 using System.Threading.Tasks.Dataflow;
@@ -43,8 +43,6 @@ namespace AEther.WindowsForms
         readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
         readonly EffectScalarVariable HistogramShiftVariable;
         readonly TaskScheduler UIScheduler;
-
-        DMXController DMX;
 
         public MainForm()
         {
@@ -144,25 +142,37 @@ namespace AEther.WindowsForms
 
             Cancel = new();
 
-            SessionOptions? options = null;
-            SampleSource? sampleSource = null;
-
-            void Init()
+            (AudioDevice, SessionOptions) Init()
             {
-                var sampleSourceName = Input.SelectedItem.ToString();
-                sampleSource = sampleSourceName is LoopbackEntry
+                var deviceName = Input.SelectedItem.ToString();
+                AudioDevice device = deviceName is LoopbackEntry
                     ? new Loopback()
-                    : new Recorder(sampleSourceName);
+                    : new Recorder(deviceName ?? string.Empty);
+                if(Options.SelectedObject is not SessionOptions options)
+                {
+                    throw new InvalidCastException();
+                }
+                Spectrum = CreateSpectrum(device.Format.ChannelCount, options.Domain.Count);
+                Histogram = CreateHistogram(device.Format.ChannelCount, options.Domain.Count, options.TimeResolution);
 
-                options = Options.SelectedObject as SessionOptions;
-                Spectrum = CreateSpectrum(sampleSource.Format.ChannelCount, options.Domain.Count);
-                Histogram = CreateHistogram(sampleSource.Format.ChannelCount, options.Domain.Count, options.TimeResolution);
+
+                return (device, options);
             }
 
-            await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, UIScheduler);
+            var (device, options) = await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, UIScheduler);
+            var sampleSource = new AudioInput(device);
+            var session = new Session(sampleSource, options);
 
-            var session = new Session(sampleSource, options ?? new());
-            var dmx = new DMXController("COM4", options.Domain, 5 * options.TimeResolution);
+            DMXController? dmx = null;
+            if(0 < options.DMXPort)
+            {
+                var comPort = $"COM{options.DMXPort}";
+                dmx = new DMXController(comPort, options.Domain)
+                {
+                    SinuoidThreshold = options.SinuoidThreshold,
+                    TransientThreshold = options.TransientThreshold,
+                };
+            }
 
             Cancel.Token.Register(sampleSource.Stop);
             var outputs = session.RunAsync();
@@ -176,7 +186,7 @@ namespace AEther.WindowsForms
                     var latency = (DateTime.Now - output.Time).TotalMilliseconds;
                     Latency = Math.Max(Latency, latency);
 
-                    dmx.Process(output);
+                    dmx?.Process(output);
                     for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                     {
                         var src = output.GetChannel(c);
@@ -200,7 +210,10 @@ namespace AEther.WindowsForms
             }
             catch(Exception) { }
 
-            await dmx.DisposeAsync();
+            if(dmx is not null)
+            {
+                await dmx.DisposeAsync();
+            }
             sampleSource.Dispose();
             IsRunning = false;
 

@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace AEther
 {
-    public class SampleReader : SampleSource
+    public class WAVReader : SampleSource
     {
 
         public override SampleFormat Format { get; }
@@ -20,7 +20,7 @@ namespace AEther
         readonly Stream Input;
         readonly CancellationTokenSource Cancel;
 
-        public SampleReader(Stream input)
+        public WAVReader(Stream input)
         {
             Input = input;
             Format = WAVHeader.FromStream(input).GetSampleFormat();

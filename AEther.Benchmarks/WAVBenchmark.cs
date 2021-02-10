@@ -42,7 +42,7 @@ namespace AEther.Benchmarks
             path = new FileInfo(path).FullName;
             using var inputStream = File.OpenRead(path);
             using var outputStream = new MemoryStream();
-            using var sampleSource = new SampleReader(inputStream);
+            using var sampleSource = new WAVReader(inputStream);
 
             var session = new Session(sampleSource, Options);
             var outputFloats = new float[4 * Options.Domain.Count];

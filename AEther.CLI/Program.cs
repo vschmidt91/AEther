@@ -30,7 +30,7 @@ namespace AEther.CLI
             using var inputStream = Console.OpenStandardInput();
             using var outputStream = new MemoryStream();
             //using var standardOutput = Console.OpenStandardOutput();
-            using var sampleSource = new SampleReader(File.OpenRead(path));
+            using var sampleSource = new WAVReader(File.OpenRead(path));
 
             var session = new Session(sampleSource, options);
             var hash = MD5.Create();

@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Buffers;
-using System.IO;
-using System.IO.Pipelines;
+using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Channels;
 using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 
 namespace AEther
 {
-    public abstract class SampleSource : IDisposable
+    public abstract class AudioDevice : IDisposable
     {
 
         public EventHandler<ReadOnlyMemory<byte>>? OnDataAvailable;
@@ -19,11 +14,12 @@ namespace AEther
 
         public abstract SampleFormat Format { get; }
 
+        public virtual void Dispose()
+        { }
+
         public abstract void Start();
 
         public abstract void Stop();
-
-        public abstract void Dispose();
 
     }
 }

@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.IO;
 using System.IO.Pipelines;
 using System.Numerics;
@@ -20,7 +21,7 @@ using CSCore.Streams;
 
 namespace AEther.CSCore
 {
-    public abstract class Input : SampleSource
+    public abstract class Input : AudioDevice
     {
 
         public override SampleFormat Format { get; }
@@ -73,7 +74,6 @@ namespace AEther.CSCore
         public override void Stop()
         {
             Device.Stop();
-            base.Stop();
         }
 
         public override void Dispose()

@@ -17,7 +17,7 @@ using System.Buffers;
 
 namespace AEther.NAudio
 {
-    public abstract class Input : SampleSource
+    public abstract class Input : AudioDevice
     {
 
         public override SampleFormat Format { get; }
