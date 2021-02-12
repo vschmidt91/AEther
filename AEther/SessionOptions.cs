@@ -45,7 +45,7 @@ namespace AEther
         public float TimeWindow { get; set; } = .03f;
 
         [Category("DMX")]
-        public int DMXPort { get; set; } = 4;
+        public int DMXPort { get; set; } = 0;
 
         [Category("DMX")]
         public float SinuoidThreshold { get; set; } = 0.1f;
