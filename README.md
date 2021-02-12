@@ -4,7 +4,7 @@
 
 collection of modules for Audio analysis, Visualization with DirectX/DMX and stuff.
 
-![](doc/flowchart.png)
+<img src="/doc/flowchart.svg" width="100%">
 
 ## Project Layout
 
