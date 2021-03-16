@@ -31,5 +31,25 @@ namespace AEther.Tests
             }
         }
 
+        [Test]
+        public void TestMedian2()
+        {
+            var width = 10;
+            var median1 = new MovingMedian(width);
+            for (var i = 0; i < 1 + 2 * width; ++i)
+            {
+                median1.Filter(0f);
+            }
+            var median2 = new MovingMedianBST<float>(Enumerable.Repeat(0f, 2 * width + 1));
+            var rng = new Random(0);
+            for (var i = 0; i < 1 << 20; ++i)
+            {
+                var x = (float)rng.NextDouble();
+                var m1 = median1.Filter(x);
+                var m2 = median2.Filter(x);
+                Assert.AreEqual(m1, m2);
+            }
+        }
+
     }
 }

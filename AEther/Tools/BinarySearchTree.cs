@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AEther.Tools
+namespace AEther
 {
     public class BinarySearchTree<T> : BinaryTree<T, BinarySearchTree<T>>
     {
@@ -45,7 +45,7 @@ namespace AEther.Tools
             }
         }
 
-        public BinarySearchTree<T> Remove(T oldItem)
+        public BinarySearchTree<T>? Remove(T oldItem)
         {
             var comparison = Comparer.Compare(oldItem, Item);
             if(comparison == 0)
@@ -62,21 +62,35 @@ namespace AEther.Tools
                 {
                     //var newLeft, predecessorItem = Left.RemoveRightmost();
                     //return new BinarySearchTree<T>(predecessorItem, newLeft, Right, Comparer);
-                    var newRight, successorItem = Right.RemoveLeftmost();
+                    var (newRight, successorItem) = Right.RemoveLeftmost();
                     return new BinarySearchTree<T>(successorItem, Left, newRight, Comparer);
                 }
             }
             else if(comparison < 0)
             {
-                return new BinarySearchTree<T>(Item, Left.Remove(oldItem), Right, Comparer);
+                if(Left == null)
+                {
+                    throw new KeyNotFoundException();
+                }
+                else
+                {
+                    return new BinarySearchTree<T>(Item, Left.Remove(oldItem), Right, Comparer);
+                }
             }
             else
             {
-                return new BinarySearchTree<T>(Item, Left, Right.Remove(oldItem), Comparer);
+                if (Right == null)
+                {
+                    throw new KeyNotFoundException();
+                }
+                else
+                {
+                    return new BinarySearchTree<T>(Item, Left, Right.Remove(oldItem), Comparer);
+                }
             }
         }
 
-        public (BinarySearchTree<T>, T) RemoveRightmost()
+        public (BinarySearchTree<T>?, T) RemoveRightmost()
         {
             if(Right == null)
             {
@@ -84,12 +98,12 @@ namespace AEther.Tools
             }
             else
             {
-                var newRight, rightmostItem = Right.RemoveRightmost();
+                var (newRight, rightmostItem) = Right.RemoveRightmost();
                 return (new BinarySearchTree<T>(Item, Left, newRight, Comparer), rightmostItem);
             }
         }
 
-        public (BinarySearchTree<T>, T) RemoveLeftmost()
+        public (BinarySearchTree<T>?, T) RemoveLeftmost()
         {
             if (Left == null)
             {
@@ -97,7 +111,7 @@ namespace AEther.Tools
             }
             else
             {
-                var newLeft, leftmostItem = Left.RemoveLeftmost();
+                var (newLeft, leftmostItem) = Left.RemoveLeftmost();
                 return (new BinarySearchTree<T>(Item, newLeft, Right, Comparer), leftmostItem);
             }
         }

@@ -31,7 +31,6 @@ namespace AEther
         readonly byte[] Batch;
         readonly DFTProcessor[] DFT;
         readonly Splitter[] Splitter;
-        readonly MovingQuantileEstimator Ceiling;
 
         public Session(SampleSource source, SessionOptions? options = null)
         {
@@ -48,7 +47,6 @@ namespace AEther
             Splitter = Enumerable.Range(0, Format.ChannelCount)
                 .Select(c => new Splitter(Domain, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow))
                 .ToArray();
-            Ceiling = new MovingQuantileEstimator(.9f, .01f);
 
         }
 
@@ -60,10 +58,10 @@ namespace AEther
             var dftChannel = CreateChannel<SampleEvent>();
             var splitterChannel = CreateChannel<SampleEvent>();
 
-            Source.OnDataAvailable += (sender, data) =>
+            Source.OnDataAvailable += async (sender, data) =>
             {
                 samplePipe.Writer.Write(data.Span);
-                _ = samplePipe.Writer.FlushAsync();
+                await samplePipe.Writer.FlushAsync();
             };
 
             Source.OnStopped += async (sender, data) =>

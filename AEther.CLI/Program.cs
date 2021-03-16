@@ -22,8 +22,8 @@ namespace AEther.CLI
         static async Task Main(string path)
         {
 
-            path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
-            path = new FileInfo(path).FullName;
+            //path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
+            //path = new FileInfo(path).FullName;
 
             var options = new SessionOptions();
 

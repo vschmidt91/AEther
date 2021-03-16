@@ -11,8 +11,8 @@ namespace AEther.Benchmarks
     {
         static void Main()
         {
-            //new WAVBenchmark().RunA();
-            BenchmarkRunner.Run<WAVBenchmark>();
+            //BenchmarkRunner.Run<WAVBenchmark>();
+            BenchmarkRunner.Run<MedianBenchmark>();
         }
     }
 }

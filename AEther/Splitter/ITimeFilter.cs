@@ -9,7 +9,5 @@ namespace AEther
 
         T Filter(T x);
 
-        void Clear();
-
     }
 }

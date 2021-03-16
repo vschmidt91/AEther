@@ -42,7 +42,7 @@ namespace AEther
 
             //    Items[Tail++] = item;
             //}
-            Items = collection.Concat(Enumerable.Repeat<T>(default, 1)).ToArray();
+            Items = collection.Concat(collection.Take(1)).ToArray();
             Tail = Items.Length - 1;
 
             for (var i = Parent(Tail - 1); 0 <= i; i--)
