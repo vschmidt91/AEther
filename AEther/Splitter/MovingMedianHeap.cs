@@ -11,99 +11,77 @@ using System.Xml.Serialization;
 namespace AEther
 { 
 
-    public class MovingMedianHeap
+    public class MovingMedianHeap<T> : ITimeFilter<T>
     {
 
-        readonly MaxHeap<float> Below;
-        readonly MinHeap<float> Above;
+        readonly Heap<T> Below;
+        readonly Heap<T> Above;
 
-        readonly float[] Buffer;
         int Position = 0;
 
-        public float Median { get; protected set; } = 0;
+        public T Median => Below.Size < Above.Size ? Above.Root : Below.Root;
 
-        public MovingMedianHeap(int size)
+        readonly T[] Buffer;
+        readonly Comparer<T> Comparer;
+
+        public MovingMedianHeap(IEnumerable<T> items, Comparer<T>? comparer = null)
         {
-            var items = Enumerable.Repeat(0f, size);
+            Comparer = comparer ?? Comparer<T>.Default;
             Buffer = items.ToArray();
-            Below = new(items.Take(size / 2));
-            Above = new(items.Skip(size / 2));
-            SetMedian();
+            Below = new(items.Take(Buffer.Length / 2), Comparer<T>.Create((x, y) => -Comparer.Compare(x, y)));
+            Above = new(items.Skip(Buffer.Length / 2), Comparer);
         }
 
-        public void Add(float value)
+        public T Filter(T value)
         {
 
             var oldValue = Buffer[Position];
             Buffer[Position] = value;
+            Position = (Position + 1) % Buffer.Length;
 
-            Position += 1;
-            if (Position == Buffer.Length)
+            var median = Median;
+            var comparison = Comparer.Compare(oldValue, median);
+            if (comparison == 0)
             {
-                Position = 0;
-            }
-
-            if (oldValue == Median)
-            {
-                if (Below.Count < Above.Count)
+                if (Below.Size < Above.Size)
                 {
-                    Above.Remove(oldValue);
+                    Above.Delete(oldValue);
                 }
                 else
                 {
-                    Below.Remove(oldValue);
+                    Below.Delete(oldValue);
                 }
             }
-            else if (oldValue < Median)
+            else if (comparison < 0)
             {
-                Below.Remove(oldValue);
+                Below.Delete(oldValue);
             }
             else
             {
-                Above.Remove(oldValue);
+                Above.Delete(oldValue);
             }
 
-            if (value < Median)
+            if (Comparer.Compare(value, median) < 0)
             {
-                Below.Add(value);
+                Below.Insert(value);
             }
             else
             {
-                Above.Add(value);
+                Above.Insert(value);
             }
 
-            // if the difference is more than one
-            if (Math.Abs(Below.Count - Above.Count) > 1)
+            if (Below.Size + 1 <= Above.Size - 1)
             {
-                if (Below.Count < Above.Count)
-                {
-                    Below.Add(Above.ExtractDominating());
-                }
-                else
-                {
-                    Above.Add(Below.ExtractDominating());
-                }
+                Below.Insert(Above.DeleteRoot());
             }
 
-            SetMedian();
+            if (Above.Size + 1 <= Below.Size - 1)
+            {
+                Above.Insert(Below.DeleteRoot());
+            }
 
-        }
+            return Median;
 
-        void SetMedian()
-        {
-            // calculate the median
-            if (Below.Count == Above.Count)
-            {
-                Median = .5f * (Below.First() + Above.First());
-            }
-            else if (Below.Count < Above.Count)
-            {
-                Median = Above.First();
-            }
-            else
-            {
-                Median = Below.First();
-            }
         }
 
     }

@@ -47,12 +47,12 @@ namespace AEther
 
             Frequency = new MovingMedian(1 + halfSizeFrequency);
             Time = Enumerable.Range(0, domain.Count)
-                .Select(k => new MovingMedianBST<float>(zeros))
+                .Select(k => new MovingMedian(1 + halfSizeTime))
                 .ToArray();
 
             Frequency2 = new MovingMedian(1 + halfSizeFrequency);
             Time2 = Enumerable.Range(0, domain.Count)
-                .Select(k => new MovingMedianBST<float>(zeros))
+                .Select(k => new MovingMedian(1 + halfSizeTime))
                 .ToArray();
 
         }

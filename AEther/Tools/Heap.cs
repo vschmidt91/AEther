@@ -6,211 +6,135 @@ using System.Text;
 
 namespace AEther
 {
-    public abstract class Heap<T> : IEnumerable<T>
+    public class Heap<T>
     {
-        private const int GrowFactor = 2;
-        private const int MinGrow = 1;
 
-        T[] Items = Array.Empty<T>();
-        private int Tail = 0;
+        static int Parent(int i) => (i - 1) / 2;
+        static int LeftChild(int i) => 2 * i + 1;
+        static int RightChild(int i) => 2 * i + 2;
 
-        public int Count => Tail;
+        const int GrowFactor = 2;
+        const int MinGrow = 1;
+
+        public int Size { get; protected set; }
         public int Capacity => Items.Length;
 
-        protected Comparer<T> Comparer { get; private set; }
-        protected abstract bool Dominates(T x, T y);
+        T[] Items = Array.Empty<T>();
+        readonly Comparer<T> Comparer;
 
-        protected Heap() : this(Comparer<T>.Default)
-        { }
-
-        protected Heap(Comparer<T> comparer) : this(Enumerable.Empty<T>(), comparer)
-        { }
-
-        protected Heap(IEnumerable<T> collection)
-            : this(collection, Comparer<T>.Default)
-        { }
-
-        protected Heap(IEnumerable<T> collection, Comparer<T> comparer)
+        public Heap(IEnumerable<T> collection, Comparer<T> comparer)
         {
-            if (collection == null) throw new ArgumentNullException(nameof(collection));
-            Comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
 
-            //foreach (var item in collection)
-            //{
-            //    if (Count == Capacity)
-            //        Grow();
-
-            //    Items[Tail++] = item;
-            //}
+            Comparer = comparer;
             Items = collection.Concat(collection.Take(1)).ToArray();
-            Tail = Items.Length - 1;
+            Size = Capacity - 1;
 
-            for (var i = Parent(Tail - 1); 0 <= i; i--)
+            for (var i = Parent(Size - 1); 0 <= i; i--)
+            {
                 BubbleDown(i);
+            }
+
         }
 
-        public void Add(T item)
+        public void Insert(T item)
         {
-            if (Count == Capacity)
+            if (Size == Capacity)
+            {
                 Grow();
-
-            Items[Tail++] = item;
-            BubbleUp(Tail - 1);
+            }
+            Items[Size++] = item;
+            BubbleUp(Size - 1);
         }
 
-        private void BubbleUp(int i)
+        public void Check()
+        {
+            for(var i = 1; i < Size - 1; ++i)
+            {
+                if (Comparer.Compare(Items[i], Items[Parent(i)]) < 0)
+                    throw new Exception();
+            }
+        }
+
+        void BubbleUp(int i)
         {
             if (i == 0)
+            {
                 return;
-            if (Dominates(Items[Parent(i)], Items[i]))
-                return;
-            Items.Swap(i, Parent(i));
-            BubbleUp(Parent(i));
+            }
+            var p = Parent(i);
+            if (Comparer.Compare(Items[i], Items[p]) < 0)
+            {
+                Items.Swap(i, p);
+                BubbleUp(p);
+            }
         }
 
-        public T Remove(int i)
+        public T DeleteAt(int i)
         {
-            if (i < 0) throw new IndexOutOfRangeException(nameof(i));
-            if (Count <= i) throw new InvalidOperationException("Heap is too small");
-            T ret = Items[i];
-            Tail--;
-            Items.Swap(Tail, i);
-            BubbleDown(i);
-            return ret;
+            while(0 < i)
+            {
+                var p = Parent(i);
+                Items.Swap(i, p);
+                i = p;
+            }
+            return DeleteRoot();
         }
 
-        public void Remove(T item)
+        public void Delete(T item)
         {
-            Remove(Array.IndexOf(Items, item));
+            var i = Array.IndexOf(Items, item);
+            if (0 <= i)
+            {
+                DeleteAt(i);
+            }
         }
 
-        public T GetMin()
-        {
-            if (Count == 0) throw new InvalidOperationException("Heap is empty");
-            return Items[0];
-        }
+        public T Root => Items[0];
 
-        public T ExtractDominating()
+        public T DeleteRoot()
         {
-            if (Count == 0) throw new InvalidOperationException("Heap is empty");
-            T ret = Items[0];
-            Tail--;
-            Items.Swap(Tail, 0);
+            var root = Root;
+            Items.Swap(--Size, 0);
             BubbleDown(0);
-            return ret;
+            return root;
         }
 
-        private void BubbleDown(int i)
+        void BubbleDown(int i)
         {
-            int dominatingNode = Dominating(i);
-            if (dominatingNode == i) return;
-            Items.Swap(i, dominatingNode);
-            BubbleDown(dominatingNode);
+            var smallest = i;
+            smallest = Smaller(smallest, LeftChild(i));
+            smallest = Smaller(smallest, RightChild(i));
+            if (smallest != i)
+            {
+                Items.Swap(i, smallest);
+                BubbleDown(smallest);
+            }
         }
 
-        private int Dominating(int i)
+        int Smaller(int i, int j)
         {
-            int dominatingNode = i;
-            dominatingNode = GetDominating(YoungChild(i), dominatingNode);
-            dominatingNode = GetDominating(OldChild(i), dominatingNode);
-            return dominatingNode;
-        }
-
-        private int GetDominating(int newNode, int dominatingNode)
-        {
-            if (newNode < Tail && !Dominates(Items[dominatingNode], Items[newNode]))
-                return newNode;
+            if (Size <= j)
+            {
+                return i;
+            }
+            else if (Comparer.Compare(Items[j], Items[i]) < 0)
+            {
+                return j;
+            }
             else
-                return dominatingNode;
+            {
+                return i;
+            }
         }
 
-        private static int Parent(int i)
-        {
-            return (i + 1) / 2 - 1;
-        }
-
-        private static int YoungChild(int i)
-        {
-            return (i + 1) * 2 - 1;
-        }
-
-        private static int OldChild(int i)
-        {
-            return YoungChild(i) + 1;
-        }
-
-        private void Grow()
+        void Grow()
         {
             int newCapacity = Capacity * GrowFactor + MinGrow;
-            var newHeap = new T[newCapacity];
-            Array.Copy(Items, newHeap, Capacity);
-            Items = newHeap;
+            var newItems = new T[newCapacity];
+            Array.Copy(Items, newItems, Capacity);
+            Items = newItems;
         }
 
-        public IEnumerator<T> GetEnumerator()
-        {
-            return Items.Take(Count).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-    }
-
-    public class MaxHeap<T> : Heap<T>
-    {
-        public MaxHeap()
-            : this(Comparer<T>.Default)
-        {
-        }
-
-        public MaxHeap(Comparer<T> comparer)
-            : base(comparer)
-        {
-        }
-
-        public MaxHeap(IEnumerable<T> collection, Comparer<T> comparer)
-            : base(collection, comparer)
-        {
-        }
-
-        public MaxHeap(IEnumerable<T> collection) : base(collection)
-        {
-        }
-
-        protected override bool Dominates(T x, T y)
-        {
-            return Comparer.Compare(x, y) >= 0;
-        }
-    }
-
-    public class MinHeap<T> : Heap<T>
-    {
-        public MinHeap()
-            : this(Comparer<T>.Default)
-        {
-        }
-
-        public MinHeap(Comparer<T> comparer)
-            : base(comparer)
-        {
-        }
-
-        public MinHeap(IEnumerable<T> collection) : base(collection)
-        {
-        }
-
-        public MinHeap(IEnumerable<T> collection, Comparer<T> comparer)
-            : base(collection, comparer)
-        {
-        }
-
-        protected override bool Dominates(T x, T y)
-        {
-            return Comparer.Compare(x, y) <= 0;
-        }
     }
 
 }

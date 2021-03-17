@@ -46,5 +46,21 @@ namespace AEther.Benchmarks
             }
         }
 
+        [Benchmark]
+        public void MedianHeap()
+        {
+            var median = new MovingMedianHeap<float>(Enumerable.Repeat(0f, 1 + 2 * Width));
+            var rng = new Random(Seed);
+            for (var i = 0; i < 1 + 2 * Width; ++i)
+            {
+                median.Filter(0f);
+            }
+            for (var i = 0; i < Length; ++i)
+            {
+                var x = (float)rng.NextDouble();
+                median.Filter(x);
+            }
+        }
+
     }
 }
