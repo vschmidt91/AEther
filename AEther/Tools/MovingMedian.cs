@@ -9,25 +9,27 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-    public class MovingMedian : ITimeFilter<float>, IFrequencyFilter<float>
+    public class MovingMedian<T> : ITimeFilter<T>, IFrequencyFilter<T>
     {
 
         public readonly int HalfWidth;
         public int Width => 2 * HalfWidth + 1;
 
-        public readonly float[] Sorted;
-        public readonly float[] Buffer;
+        public readonly T[] Sorted;
+        public readonly T[] Buffer;
 
         int Position;
-        bool NoneFlag;
 
-        public MovingMedian(int halfWidth)
+        readonly Comparer<T> Comparer;
+
+        public MovingMedian(int halfWidth, Comparer<T>? comparer = null)
         {
 
+            Comparer = comparer ?? Comparer<T>.Default;
             HalfWidth = halfWidth;
 
-            Sorted = new float[Width];
-            Buffer = new float[Width];
+            Sorted = new T[Width];
+            Buffer = new T[Width];
 
             Clear();
 
@@ -35,10 +37,11 @@ namespace AEther
 
         public void Clear()
         {
-            ClearOpt();
+            Array.Clear(Buffer, 0, Width);
+            Array.Clear(Sorted, 0, Width);
         }
 
-        public void Filter(ReadOnlySpan<float> src, Memory<float> dst)
+        public void Filter(ReadOnlySpan<T> src, Memory<T> dst)
         {
 
             Clear();
@@ -55,12 +58,12 @@ namespace AEther
 
             for (int k = src.Length - HalfWidth; k < src.Length; ++k)
             {
-                dst.Span[k] = FilterNone();
+                dst.Span[k] = src[^1];
             }
 
         }
 
-        public float Filter(float value)
+        public T Filter(T value)
         {
 
             var oldValue = Buffer[Position];
@@ -70,14 +73,15 @@ namespace AEther
             if (Position == Buffer.Length)
                 Position = 0;
 
-            if (oldValue < value)
+            var comparison = Comparer.Compare(oldValue, value);
+            if (comparison < 0)
             {
                 var i = BinarySearchLeft(Sorted, oldValue);
                 var j = BinarySearchRight(Sorted, value);
                 Array.Copy(Sorted, i + 1, Sorted, i, j - i);
                 Sorted[j] = value;
             }
-            else if (value < oldValue)
+            else if (0 < comparison)
             {
                 var i = BinarySearchRight(Sorted, oldValue);
                 var j = BinarySearchLeft(Sorted, value);
@@ -89,21 +93,7 @@ namespace AEther
 
         }
 
-        float FilterNone()
-        {
-            NoneFlag = !NoneFlag;
-            if (NoneFlag)
-                return Filter(float.NegativeInfinity);
-            else
-                return Filter(float.PositiveInfinity);
-        }
-
-        public static int BinarySearch(float[] data, float value, bool left = true)
-            => left
-                ? BinarySearchLeft(data, value)
-                : BinarySearchRight(data, value);
-
-        public static int BinarySearchRight(float[] data, float value)
+        public int BinarySearchRight(T[] data, T value)
         {
 
             var l = 0;
@@ -112,7 +102,7 @@ namespace AEther
             while(l < r)
             {
                 var m = (l + r) / 2;
-                if (value < data[m])
+                if (Comparer.Compare(value, data[m]) < 0)
                     r = m;
                 else
                     l = m + 1;
@@ -122,7 +112,7 @@ namespace AEther
 
         }
 
-        public static int BinarySearchLeft(float[] data, float value)
+        public int BinarySearchLeft(T[] data, T value)
         {
 
             var l = 0;
@@ -131,7 +121,7 @@ namespace AEther
             while (l < r)
             {
                 var m = (l + r) / 2;
-                if (data[m] < value)
+                if(Comparer.Compare(data[m], value) < 0)
                     l = m + 1;
                 else
                     r = m;
@@ -141,35 +131,10 @@ namespace AEther
 
         }
 
-        public void ClearValue(float value)
+        public void ClearValue(T value)
         {
             Array.Fill(Buffer, value);
             Array.Fill(Sorted, value);
-        }
-
-        public void ClearRef()
-        {
-            Position = 0;
-            Array.Clear(Buffer, 0, Buffer.Length);
-            Array.Clear(Sorted, 0, Sorted.Length);
-            for (int i = 0; i < Width; ++i)
-                FilterNone();
-        }
-
-        public void ClearOpt()
-        {
-
-            Position = 0;
-            for (int i = 0; i < Width; ++i)
-            {
-                Buffer[i] = ((i & 1) == 1)
-                    ? float.NegativeInfinity
-                    : float.PositiveInfinity;
-                Sorted[i] = i < HalfWidth
-                    ? float.NegativeInfinity
-                    : float.PositiveInfinity;
-            }
-
         }
 
     }

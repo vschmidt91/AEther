@@ -39,19 +39,26 @@ namespace AEther.CLI
 
             sampleSource.Start();
 
-            await foreach (var output in outputs)
+            var pool = ArrayPool<byte>.Shared;
+            byte[] buffer = pool.Rent(1 << 10);
+
+            await foreach(var output in outputs)
             {
                 var byteCount = sizeof(float) * output.SampleCount;
-                var buffer = ArrayPool<byte>.Shared.Rent(byteCount);
+                if(buffer.Length < byteCount)
+                {
+                    pool.Return(buffer);
+                    buffer = pool.Rent(byteCount);
+                }
                 Buffer.BlockCopy(output.Samples, 0, buffer, 0, byteCount);
 
-                Console.WriteLine(BitConverter.ToString(hash.ComputeHash(buffer, 0, byteCount)));
+                //Console.WriteLine(BitConverter.ToString(hash.ComputeHash(buffer, 0, byteCount)));
                 await outputStream.WriteAsync(buffer.AsMemory(0, byteCount));
-
-                ArrayPool<byte>.Shared.Return(buffer);
 
                 output.Dispose();
             }
+
+            pool.Return(buffer);
 
         }
 

@@ -6,26 +6,53 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-
-    public class MovingQuantile
+    public class MovingQuantileEstimator : IFrequencyFilter<float>
     {
 
         public readonly float Quantile;
-        public readonly float Eta;
+        public readonly float Mix;
 
-        public float State { get; protected set; }
+        float State;
 
-        public MovingQuantile(float quantile = .5f, float eta = 1f, float state = 0f)
+        public MovingQuantileEstimator(float quantile, float mix, float? initialState = default)
         {
+
             Quantile = quantile;
-            Eta = eta;
-            State = state;
+            Mix = mix;
+
+            State = initialState ?? 0;
+
         }
 
-        public float Filter(float x)
+        public void Clear()
         {
-            float delta = x - State;
-            State += (Math.Sign(delta) + 2 * Quantile - 1) * Eta * Math.Abs(delta);
+            State = 0;
+        }
+
+        public void Filter(ReadOnlySpan<float> src, Memory<float> dst)
+        {
+
+            State = src[0];
+            for (int k = 0; k < src.Length; ++k)
+            {
+                dst.Span[k] = 0.5f * Filter(src[k]);
+            }
+
+            State = src[^1];
+            for (int k = src.Length - 1; 0 <= k; --k)
+            {
+                dst.Span[k] += 0.5f * Filter(src[k]);
+            }
+
+        }
+
+        public float Filter(float value)
+        {
+            //var mix = Math.Max(Mix, Math.Abs(State));
+            State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);
+            //State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);
+            if (float.IsNaN(value))
+                throw new Exception();
             return State;
         }
 

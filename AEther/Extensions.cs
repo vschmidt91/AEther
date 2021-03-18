@@ -64,6 +64,9 @@ namespace AEther
             return x0 + q * (x1 - x0);
         }
 
+        public static (IEnumerable<T1>, IEnumerable<T2>) Unzip<T1, T2>(this IEnumerable<(T1, T2)> items)
+            => (items.Select(p => p.Item1), items.Select(p => p.Item2));
+
         public static void Swap<T>(this T[] values, int i, int j)
         {
             (values[i], values[j]) = (values[j], values[i]);

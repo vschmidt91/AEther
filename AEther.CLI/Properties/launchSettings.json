@@ -1,7 +1,8 @@
 {
   "profiles": {
     "AEther.CLI": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "--path=\"..\\..\\..\\..\\TestFiles\\test_input.wav\""
     }
   }
 }

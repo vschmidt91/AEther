@@ -43,17 +43,25 @@ namespace AEther
             Buffer3 = new float[Domain.Count];
             Buffer4 = new float[Domain.Count];
 
-            var zeros = Enumerable.Repeat(0f, 1 + 2 * halfSizeTime);
-
-            Frequency = new MovingMedian(1 + halfSizeFrequency);
+            Frequency = new MovingMedianHeap<float>(1 + 2 * halfSizeFrequency);
             Time = Enumerable.Range(0, domain.Count)
-                .Select(k => new MovingMedian(1 + halfSizeTime))
+                .Select(k => new MovingMedianHeap<float>(1 + 2 * halfSizeTime))
                 .ToArray();
 
-            Frequency2 = new MovingMedian(1 + halfSizeFrequency);
+            Frequency2 = new MovingMedianHeap<float>(1 + 2 * halfSizeFrequency);
             Time2 = Enumerable.Range(0, domain.Count)
-                .Select(k => new MovingMedian(1 + halfSizeTime))
+                .Select(k => new MovingMedianHeap<float>(1 + 2 * halfSizeTime))
                 .ToArray();
+
+            //Frequency = new MovingMedian<float>(halfSizeFrequency);
+            //Time = Enumerable.Range(0, domain.Count)
+            //    .Select(k => new MovingMedian<float>(halfSizeTime))
+            //    .ToArray();
+
+            //Frequency2 = new MovingMedian<float>(halfSizeFrequency);
+            //Time2 = Enumerable.Range(0, domain.Count)
+            //    .Select(k => new MovingMedian<float>(halfSizeTime))
+            //    .ToArray();
 
         }
 

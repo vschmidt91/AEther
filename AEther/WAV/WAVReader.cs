@@ -35,7 +35,7 @@ namespace AEther
         public override void Start()
         {
             var buffer = new byte[BufferSize];
-            while(!Cancel.IsCancellationRequested)
+            while (!Cancel.IsCancellationRequested)
             {
                 var count = Input.Read(buffer, 0, buffer.Length);
                 if (count == 0)

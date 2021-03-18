@@ -9,7 +9,5 @@ namespace AEther
 
         void Filter(ReadOnlySpan<T> spectrum, Memory<T> result);
 
-        void Clear();
-
     }
 }
