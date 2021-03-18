@@ -74,25 +74,5 @@ namespace AEther.Tests
             }
         }
 
-        [Test]
-        public void TestMedianHeapFloat()
-        {
-            var median1 = new MovingMedian<float>(Width);
-            var median2 = new MovingMedianHeapFloat(1 + 2 * Width);
-            for (var i = 0; i < 1 + 2 * Width; ++i)
-            {
-                median1.Filter(0f);
-                median2.Filter(0f);
-            }
-            var rng = new Random(Seed);
-            for (var i = 0; i < Count; ++i)
-            {
-                var x = (float)rng.NextDouble();
-                var m1 = median1.Filter(x);
-                var m2 = median2.Filter(x);
-                Assert.AreEqual(m1, m2);
-            }
-        }
-
     }
 }
