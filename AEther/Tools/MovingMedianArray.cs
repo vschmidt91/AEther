@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-    public class MovingMedian<T> : ITimeFilter<T>, IFrequencyFilter<T>
+    public class MovingMedianArray<T> : ITimeFilter<T>, IFrequencyFilter<T>
     {
 
         public readonly int HalfWidth;
@@ -22,7 +22,7 @@ namespace AEther
 
         readonly Comparer<T> Comparer;
 
-        public MovingMedian(int halfWidth, Comparer<T>? comparer = null)
+        public MovingMedianArray(int halfWidth, Comparer<T>? comparer = null)
         {
 
             Comparer = comparer ?? Comparer<T>.Default;

@@ -87,7 +87,7 @@ namespace AEther.WindowsForms
             deviceFlags |= DeviceCreationFlags.Debug;
 #endif
 
-            SharpDX.Direct3D11.Device.CreateWithSwapChain(
+            Device.CreateWithSwapChain(
                 DriverType.Hardware,
                 deviceFlags,
                 new[] { FeatureLevel.Level_10_0 },
@@ -111,12 +111,6 @@ namespace AEther.WindowsForms
 
             Shaders = CreateShaderManager();
             Quad = new Model(Device, new Grid(2, 2));
-
-            //foreach(var shader in Shaders.Keys)
-            //{
-            //    var src = Shaders[shader].Disassemble(DisassemblyFlags.None);
-            //    File.WriteAllText(Path.Join("disassembly", shader + ".txt"), src);
-            //}
 
         }
 
@@ -241,7 +235,7 @@ namespace AEther.WindowsForms
 
         public void Present()
         {
-            Chain.TryPresent(1, PresentFlags.None);
+            Chain.TryPresent(1, PresentFlags.DoNotWait);
         }
 
         public Shader CreateShader(string key)

@@ -233,6 +233,7 @@ namespace AEther.WindowsForms
             }
         }
 
+        DateTime LastDraw = DateTime.Now;
 
         public void Render()
         {
@@ -246,10 +247,14 @@ namespace AEther.WindowsForms
             var now = DateTime.Now;
             if (LatencyUpdateInterval < now - LastLatencyUpdate)
             {
-                Text = $"Latency: {Math.Round(Latency, 0)} ms";
+                var drawTime = (now - LastDraw).TotalMilliseconds;
+                //Text = ().TotalMilliseconds.ToString();
+                Text = $"Latency: {Math.Round(Latency, 0)} ms, Draw Time: {Math.Round(drawTime, 0)} ms";
                 LastLatencyUpdate = now;
                 Latency = 0;
             }
+
+            LastDraw = now;
 
             if (0 < InputCounter)
             {

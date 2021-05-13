@@ -61,7 +61,7 @@ namespace AEther
             Source.OnDataAvailable += (sender, data) =>
             {
                 SamplePipe.Writer.Write(data.Span);
-                SamplePipe.Writer.FlushAsync();
+                _ = SamplePipe.Writer.FlushAsync();
             };
 
             Source.OnStopped += async (sender, data) =>

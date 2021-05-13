@@ -76,6 +76,7 @@ namespace AEther
         public (int, T) Delete(int key)
         {
             var i = Indirection[key];
+            i = Array.IndexOf(Keys, Keys[i]);
             return DeleteAt(i);
         }
 

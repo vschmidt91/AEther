@@ -12,8 +12,8 @@ namespace AEther.Tests
     class MedianTests
     {
 
-        readonly int Width = 1 << 3;
-        readonly int Count = 1 << 12;
+        readonly int Width = 1 << 8;
+        readonly int Count = 1 << 16;
         readonly int Seed = 123;
 
         [SetUp]
@@ -24,10 +24,10 @@ namespace AEther.Tests
         [Test]
         public void TestMedianArray()
         {
-            var median = new MovingMedian<float>(Width);
+            var median = new MovingMedianArray<float>(Width);
             var b = new float[Width];
             var rng = new Random(Seed);
-            for (var i = 0; i < Count; ++i)
+            for (var i = 0; i < 1 << 8; ++i)
             {
                 median.Filter((float)rng.NextDouble());
                 var expected = median.Buffer.OrderBy(v => v).ToArray();
@@ -38,7 +38,7 @@ namespace AEther.Tests
         [Test]
         public void TestMedianBST()
         {
-            var median1 = new MovingMedian<float>(Width);
+            var median1 = new MovingMedianArray<float>(Width);
             for (var i = 0; i < 1 + 2 * Width; ++i)
             {
                 median1.Filter(0f);
@@ -57,7 +57,7 @@ namespace AEther.Tests
         [Test]
         public void TestMedianHeap()
         {
-            var median1 = new MovingMedian<float>(Width);
+            var median1 = new MovingMedianArray<float>(Width);
             var median2 = new MovingMedianHeap<float>(1 + 2 * Width);
             for (var i = 0; i < 1 + 2 * Width; ++i)
             {

@@ -33,7 +33,7 @@ namespace AEther
         public DFTProcessor(Domain domain, float sampleRate, bool useSIMD = true, int maxParallelism = -1)
         {
             
-            Console.WriteLine(Vector<float>.Count);
+            //Console.WriteLine(Vector<float>.Count);
 
             var cosines = useSIMD
                 ? WindowCandidates.Last(w => 2 * w.Length - 1 <= Vector<float>.Count)

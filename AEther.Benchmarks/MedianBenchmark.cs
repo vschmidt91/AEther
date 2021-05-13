@@ -10,14 +10,14 @@ namespace AEther.Benchmarks
     public class MedianBenchmark
     {
 
-        readonly int Width = 1 << 10;
-        readonly int Length = 1 << 20;
+        readonly int Width = 1 << 8;
+        readonly int Length = 1 << 14;
         readonly int Seed = 0;
 
         [Benchmark]
         public void MedianArray()
         {
-            var median = new MovingMedian<float>(Width);
+            var median = new MovingMedianArray<float>(Width);
             var rng = new Random(Seed);
             for (var i = 0; i < 1 + 2 * Width; ++i)
             {

@@ -48,7 +48,6 @@ namespace AEther
             Buffer[BufferPosition] = newItem;
             BufferPosition = (BufferPosition + 1) % Buffer.Length;
             Remove(oldItem);
-            Balance();
             Insert(newItem);
             Balance();
             return Median;
