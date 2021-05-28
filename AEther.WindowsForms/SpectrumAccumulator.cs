@@ -87,8 +87,9 @@ namespace AEther.WindowsForms
 
         public override int Update()
         {
-            using var map = Texture.Map();
+            var map = Texture.Map();
             map.WriteRange(Buffer, 0, Buffer.Length);
+            map.Dispose();
             return Buffer.Length * Marshal.SizeOf<T>();
         }
 

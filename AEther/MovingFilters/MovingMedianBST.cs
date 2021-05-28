@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-    public class MovingMedianBST<T> : ITimeFilter<T>
+    public class MovingMedianBST<T> : MovingFilter<T>
     {
 
         public readonly Comparer<T> Comparer;
@@ -42,7 +42,12 @@ namespace AEther
 
         }
 
-        public T Filter(T newItem)
+        public override void Clear()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override T Filter(T newItem)
         {
             var oldItem = Buffer[BufferPosition];
             Buffer[BufferPosition] = newItem;

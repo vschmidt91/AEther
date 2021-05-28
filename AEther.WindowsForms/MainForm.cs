@@ -13,7 +13,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 
 using AEther.DMX;
-using AEther.NAudio;
+using AEther.CSCore;
 
 using SharpDX.Direct3D11;
 using System.Threading.Tasks.Dataflow;

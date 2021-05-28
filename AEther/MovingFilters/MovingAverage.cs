@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AEther
 {
-    public class MovingAverage : ITimeFilter<float>
+    public class MovingAverage : MovingFilter<float>
     {
 
         readonly float[] Buffer;
@@ -21,14 +21,14 @@ namespace AEther
             Position = 0;
         }
 
-        public void Clear()
+        public override void Clear()
         {
             Average = 0f;
             Array.Clear(Buffer, 0, Buffer.Length);
             Position = 0;
         }
 
-        public float Filter(float newValue)
+        public override float Filter(float newValue)
         {
             var oldValue = Buffer[Position];
             Buffer[Position] = newValue;

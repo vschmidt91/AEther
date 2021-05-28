@@ -15,6 +15,7 @@ namespace AEther.Tests
         readonly int Width = 1 << 8;
         readonly int Count = 1 << 16;
         readonly int Seed = 123;
+        readonly Comparer<float> Comparer = Comparer<float>.Default;
 
         [SetUp]
         public void Setup()
@@ -23,54 +24,25 @@ namespace AEther.Tests
 
         [Test]
         public void TestMedianArray()
-        {
-            var median = new MovingMedianArray<float>(Width);
-            var b = new float[Width];
-            var rng = new Random(Seed);
-            for (var i = 0; i < 1 << 8; ++i)
-            {
-                median.Filter((float)rng.NextDouble());
-                var expected = median.Buffer.OrderBy(v => v).ToArray();
-                Assert.That(median.Sorted, Is.EqualTo(expected));
-            }
-        }
+            => TestMedian(new MovingMedianRef<float>(Width, Comparer), new MovingMedianArray<float>(Width, Comparer), Count, Seed);
 
-        [Test]
-        public void TestMedianBST()
-        {
-            var median1 = new MovingMedianArray<float>(Width);
-            for (var i = 0; i < 1 + 2 * Width; ++i)
-            {
-                median1.Filter(0f);
-            }
-            var median2 = new MovingMedianBST<float>(Enumerable.Repeat(0f, 2 * Width + 1));
-            var rng = new Random(Seed);
-            for (var i = 0; i < Count; ++i)
-            {
-                var x = (float)rng.NextDouble();
-                var m1 = median1.Filter(x);
-                var m2 = median2.Filter(x);
-                Assert.AreEqual(m1, m2);
-            }
-        }
+        //[Test]
+        //public void TestMedianBST()
+        //    => TestMedian(new MovingMedianRef<float>(Width, Comparer), new MovingMedianBST<float>(Width, Comparer), Count, Seed);
 
         [Test]
         public void TestMedianHeap()
+            => TestMedian(new MovingMedianRef<float>(Width, Comparer), new MovingMedianHeap<float>(Width, Comparer), Count, Seed);
+
+        static void TestMedian(MovingFilter<float> a, MovingFilter<float> b, int length, int seed = 0)
         {
-            var median1 = new MovingMedianArray<float>(Width);
-            var median2 = new MovingMedianHeap<float>(1 + 2 * Width);
-            for (var i = 0; i < 1 + 2 * Width; ++i)
-            {
-                median1.Filter(0f);
-                median2.Filter(0f);
-            }
-            var rng = new Random(Seed);
-            for (var i = 0; i < Count; ++i)
+            var rng = new Random(seed);
+            for (var i = 0; i < length; ++i)
             {
                 var x = (float)rng.NextDouble();
-                var m1 = median1.Filter(x);
-                var m2 = median2.Filter(x);
-                Assert.AreEqual(m1, m2);
+                var y1 = a.Filter(x);
+                var y2 = b.Filter(x);
+                Assert.AreEqual(y1, y2);
             }
         }
 

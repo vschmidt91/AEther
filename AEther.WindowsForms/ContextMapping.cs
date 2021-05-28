@@ -45,7 +45,6 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
             Stream.Close();
             Stream.Dispose();
             Resource.Device.ImmediateContext.UnmapSubresource(Resource, Subresource);

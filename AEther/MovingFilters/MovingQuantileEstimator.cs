@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-    public class MovingQuantileEstimator : IFrequencyFilter<float>
+    public class MovingQuantileEstimator : MovingFilter<float>
     {
 
         public readonly float Quantile;
@@ -24,29 +24,12 @@ namespace AEther
 
         }
 
-        public void Clear()
+        public override void Clear()
         {
             State = 0;
         }
 
-        public void Filter(ReadOnlySpan<float> src, Memory<float> dst)
-        {
-
-            State = src[0];
-            for (int k = 0; k < src.Length; ++k)
-            {
-                dst.Span[k] = 0.5f * Filter(src[k]);
-            }
-
-            State = src[^1];
-            for (int k = src.Length - 1; 0 <= k; --k)
-            {
-                dst.Span[k] += 0.5f * Filter(src[k]);
-            }
-
-        }
-
-        public float Filter(float value)
+        public override float Filter(float value)
         {
             //var mix = Math.Max(Mix, Math.Abs(State));
             State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <LangVersion>default</LangVersion>
     <Platforms>AnyCPU;x64</Platforms>
     <Nullable>enable</Nullable>
@@ -25,7 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.Buffers" Version="4.5.1" />
-    <PackageReference Include="System.IO.Pipelines" Version="6.0.0-preview.3.21201.4" />
-    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0-preview.3.21201.4" />
+    <PackageReference Include="System.IO.Pipelines" Version="6.0.0-preview.4.21253.7" />
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="6.0.0-preview.4.21253.7" />
   </ItemGroup>
 </Project>

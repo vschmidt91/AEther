@@ -10,55 +10,34 @@ namespace AEther.Benchmarks
     public class MedianBenchmark
     {
 
-        readonly int Width = 1 << 8;
-        readonly int Length = 1 << 14;
+        readonly int Width = 1 << 12;
+        readonly int Length = 1 << 16;
         readonly int Seed = 0;
+        readonly Comparer<float> Comparer = Comparer<float>.Default;
 
         [Benchmark]
-        public void MedianArray()
-        {
-            var median = new MovingMedianArray<float>(Width);
-            var rng = new Random(Seed);
-            for (var i = 0; i < 1 + 2 * Width; ++i)
-            {
-                median.Filter(0f);
-            }
-            for (var i = 0; i < Length; ++i)
-            {
-                var x = (float)rng.NextDouble();
-                median.Filter(x);
-            }
-        }
+        public void MovingMedianRef()
+            => Median(new MovingMedianArray<float>(Width, Comparer), Length, Seed);
 
         [Benchmark]
-        public void MedianBST()
-        {
-            var median = new MovingMedianBST<float>(Enumerable.Repeat(0f, 1 + 2 * Width));
-            var rng = new Random(Seed);
-            for (var i = 0; i < 1 + 2 * Width; ++i)
-            {
-                median.Filter(0f);
-            }
-            for (var i = 0; i < Length; ++i)
-            {
-                var x = (float)rng.NextDouble();
-                median.Filter(x);
-            }
-        }
+        public void MovingMedianArray()
+            => Median(new MovingMedianArray<float>(Width, Comparer), Length, Seed);
+
+        //[Benchmark]
+        //public void MovingMedianBST()
+        //    => Median(new MovingMedianBST<float>(Width, Comparer), Length, Seed);
 
         [Benchmark]
-        public void MedianHeap()
+        public void MovingMedianHeap()
+            => Median(new MovingMedianHeap<float>(Width, Comparer), Length, Seed);
+
+        public void Median(MovingFilter<float> filter, int length, int seed = 0)
         {
-            var median = new MovingMedianHeap<float>(1 + 2 * Width);
-            var rng = new Random(Seed);
-            for (var i = 0; i < 1 + 2 * Width; ++i)
-            {
-                median.Filter(0f);
-            }
-            for (var i = 0; i < Length; ++i)
+            var rng = new Random(seed);
+            for (var i = 0; i < length; ++i)
             {
                 var x = (float)rng.NextDouble();
-                median.Filter(x);
+                filter.Filter(x);
             }
         }
 

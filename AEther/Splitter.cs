@@ -10,17 +10,16 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-
     public class Splitter
     {
 
         readonly Domain Domain;
 
-        readonly IFrequencyFilter<float> Frequency;
-        readonly ITimeFilter<float>[] Time;
+        readonly MovingFilter<float> Frequency;
+        readonly MovingFilter<float>[] Time;
 
-        readonly IFrequencyFilter<float> Frequency2;
-        readonly ITimeFilter<float>[] Time2;
+        readonly MovingFilter<float> Frequency2;
+        readonly MovingFilter<float>[] Time2;
 
         readonly float[] Buffer1;
         readonly float[] Buffer2;
@@ -43,27 +42,20 @@ namespace AEther
             Buffer3 = new float[Domain.Count];
             Buffer4 = new float[Domain.Count];
 
-            Frequency = new MovingMedianHeap<float>(1 + 2 * halfSizeFrequency);
+            Frequency = CreateFilter(1 + 2 * halfSizeFrequency);
             Time = Enumerable.Range(0, domain.Count)
-                .Select(k => new MovingMedianHeap<float>(1 + 2 * halfSizeTime))
+                .Select(k => CreateFilter(1 + 2 * halfSizeTime))
                 .ToArray();
 
-            Frequency2 = new MovingMedianHeap<float>(1 + 2 * halfSizeFrequency);
+            Frequency2 = CreateFilter(1 + 2 * halfSizeFrequency);
             Time2 = Enumerable.Range(0, domain.Count)
-                .Select(k => new MovingMedianHeap<float>(1 + 2 * halfSizeTime))
+                .Select(k => CreateFilter(1 + 2 * halfSizeTime))
                 .ToArray();
-
-            //Frequency = new MovingMedian<float>(halfSizeFrequency);
-            //Time = Enumerable.Range(0, domain.Count)
-            //    .Select(k => new MovingMedian<float>(halfSizeTime))
-            //    .ToArray();
-
-            //Frequency2 = new MovingMedian<float>(halfSizeFrequency);
-            //Time2 = Enumerable.Range(0, domain.Count)
-            //    .Select(k => new MovingMedian<float>(halfSizeTime))
-            //    .ToArray();
 
         }
+
+        static WindowedFilter<float> CreateFilter(int windowSize)
+            => new MovingMedianArray<float>(windowSize, Comparer<float>.Default);
 
         public void Process(ReadOnlyMemory<float> input, Memory<float> output)
         {
@@ -71,13 +63,13 @@ namespace AEther
             var src = input.Span;
             var dst = output.Span;
 
-            Frequency.Filter(src, Buffer1);
+            Frequency.FilterSpan(src, Buffer1, (x, y) => .5f * (x + y));
             for (int k = 0; k < Domain.Count; ++k)
             {
                 Buffer2[k] = Time[k].Filter(src[k]);
                 Buffer3[k] = Time2[k].Filter(Buffer1[k]);
             }
-            Frequency2.Filter(Buffer2, Buffer4);
+            Frequency2.FilterSpan(Buffer2, Buffer4, (x, y) => .5f * (x + y));
 
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
 

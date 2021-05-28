@@ -24,7 +24,6 @@ namespace AEther.WindowsForms
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
 
-
         }
     }
 }

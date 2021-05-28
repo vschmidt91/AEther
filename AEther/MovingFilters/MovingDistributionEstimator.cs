@@ -5,7 +5,7 @@ using System.Text;
 
 namespace AEther
 {
-    public class MovingDistributionEstimator : ITimeFilter<float>
+    public class MovingDistributionEstimator : MovingFilter<float>
     {
 
         public readonly MovingQuantileEstimator[] Quantiles;
@@ -20,7 +20,7 @@ namespace AEther
             States = new float[quantileCount];
         }
 
-        public void Clear()
+        public override void Clear()
         {
             foreach(var quantile in Quantiles)
             {
@@ -28,7 +28,7 @@ namespace AEther
             }
         }
 
-        public float Filter(float x)
+        public override float Filter(float x)
         {
             for(int i = 0; i < Quantiles.Length; ++i)
             {

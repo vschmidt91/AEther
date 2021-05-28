@@ -31,7 +31,6 @@ namespace AEther
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
             Pool.Return(Samples);
         }
 
