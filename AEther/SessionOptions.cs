@@ -20,6 +20,12 @@ namespace AEther
         [Category("Pipeline")]
         public int BufferCapacity { get; set; } = -1;
 
+        [Category("Pipeline")]
+        public float TimingAmount { get; set; } = .9f;
+
+        [Category("Pipeline")]
+        public int TimingSpinwaits { get; set; } = 100;
+
         [Category("Domain")]
         public float MinFrequency { get; set; } = 27.5f;
 

@@ -22,7 +22,7 @@ namespace AEther.WindowsForms
 
         public abstract void Clear();
 
-        public abstract void Add(ReadOnlySpan<float> values);
+        public abstract void Add(ReadOnlySpan<double> values);
 
         public abstract int Update();
 
@@ -68,11 +68,11 @@ namespace AEther.WindowsForms
             Array.Clear(Buffer, 0, Buffer.Length);
         }
 
-        protected abstract T Convert(float value);
+        protected abstract T Convert(double value);
 
         protected abstract T Combine(T src, T dst);
 
-        public override void Add(ReadOnlySpan<float> src)
+        public override void Add(ReadOnlySpan<double> src)
         {
             if(src.Length < Buffer.Length)
             {
@@ -105,7 +105,7 @@ namespace AEther.WindowsForms
         protected override byte Combine(byte src, byte dst)
             => Math.Max(src, dst);
 
-        protected override byte Convert(float value)
+        protected override byte Convert(double value)
             => (byte)(255 * value.Clamp(0, 1));
 
     }
@@ -120,8 +120,8 @@ namespace AEther.WindowsForms
         protected override float Combine(float src, float dst)
             => Math.Max(src, dst);
 
-        protected override float Convert(float value)
-            => value;
+        protected override float Convert(double value)
+            => (float)value;
 
     }
 

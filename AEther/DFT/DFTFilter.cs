@@ -21,7 +21,7 @@ namespace AEther
         readonly float DFTFrequency;
         readonly float Q;
         readonly int M;
-        readonly RingBuffer<float> Buffer;
+        readonly RingBuffer<double> Buffer;
 
         public DFTFilter(float frequency, float frequencyResolution, float sampleRate)
         {
@@ -42,14 +42,14 @@ namespace AEther
             return State / Buffer.Size;
         }
 
-        public void Process(float newSample)
+        public void Process(double newSample)
         {
             var oldSample = Buffer.Add(newSample);
             var input = newSample - oldSample;
             State = Coefficient * State + input;
         }
 
-        public void Process(ReadOnlyMemory<float> samples)
+        public void Process(ReadOnlyMemory<double> samples)
         {
             while(0 < samples.Length)
             {

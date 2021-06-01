@@ -25,7 +25,7 @@ namespace AEther.WindowsForms
 
         public abstract int Position { get; }
 
-        public abstract void Add(ReadOnlySpan<float> src);
+        public abstract void Add(ReadOnlySpan<double> src);
 
         public abstract int Update();
 
@@ -97,9 +97,9 @@ namespace AEther.WindowsForms
             return graphics.CreateTexture(desc);
         }
 
-        protected abstract T Convert(float value);
+        protected abstract T Convert(double value);
 
-        public override void Add(ReadOnlySpan<float> src)
+        public override void Add(ReadOnlySpan<double> src)
         {
 
             for(int i = 0; i < src.Length; ++i)
@@ -185,7 +185,7 @@ namespace AEther.WindowsForms
             : base(graphics, Format.R32G32B32A32_Float, width, height, useMapping)
         { }
 
-        protected override float Convert(float value) => value;
+        protected override float Convert(double value) => (float)value;
 
     }
 
@@ -196,7 +196,7 @@ namespace AEther.WindowsForms
             : base(graphics, Format.R8G8B8A8_UNorm, width, height, useMapping)
         { }
 
-        protected override byte Convert(float value) => (byte)(255f * value.Clamp(0, 1));
+        protected override byte Convert(double value) => (byte)(255f * value.Clamp(0, 1));
 
     }
 

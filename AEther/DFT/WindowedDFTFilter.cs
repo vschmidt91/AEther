@@ -20,10 +20,10 @@ namespace AEther
         readonly float DFTFrequency;
         readonly float Q;
         readonly int M;
-        readonly float[] Window;
-        readonly RingBuffer<float> Buffer;
+        readonly double[] Window;
+        readonly RingBuffer<double> Buffer;
 
-        public WindowedDFTFilter(float frequency, float frequencyResolution, float sampleRate, float[] window)
+        public WindowedDFTFilter(float frequency, float frequencyResolution, float sampleRate, double[] window)
         {
 
             Window = window;
@@ -53,7 +53,7 @@ namespace AEther
             return result / Buffer.Size;
         }
 
-        public void Process(float newSample)
+        public void Process(double newSample)
         {
             var oldSample = Buffer.Add(newSample);
             var input = newSample - oldSample;
@@ -63,7 +63,7 @@ namespace AEther
             }
         }
 
-        public void Process(ReadOnlyMemory<float> samples)
+        public void Process(ReadOnlyMemory<double> samples)
         {
             while (0 < samples.Length)
             {

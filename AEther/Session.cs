@@ -33,9 +33,9 @@ namespace AEther
         readonly Splitter[] Splitter;
 
         readonly Pipe SamplePipe;
-        readonly Channel<SampleEvent> BatcherChannel;
-        readonly Channel<SampleEvent> DFTChannel;
-        readonly Channel<SampleEvent> SplitterChannel;
+        readonly Channel<SampleEvent<double>> BatcherChannel;
+        readonly Channel<SampleEvent<double>> DFTChannel;
+        readonly Channel<SampleEvent<double>> SplitterChannel;
 
         public Session(SampleSource source, SessionOptions? options = null)
         {
@@ -54,9 +54,9 @@ namespace AEther
                 .ToArray();
 
             SamplePipe = new Pipe();
-            BatcherChannel = CreateChannel<SampleEvent>();
-            DFTChannel = CreateChannel<SampleEvent>();
-            SplitterChannel = CreateChannel<SampleEvent>();
+            BatcherChannel = CreateChannel<SampleEvent<double>>();
+            DFTChannel = CreateChannel<SampleEvent<double>>();
+            SplitterChannel = CreateChannel<SampleEvent<double>>();
 
             Source.OnDataAvailable += (sender, data) =>
             {
@@ -73,7 +73,7 @@ namespace AEther
 
         }
 
-        public async IAsyncEnumerable<SampleEvent> RunAsync([EnumeratorCancellation] CancellationToken cancel = default)
+        public async IAsyncEnumerable<SampleEvent<double>> RunAsync([EnumeratorCancellation] CancellationToken cancel = default)
         {
 
             var batcher = Task.Run(() => RunBatcherAsync(cancel), cancel);
@@ -120,7 +120,7 @@ namespace AEther
                 for (; offset + Batch.Length < input.Data.Length; offset += Batch.Length)
                 {
                     input.Data.Slice(offset, Batch.Length).CopyTo(Batch);
-                    var output = new SampleEvent(BatchSize, Format.ChannelCount, DateTime.Now);
+                    var output = new SampleEvent<double>(BatchSize, Format.ChannelCount, DateTime.Now);
                     for (var c = 0; c < Format.ChannelCount; ++c)
                     {
                         var channel = output.GetChannel(c);
@@ -153,7 +153,7 @@ namespace AEther
         {
             await foreach (var input in BatcherChannel.Reader.ReadAllAsync(cancel))
             {
-                var output = new SampleEvent(Domain.Count, Format.ChannelCount, input.Time);
+                var output = new SampleEvent<double>(Domain.Count, Format.ChannelCount, input.Time);
 
                 for (var c = 0; c < Format.ChannelCount; ++c)
                 {
@@ -175,7 +175,7 @@ namespace AEther
         {
             await foreach (var input in DFTChannel.Reader.ReadAllAsync(cancel))
             {
-                var output = new SampleEvent(4 * Domain.Count, Format.ChannelCount, input.Time);
+                var output = new SampleEvent<double>(4 * Domain.Count, Format.ChannelCount, input.Time);
 
                 for (var c = 0; c < Format.ChannelCount; ++c)
                 {
@@ -189,15 +189,15 @@ namespace AEther
 
         }
 
-        public async IAsyncEnumerable<SampleEvent> RunThrottlerAsync([EnumeratorCancellation] CancellationToken cancel)
+        public async IAsyncEnumerable<SampleEvent<double>> RunThrottlerAsync([EnumeratorCancellation] CancellationToken cancel)
         {
             var timer = Stopwatch.StartNew();
-            var targetInterval = TimeSpan.FromSeconds(0.9 / Options.TimeResolution);
+            var targetInterval = TimeSpan.FromSeconds(Options.TimingAmount / Options.TimeResolution);
             await foreach (var output in SplitterChannel.Reader.ReadAllAsync(cancel))
             {
                 while (timer.Elapsed < targetInterval)
                 {
-                    Thread.SpinWait(1 << 8);
+                    Thread.SpinWait(Options.TimingSpinwaits);
                 }
                 timer.Restart();
                 yield return output;
