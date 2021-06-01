@@ -235,7 +235,7 @@ namespace AEther.WindowsForms
 
         public void Present()
         {
-            Chain.TryPresent(1, PresentFlags.DoNotWait);
+            Chain.Present(1, PresentFlags.DoNotWait);
         }
 
         public Shader CreateShader(string key)
@@ -308,11 +308,11 @@ namespace AEther.WindowsForms
                     Context.DrawIndexed(IndexCount, indexOffset ?? 0, vertexOffset ?? 0);
                 }
 
-                for(int i = 0; i < shader.ShaderResources.Count; ++i)
-                {
-                    Context.PixelShader.SetShaderResource(i, null);
-                    Context.VertexShader.SetShaderResource(i, null);
-                }
+                //for(int i = 0; i < shader.ShaderResources.Count; ++i)
+                //{
+                //    Context.PixelShader.SetShaderResource(i, null);
+                //    Context.VertexShader.SetShaderResource(i, null);
+                //}
 
             }
         }

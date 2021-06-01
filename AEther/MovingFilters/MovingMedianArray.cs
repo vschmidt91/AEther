@@ -17,14 +17,14 @@ namespace AEther
 
         public readonly T[] Sorted;
         public readonly T[] Buffer;
-        readonly Comparer<T> Comparer;
+        readonly Comparison<T> Comparison;
 
-        public MovingMedianArray(int windowSize, Comparer<T> comparer)
+        public MovingMedianArray(int windowSize, Comparison<T> comparison)
             : base(windowSize)
         {
             Size = 0;
             Position = 0;
-            Comparer = comparer;
+            Comparison = comparison;
             Sorted = new T[WindowSize];
             Buffer = new T[WindowSize];
         }
@@ -33,7 +33,7 @@ namespace AEther
         {
             var buffer = ArrayPool<T>.Shared.Rent(Size);
             Array.Copy(Buffer, buffer, Size);
-            Array.Sort(buffer, 0, Size, Comparer);
+            Array.Sort(buffer, 0, Size, Comparer<T>.Create(Comparison));
             return buffer.Take(Size).SequenceEqual(Sorted.Take(Size));
         }
 
@@ -62,7 +62,7 @@ namespace AEther
 
                 var oldValue = Buffer[Position];
 
-                var comparison = Comparer.Compare(oldValue, value);
+                var comparison = Comparison(oldValue, value);
                 if (comparison < 0)
                 {
                     var i = BinarySearchLeft(Sorted, oldValue);
@@ -99,7 +99,7 @@ namespace AEther
             while(l < r)
             {
                 var m = (l + r) / 2;
-                if (Comparer.Compare(value, data[m]) < 0)
+                if (Comparison(value, data[m]) < 0)
                     r = m;
                 else
                     l = m + 1;
@@ -118,7 +118,7 @@ namespace AEther
             while (l < r)
             {
                 var m = (l + r) / 2;
-                if(Comparer.Compare(data[m], value) < 0)
+                if(Comparison(data[m], value) < 0)
                     l = m + 1;
                 else
                     r = m;

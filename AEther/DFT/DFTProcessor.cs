@@ -30,7 +30,7 @@ namespace AEther
         readonly IDFTFilter[] Filters;
         readonly ParallelOptions ParallelOptions;
 
-        public DFTProcessor(Domain domain, float sampleRate, bool useSIMD = true, int maxParallelism = -1)
+        public DFTProcessor(Domain domain, float sampleRate, bool useSIMD = true, int maxParallelism = 1)
         {
             
             //Console.WriteLine(Vector<float>.Count);

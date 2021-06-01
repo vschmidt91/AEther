@@ -55,7 +55,7 @@ namespace AEther
         }
 
         static WindowedFilter<float> CreateFilter(int windowSize)
-            => new MovingMedianArray<float>(windowSize, Comparer<float>.Default);
+            => new MovingMedianHeap<float>(windowSize, Comparer<float>.Default.Compare);
 
         public void Process(ReadOnlyMemory<float> input, Memory<float> output)
         {
@@ -83,8 +83,8 @@ namespace AEther
 
                 KeyWeights[k % KeyWeights.Length] += sinuoids * Domain.Resolution / Domain.Count;
 
-                y[0] = sinuoids;
-                y[1] = transients;
+                y[0] = .8f * sinuoids;
+                y[1] = .8f * transients;
                 //y[2] = 1 + .1f * src[k];
                 y[2] = 0;
                 y[3] = 0;

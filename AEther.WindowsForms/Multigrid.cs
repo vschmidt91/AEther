@@ -82,6 +82,7 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
+                GC.SuppressFinalize(this);
                 CopyShader.Dispose();
                 ResidualShader.Dispose();
                 AddShader.Dispose();
