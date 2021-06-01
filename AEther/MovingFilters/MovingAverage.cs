@@ -4,20 +4,20 @@ using System.Text;
 
 namespace AEther
 {
-    public class MovingAverage : MovingFilter<float>
+    public class MovingAverage : MovingFilter<double>
     {
 
-        readonly float[] Buffer;
+        readonly double[] Buffer;
         readonly int HalfSize;
 
-        float Average;
+        double Average;
         int Position;
 
         public MovingAverage(int halfSize)
         {
             HalfSize = halfSize;
             Average = 0f;
-            Buffer = new float[2 * HalfSize + 1];
+            Buffer = new double[2 * HalfSize + 1];
             Position = 0;
         }
 
@@ -28,7 +28,7 @@ namespace AEther
             Position = 0;
         }
 
-        public override float Filter(float newValue)
+        public override double Filter(double newValue)
         {
             var oldValue = Buffer[Position];
             Buffer[Position] = newValue;

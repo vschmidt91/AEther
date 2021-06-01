@@ -16,20 +16,20 @@ namespace AEther
 
         readonly Complex[] States;
         readonly Complex[] Coefficients;
-        readonly float Frequency;
-        readonly float DFTFrequency;
-        readonly float Q;
+        readonly double Frequency;
+        readonly double DFTFrequency;
+        readonly double Q;
         readonly int M;
-        readonly float[] Window;
-        readonly RingBuffer<float> Buffer;
+        readonly double[] Window;
+        readonly RingBuffer<double> Buffer;
 
-        public WindowedDFTFilter(float frequency, float frequencyResolution, float sampleRate, float[] window)
+        public WindowedDFTFilter(double frequency, double frequencyResolution, double sampleRate, double[] window)
         {
 
             Window = window;
             Frequency = frequency;
             DFTFrequency = Frequency / sampleRate;
-            Q = 1f / (float)(Math.Pow(2, 1f / frequencyResolution) - 1);
+            Q = 1.0 / (Math.Pow(2, 1.0 / frequencyResolution) - 1);
             M = (int)Math.Round(Q);
             States = new Complex[Window.Length];
             var length = (int)Math.Round(M / DFTFrequency);
@@ -53,7 +53,7 @@ namespace AEther
             return result / Buffer.Size;
         }
 
-        public void Process(float newSample)
+        public void Process(double newSample)
         {
             var oldSample = Buffer.Add(newSample);
             var input = newSample - oldSample;
@@ -63,7 +63,7 @@ namespace AEther
             }
         }
 
-        public void Process(ReadOnlyMemory<float> samples)
+        public void Process(ReadOnlyMemory<double> samples)
         {
             while (0 < samples.Length)
             {

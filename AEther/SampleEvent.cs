@@ -7,12 +7,12 @@ using System.Threading.Channels;
 
 namespace AEther
 {
-    public class SampleEvent : IDisposable
+    public class SampleEvent<T> : IDisposable
     {
 
-        static ArrayPool<float> Pool => ArrayPool<float>.Shared;
+        static ArrayPool<T> Pool => ArrayPool<T>.Shared;
 
-        public readonly float[] Samples;
+        public readonly T[] Samples;
         public readonly int SampleCount;
         public readonly DateTime Time;
 
@@ -23,7 +23,7 @@ namespace AEther
             Time = time;
         }
 
-        public Memory<float> GetChannel(int channelIndex)
+        public Memory<T> GetChannel(int channelIndex)
         {
             var offset = channelIndex * SampleCount;
             return Samples.AsMemory(offset, SampleCount);

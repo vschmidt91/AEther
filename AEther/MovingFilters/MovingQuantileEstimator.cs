@@ -6,21 +6,21 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-    public class MovingQuantileEstimator : MovingFilter<float>
+    public class MovingQuantileEstimator : MovingFilter<double>
     {
 
-        public readonly float Quantile;
-        public readonly float Mix;
+        public readonly double Quantile;
+        public readonly double Mix;
 
-        float State;
+        double State;
 
-        public MovingQuantileEstimator(float quantile, float mix, float? initialState = default)
+        public MovingQuantileEstimator(double quantile, double mix, double initialState = 0)
         {
 
             Quantile = quantile;
             Mix = mix;
 
-            State = initialState ?? 0;
+            State = initialState;
 
         }
 
@@ -29,12 +29,12 @@ namespace AEther
             State = 0;
         }
 
-        public override float Filter(float value)
+        public override double Filter(double value)
         {
             //var mix = Math.Max(Mix, Math.Abs(State));
             State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);
             //State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);
-            if (float.IsNaN(value))
+            if (double.IsNaN(value))
                 throw new Exception();
             return State;
         }

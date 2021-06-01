@@ -44,7 +44,7 @@ namespace AEther.CLI
 
             await foreach(var output in outputs)
             {
-                var byteCount = sizeof(float) * output.SampleCount;
+                var byteCount = sizeof(double) * output.SampleCount;
                 if(buffer.Length < byteCount)
                 {
                     pool.Return(buffer);

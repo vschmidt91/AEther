@@ -13,15 +13,15 @@ namespace AEther.Benchmarks
         readonly int Width = 1 << 12;
         readonly int Length = 1 << 16;
         readonly int Seed = 0;
-        readonly Comparer<float> Comparer = Comparer<float>.Default;
+        readonly Comparer<double> Comparer = Comparer<double>.Default;
 
         [Benchmark]
         public void MovingMedianRef()
-            => Median(new MovingMedianArray<float>(Width, Comparer), Length, Seed);
+            => Median(new MovingMedianArray<double>(Width, Comparer), Length, Seed);
 
         [Benchmark]
         public void MovingMedianArray()
-            => Median(new MovingMedianArray<float>(Width, Comparer), Length, Seed);
+            => Median(new MovingMedianArray<double>(Width, Comparer), Length, Seed);
 
         //[Benchmark]
         //public void MovingMedianBST()
@@ -29,14 +29,14 @@ namespace AEther.Benchmarks
 
         [Benchmark]
         public void MovingMedianHeap()
-            => Median(new MovingMedianHeap<float>(Width, Comparer), Length, Seed);
+            => Median(new MovingMedianHeap<double>(Width, Comparer), Length, Seed);
 
-        public void Median(MovingFilter<float> filter, int length, int seed = 0)
+        public void Median(MovingFilter<double> filter, int length, int seed = 0)
         {
             var rng = new Random(seed);
             for (var i = 0; i < length; ++i)
             {
-                var x = (float)rng.NextDouble();
+                var x = rng.NextDouble();
                 filter.Filter(x);
             }
         }

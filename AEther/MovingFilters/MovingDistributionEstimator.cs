@@ -5,19 +5,19 @@ using System.Text;
 
 namespace AEther
 {
-    public class MovingDistributionEstimator : MovingFilter<float>
+    public class MovingDistributionEstimator : MovingFilter<double>
     {
 
         public readonly MovingQuantileEstimator[] Quantiles;
 
-        readonly float[] States;
+        readonly double[] States;
 
-        public MovingDistributionEstimator(int quantileCount, float mix)
+        public MovingDistributionEstimator(int quantileCount, double mix)
         {
             Quantiles = Enumerable.Range(0, quantileCount)
-                .Select(i => new MovingQuantileEstimator(i / (float)(quantileCount - 1), mix))
+                .Select(i => new MovingQuantileEstimator(i / (double)(quantileCount - 1), mix))
                 .ToArray();
-            States = new float[quantileCount];
+            States = new double[quantileCount];
         }
 
         public override void Clear()
@@ -28,7 +28,7 @@ namespace AEther
             }
         }
 
-        public override float Filter(float x)
+        public override double Filter(double x)
         {
             for(int i = 0; i < Quantiles.Length; ++i)
             {

@@ -15,7 +15,7 @@ namespace AEther.Tests
         readonly int Width = 1 << 8;
         readonly int Count = 1 << 16;
         readonly int Seed = 123;
-        readonly Comparer<float> Comparer = Comparer<float>.Default;
+        readonly Comparer<double> Comparer = Comparer<double>.Default;
 
         [SetUp]
         public void Setup()
@@ -24,7 +24,7 @@ namespace AEther.Tests
 
         [Test]
         public void TestMedianArray()
-            => TestMedian(new MovingMedianRef<float>(Width, Comparer), new MovingMedianArray<float>(Width, Comparer), Count, Seed);
+            => TestMedian(new MovingMedianRef<double>(Width, Comparer), new MovingMedianArray<double>(Width, Comparer), Count, Seed);
 
         //[Test]
         //public void TestMedianBST()
@@ -32,14 +32,14 @@ namespace AEther.Tests
 
         [Test]
         public void TestMedianHeap()
-            => TestMedian(new MovingMedianRef<float>(Width, Comparer), new MovingMedianHeap<float>(Width, Comparer), Count, Seed);
+            => TestMedian(new MovingMedianRef<double>(Width, Comparer), new MovingMedianHeap<double>(Width, Comparer), Count, Seed);
 
-        static void TestMedian(MovingFilter<float> a, MovingFilter<float> b, int length, int seed = 0)
+        static void TestMedian(MovingFilter<double> a, MovingFilter<double> b, int length, int seed = 0)
         {
             var rng = new Random(seed);
             for (var i = 0; i < length; ++i)
             {
-                var x = (float)rng.NextDouble();
+                var x = rng.NextDouble();
                 var y1 = a.Filter(x);
                 var y2 = b.Filter(x);
                 Assert.AreEqual(y1, y2);

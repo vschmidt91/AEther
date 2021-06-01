@@ -33,14 +33,18 @@ namespace AEther.WindowsForms
         CancellationTokenSource Cancel = new();
         SpectrumAccumulator[] Spectrum = Array.Empty<SpectrumAccumulator>();
         Histogram[] Histogram = Array.Empty<Histogram>();
-        double Latency;
-        DateTime LastLatencyUpdate = DateTime.MinValue;
-        int InputCounter;
+
+        TimeSpan Latency;
+        TimeSpan FrameTime;
+        int EventCounter = 0;
+
+        readonly Stopwatch FrameTimer = Stopwatch.StartNew();
+        readonly Stopwatch LatencyUpdateTimer = Stopwatch.StartNew();
+        readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
 
         readonly Graphics Graphics;
         readonly Shader HistogramShader;
         readonly Shader SpectrumShader;
-        readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
         readonly EffectScalarVariable HistogramShiftVariable;
         readonly TaskScheduler UIScheduler;
 
@@ -91,8 +95,8 @@ namespace AEther.WindowsForms
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            Graphics.Resize(ClientSize.Width, ClientSize.Height); 
-            
+            Graphics.Resize(ClientSize.Width, ClientSize.Height);
+
             _ = Task.Factory.StartNew(() =>
             {
                 while (!IsDisposed)
@@ -105,6 +109,9 @@ namespace AEther.WindowsForms
             }, CancellationToken.None, TaskCreationOptions.LongRunning, UIScheduler);
 
             _ = Task.Run(RunAsync);
+
+
+            //SharpDX.Windows.RenderLoop.Run(this, Render);
 
         }
 
@@ -148,7 +155,7 @@ namespace AEther.WindowsForms
                 AudioDevice device = deviceName is LoopbackEntry
                     ? new Loopback()
                     : new Recorder(deviceName ?? string.Empty);
-                if(Options.SelectedObject is not SessionOptions options)
+                if (Options.SelectedObject is not SessionOptions options)
                 {
                     throw new InvalidCastException();
                 }
@@ -164,7 +171,7 @@ namespace AEther.WindowsForms
             var session = new Session(sampleSource, options);
 
             DMXController? dmx = null;
-            if(0 < options.DMXPort)
+            if (0 < options.DMXPort)
             {
                 var comPort = $"COM{options.DMXPort}";
                 dmx = new DMXController(comPort, options.Domain)
@@ -175,42 +182,37 @@ namespace AEther.WindowsForms
             }
 
             Cancel.Token.Register(sampleSource.Stop);
-            var outputs = session.RunAsync();
+            var events = session.RunAsync();
 
             IsRunning = true;
             sampleSource.Start();
             try
             {
-                await foreach (var output in outputs)
+                await foreach (var evt in events)
                 {
-                    var latency = (DateTime.Now - output.Time).TotalMilliseconds;
-                    Latency = Math.Max(Latency, latency);
 
-                    dmx?.Process(output);
+                    var latency = DateTime.Now - evt.Time;
+                    if (Latency < latency)
+                    {
+                        Latency = latency;
+                    }
+
+                    dmx?.Process(evt);
+
                     for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                     {
-                        var src = output.GetChannel(c);
-                        lock (Spectrum[c])
-                        {
-                            Spectrum[c].Add(src.Span);
-                        }
-                    }
-                    for (int c = 0; c < Histogram.Length; ++c)
-                    {
-                        var src = output.GetChannel(c);
-                        lock (Histogram[c])
-                        {
-                            Histogram[c].Add(src.Span);
-                        }
+                        var channel = evt.GetChannel(c);
+                        Spectrum[c].Add(channel.Span);
+                        Histogram[c].Add(channel.Span);
                     }
 
-                    InputCounter++;
-                    output.Dispose();
+                    evt.Dispose();
+                    Interlocked.Increment(ref EventCounter);
                 }
             }
-            catch(Exception) { }
+            catch (Exception) { }
 
-            if(dmx is not null)
+            if (dmx is not null)
             {
                 await dmx.DisposeAsync();
             }
@@ -221,19 +223,17 @@ namespace AEther.WindowsForms
 
         void ToggleFullscreen()
         {
-            if(Graphics.IsFullscreen)
+            if (Graphics.IsFullscreen)
             {
                 Hide();
                 Show();
             }
-            else 
+            else
             {
                 Graphics.Resize(Graphics.NativeMode);
                 Graphics.IsFullscreen = true;
             }
         }
-
-        DateTime LastDraw = DateTime.Now;
 
         public void Render()
         {
@@ -244,48 +244,46 @@ namespace AEther.WindowsForms
             if (!IsRunning)
                 return;
 
-            var now = DateTime.Now;
-            if (LatencyUpdateInterval < now - LastLatencyUpdate)
+            var frameTime = FrameTimer.Elapsed;
+            FrameTimer.Restart();
+
+            if (FrameTime < frameTime)
             {
-                var drawTime = (now - LastDraw).TotalMilliseconds;
-                //Text = ().TotalMilliseconds.ToString();
-                Text = $"Latency: {Math.Round(Latency, 0)} ms, Draw Time: {Math.Round(drawTime, 0)} ms";
-                LastLatencyUpdate = now;
-                Latency = 0;
+                FrameTime = frameTime;
             }
 
-            LastDraw = now;
+            if (LatencyUpdateInterval < LatencyUpdateTimer.Elapsed)
+            {
+                Text = $"Latency: {Math.Round(Latency.TotalMilliseconds, 0)} ms, Draw Time: {Math.Round(FrameTime.TotalMilliseconds, 0)} ms";
+                Latency = TimeSpan.Zero;
+                FrameTime = TimeSpan.Zero;
+                LatencyUpdateTimer.Restart();
+            }
 
-            if (0 < InputCounter)
+            if (0 < Interlocked.Exchange(ref EventCounter, 0))
             {
 
                 foreach (var spectrum in Spectrum)
                 {
-                    lock(spectrum)
-                    {
-                        spectrum.Update();
-                        spectrum.Clear();
-                    }
+                    spectrum.Update();
+                    spectrum.Clear();
                 }
                 SpectrumShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
                 SpectrumShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
 
                 foreach (var histogram in Histogram)
                 {
-                    lock (histogram)
-                    {
-                        histogram.Update();
-                    }
+                    histogram.Update();
                 }
                 HistogramShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
                 HistogramShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
 
                 var histogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
                 HistogramShiftVariable.Set(histogramShift);
-                InputCounter = 0;
+
             }
 
-            if(State.SelectedItem is GraphicsState state)
+            if (State.SelectedItem is GraphicsState state)
             {
                 using var frame = Graphics.RenderFrame();
                 state.Render();

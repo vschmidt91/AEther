@@ -17,18 +17,18 @@ namespace AEther
         Complex State;
 
         readonly Complex Coefficient;
-        readonly float Frequency;
-        readonly float DFTFrequency;
-        readonly float Q;
+        readonly double Frequency;
+        readonly double DFTFrequency;
+        readonly double Q;
         readonly int M;
-        readonly RingBuffer<float> Buffer;
+        readonly RingBuffer<double> Buffer;
 
-        public DFTFilter(float frequency, float frequencyResolution, float sampleRate)
+        public DFTFilter(double frequency, double frequencyResolution, double sampleRate)
         {
 
             Frequency = frequency;
             DFTFrequency = Frequency / sampleRate;
-            Q = 1f / (float)(Math.Pow(2, 1f / frequencyResolution) - 1);
+            Q = 1.0 / (Math.Pow(2, 1.0 / frequencyResolution) - 1);
             M = (int)Math.Round(Q);
             State = Complex.Zero;
             var length = (int)Math.Round(M / DFTFrequency);
@@ -42,14 +42,14 @@ namespace AEther
             return State / Buffer.Size;
         }
 
-        public void Process(float newSample)
+        public void Process(double newSample)
         {
             var oldSample = Buffer.Add(newSample);
             var input = newSample - oldSample;
             State = Coefficient * State + input;
         }
 
-        public void Process(ReadOnlyMemory<float> samples)
+        public void Process(ReadOnlyMemory<double> samples)
         {
             while(0 < samples.Length)
             {

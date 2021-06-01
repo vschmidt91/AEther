@@ -4,16 +4,16 @@ using System.Text;
 
 namespace AEther
 {
-    public class MovingExponentialAverage : MovingFilter<float>
+    public class MovingExponentialAverage : MovingFilter<double>
     {
 
-        public float Average => State;
+        public double Average => State;
 
-        readonly float Mix;
+        readonly double Mix;
 
-        float State;
+        double State;
 
-        public MovingExponentialAverage(float mix)
+        public MovingExponentialAverage(double mix)
         {
             Mix = mix;
             State = 0f;
@@ -27,7 +27,7 @@ namespace AEther
             State = 0f;
         }
 
-        public override float Filter(float newValue)
+        public override double Filter(double newValue)
         {
             State += Mix * (newValue - State);
             return State;

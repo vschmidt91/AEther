@@ -13,9 +13,9 @@ namespace AEther
 
         Complex GetOutput();
 
-        void Process(float newSample);
+        void Process(double newSample);
 
-        void Process(ReadOnlyMemory<float> samples);
+        void Process(ReadOnlyMemory<double> samples);
 
     }
 

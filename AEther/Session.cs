@@ -33,9 +33,9 @@ namespace AEther
         readonly Splitter[] Splitter;
 
         readonly Pipe SamplePipe;
-        readonly Channel<SampleEvent> BatcherChannel;
-        readonly Channel<SampleEvent> DFTChannel;
-        readonly Channel<SampleEvent> SplitterChannel;
+        readonly Channel<SampleEvent<double>> BatcherChannel;
+        readonly Channel<SampleEvent<double>> DFTChannel;
+        readonly Channel<SampleEvent<double>> SplitterChannel;
 
         public Session(SampleSource source, SessionOptions? options = null)
         {
@@ -54,9 +54,9 @@ namespace AEther
                 .ToArray();
 
             SamplePipe = new Pipe();
-            BatcherChannel = CreateChannel<SampleEvent>();
-            DFTChannel = CreateChannel<SampleEvent>();
-            SplitterChannel = CreateChannel<SampleEvent>();
+            BatcherChannel = CreateChannel<SampleEvent<double>>();
+            DFTChannel = CreateChannel<SampleEvent<double>>();
+            SplitterChannel = CreateChannel<SampleEvent<double>>();
 
             Source.OnDataAvailable += (sender, data) =>
             {
@@ -72,21 +72,21 @@ namespace AEther
 
         }
 
-        public async IAsyncEnumerable<SampleEvent> RunAsync([EnumeratorCancellation] CancellationToken cancel = default)
+        public async IAsyncEnumerable<SampleEvent<double>> RunAsync([EnumeratorCancellation] CancellationToken cancel = default)
         {
 
-            var batcherTask = Task.Run(() => RunBatcher(cancel), cancel);
-            var dftTask = Task.Run(() => RunDFT(cancel), cancel);
-            var splitterTask = Task.Run(() => RunSplitter(cancel), cancel);
+            var batcher = Task.Run(() => RunBatcherAsync(cancel), cancel);
+            var dft = Task.Run(() => RunDFTAsync(cancel), cancel);
+            var splitter = Task.Run(() => RunSplitterAsync(cancel), cancel);
 
-            //return splitterChannel.Reader.ReadAllAsync(cancel);
-
-            await foreach (var output in SplitterChannel.Reader.ReadAllAsync(cancel))
+            await foreach (var evt in RunThrottlerAsync(cancel))
             {
-                yield return output;
+                yield return evt;
             }
 
-            await Task.WhenAll(batcherTask, dftTask, splitterTask);
+            await batcher;
+            await dft;
+            await splitter;
 
         }
 
@@ -111,7 +111,7 @@ namespace AEther
             }
         }
 
-        public async Task RunBatcher(CancellationToken cancel)
+        public async Task RunBatcherAsync(CancellationToken cancel)
         {
             await foreach (var input in SamplePipe.Reader.ReadAllAsync(cancel))
             {
@@ -119,7 +119,7 @@ namespace AEther
                 for (; offset + Batch.Length < input.Data.Length; offset += Batch.Length)
                 {
                     input.Data.Slice(offset, Batch.Length).CopyTo(Batch);
-                    var output = new SampleEvent(BatchSize, Format.ChannelCount, DateTime.Now);
+                    var output = new SampleEvent<double>(BatchSize, Format.ChannelCount, DateTime.Now);
                     for (var c = 0; c < Format.ChannelCount; ++c)
                     {
                         var channel = output.GetChannel(c);
@@ -136,23 +136,23 @@ namespace AEther
             BatcherChannel.Writer.Complete();
         }
 
-        private float GetSample(byte[] source, int sampleIndex, int channel)
+        private double GetSample(byte[] source, int sampleIndex, int channel)
         {
             var index = sampleIndex * Format.ChannelCount + channel;
             var offset = Format.Type.GetSize() * index;
             return Format.Type switch
             {
-                SampleType.UInt16 => BitConverter.ToInt16(source, offset) / (float)short.MaxValue,
+                SampleType.UInt16 => BitConverter.ToInt16(source, offset) / (double)short.MaxValue,
                 SampleType.Float32 => BitConverter.ToSingle(source, offset),
                 _ => throw new Exception(),
             };
         }
 
-        public async Task RunDFT(CancellationToken cancel)
+        public async Task RunDFTAsync(CancellationToken cancel)
         {
             await foreach (var input in BatcherChannel.Reader.ReadAllAsync(cancel))
             {
-                var output = new SampleEvent(Domain.Count, Format.ChannelCount, input.Time);
+                var output = new SampleEvent<double>(Domain.Count, Format.ChannelCount, input.Time);
 
                 for (var c = 0; c < Format.ChannelCount; ++c)
                 {
@@ -170,11 +170,11 @@ namespace AEther
 
         }
 
-        public async Task RunSplitter(CancellationToken cancel)
+        public async Task RunSplitterAsync(CancellationToken cancel)
         {
             await foreach (var input in DFTChannel.Reader.ReadAllAsync(cancel))
             {
-                var output = new SampleEvent(4 * Domain.Count, Format.ChannelCount, input.Time);
+                var output = new SampleEvent<double>(4 * Domain.Count, Format.ChannelCount, input.Time);
 
                 for (var c = 0; c < Format.ChannelCount; ++c)
                 {
@@ -186,6 +186,24 @@ namespace AEther
             }
             SplitterChannel.Writer.Complete();
 
+        }
+
+        public async IAsyncEnumerable<SampleEvent<double>> RunThrottlerAsync([EnumeratorCancellation] CancellationToken cancel)
+        {
+
+            var timer = Stopwatch.StartNew();
+            var targetInterval = TimeSpan.FromSeconds(1.0 / Options.TimeResolution);
+            await foreach (var output in SplitterChannel.Reader.ReadAllAsync(cancel))
+            {
+                timer.Stop();
+                var remainingInterval = targetInterval - timer.Elapsed;
+                if (1 <= remainingInterval.TotalMilliseconds)
+                {
+                    await MultimediaTimer.Delay((int)remainingInterval.TotalMilliseconds, cancel);
+                }
+                timer.Restart();
+                yield return output;
+            }
         }
 
     }

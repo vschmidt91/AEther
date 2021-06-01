@@ -49,7 +49,7 @@ namespace AEther
             }
         }
 
-        public static float Clamp(this float x, float a, float b)
+        public static double Clamp(this double x, double a, double b)
         {
             if (x < a)
                 return a;
@@ -59,7 +59,7 @@ namespace AEther
                 return x;
         }
 
-        public static float Mix(this float x0, float x1, float q)
+        public static double Mix(this double x0, double x1, double q)
         {
             return x0 + q * (x1 - x0);
         }

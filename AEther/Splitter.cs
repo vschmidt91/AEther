@@ -15,20 +15,20 @@ namespace AEther
 
         readonly Domain Domain;
 
-        readonly MovingFilter<float> Frequency;
-        readonly MovingFilter<float>[] Time;
+        readonly MovingFilter<double> Frequency;
+        readonly MovingFilter<double>[] Time;
 
-        readonly MovingFilter<float> Frequency2;
-        readonly MovingFilter<float>[] Time2;
+        readonly MovingFilter<double> Frequency2;
+        readonly MovingFilter<double>[] Time2;
 
-        readonly float[] Buffer1;
-        readonly float[] Buffer2;
-        readonly float[] Buffer3;
-        readonly float[] Buffer4;
+        readonly double[] Buffer1;
+        readonly double[] Buffer2;
+        readonly double[] Buffer3;
+        readonly double[] Buffer4;
 
-        readonly float[] KeyWeights;
+        readonly double[] KeyWeights;
 
-        public Splitter(Domain domain, float timeResolution, float frequencyWindow, float timeWindow)
+        public Splitter(Domain domain, double timeResolution, double frequencyWindow, double timeWindow)
         {
 
             Domain = domain;
@@ -36,11 +36,11 @@ namespace AEther
             int halfSizeFrequency = (int)(frequencyWindow * domain.Resolution);
             int halfSizeTime = (int)(timeWindow * timeResolution);
 
-            KeyWeights = new float[Domain.Resolution];
-            Buffer1 = new float[Domain.Count];
-            Buffer2 = new float[Domain.Count];
-            Buffer3 = new float[Domain.Count];
-            Buffer4 = new float[Domain.Count];
+            KeyWeights = new double[Domain.Resolution];
+            Buffer1 = new double[Domain.Count];
+            Buffer2 = new double[Domain.Count];
+            Buffer3 = new double[Domain.Count];
+            Buffer4 = new double[Domain.Count];
 
             Frequency = CreateFilter(1 + 2 * halfSizeFrequency);
             Time = Enumerable.Range(0, domain.Count)
@@ -54,10 +54,10 @@ namespace AEther
 
         }
 
-        static WindowedFilter<float> CreateFilter(int windowSize)
-            => new MovingMedianArray<float>(windowSize, Comparer<float>.Default);
+        static WindowedFilter<double> CreateFilter(int windowSize)
+            => new MovingMedianArray<double>(windowSize, Comparer<double>.Default);
 
-        public void Process(ReadOnlyMemory<float> input, Memory<float> output)
+        public void Process(ReadOnlyMemory<double> input, Memory<double> output)
         {
 
             var src = input.Span;

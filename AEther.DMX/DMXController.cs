@@ -20,14 +20,14 @@ namespace AEther.DMX
         readonly DMXChannel[] Channels;
         readonly Domain Domain;
 
-        readonly float[] KeyWeights;
+        readonly double[] KeyWeights;
         int Key;
 
         readonly MovingQuantileEstimator SinuoidFilter;
         readonly MovingQuantileEstimator TransientFilter;
 
-        public float SinuoidThreshold;
-        public float TransientThreshold;
+        public double SinuoidThreshold;
+        public double TransientThreshold;
 
         public DMXController(string comPort, Domain domain)
         {
@@ -37,7 +37,7 @@ namespace AEther.DMX
             SinuoidFilter = new MovingQuantileEstimator(.95f, .003f);
             TransientFilter = new MovingQuantileEstimator(.95f, .003f);
 
-            KeyWeights = new float[Domain.Resolution];
+            KeyWeights = new double[Domain.Resolution];
             var ports = SerialPort.GetPortNames();
             Serial = new SerialPort(comPort, Baudrate)
             {
@@ -59,7 +59,7 @@ namespace AEther.DMX
             }
         }
 
-        public void Process(SampleEvent evt)
+        public void Process(SampleEvent<double> evt)
         {
 
 
@@ -75,8 +75,8 @@ namespace AEther.DMX
                 Key = newKey;
             }
 
-            var sum = new float[4];
-            var scale = sum.Length / (float)evt.SampleCount;
+            var sum = new double[4];
+            var scale = sum.Length / (double)evt.SampleCount;
             for (var i = 0; i < evt.SampleCount; ++i)
             {
                 sum[i % sum.Length] += scale * evt.Samples[i];

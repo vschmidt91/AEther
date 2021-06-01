@@ -11,15 +11,15 @@ namespace AEther
     public class DFTProcessor
     {
 
-        public static readonly float[] RectWindow = new[] { 1f };
-        public static readonly float[] HannWindow = new[] { 0.5f, 0.5f };
-        public static readonly float[] HammingWindow = new[] { .54f, .46f };
-        public static readonly float[] HammingExactWindow = new[] { 25 / 46f, 21 / 46f };
-        public static readonly float[] BlackmanWindow = new[] { .42f, .5f, .08f };
-        public static readonly float[] BlackmanExactWindow = new[] { 3969 / 9304f, 4620 / 9304f, 715 / 9304f };
-        public static readonly float[] NuttalWindow = new[] { .355768f, .487396f, .144232f, .012604f };
+        public static readonly double[] RectWindow = new[] { 1.0 };
+        public static readonly double[] HannWindow = new[] { 0.5, 0.5 };
+        public static readonly double[] HammingWindow = new[] { .54, .46 };
+        public static readonly double[] HammingExactWindow = new[] { 25 / 46.0, 21 / 46.0 };
+        public static readonly double[] BlackmanWindow = new[] { .42, .5, .08 };
+        public static readonly double[] BlackmanExactWindow = new[] { 3969 / 9304.0, 4620 / 9304.0, 715 / 9304.0 };
+        public static readonly double[] NuttalWindow = new[] { .355768, .487396, .144232, .012604 };
 
-        public static readonly float[][] WindowCandidates = new[]
+        public static readonly double[][] WindowCandidates = new[]
         {
             RectWindow,
             HannWindow,
@@ -30,13 +30,13 @@ namespace AEther
         readonly IDFTFilter[] Filters;
         readonly ParallelOptions ParallelOptions;
 
-        public DFTProcessor(Domain domain, float sampleRate, bool useSIMD = true, int maxParallelism = -1)
+        public DFTProcessor(Domain domain, double sampleRate, bool useSIMD = true, int maxParallelism = -1)
         {
             
             //Console.WriteLine(Vector<float>.Count);
 
             var cosines = useSIMD
-                ? WindowCandidates.Last(w => 2 * w.Length - 1 <= Vector<float>.Count)
+                ? WindowCandidates.Last(w => 2 * w.Length - 1 <= Vector<double>.Count)
                 : HannWindow;
 
             //cosines = RectWindow;
@@ -82,29 +82,29 @@ namespace AEther
             return r;
         }
 
-        public static float[] CreateWindow(float[] cosines)
+        public static double[] CreateWindow(double[] cosines)
         {
-            var window = new float[2 * cosines.Length - 1];
+            var window = new double[2 * cosines.Length - 1];
             window[cosines.Length - 1] = cosines[0];
             for (int j = 1; j < cosines.Length; ++j)
             {
-                var coeff = 0.5f * (float)Math.Pow(-1, j) * cosines[j];
+                var coeff = 0.5 * Math.Pow(-1, j) * cosines[j];
                 window[cosines.Length - 1 - j] = window[cosines.Length - 1 + j] = coeff;
             }
             return window;
         }
 
-        public void Output(Memory<float> dst)
+        public void Output(Memory<double> dst)
         {
             for (int k = 0; k < Filters.Length; ++k)
             {
                 var filter = Filters[k];
                 var bin = 2 * filter.GetOutput().Magnitude;
-                dst.Span[k] = (float)Math.Log10(Math.Max(1e-10, bin));
+                dst.Span[k] = Math.Log10(Math.Max(1e-10, bin));
             }
         }
 
-        public void Process(ReadOnlyMemory<float> samples)
+        public void Process(ReadOnlyMemory<double> samples)
         {
 
             void ProcessFilter(IDFTFilter filter)
