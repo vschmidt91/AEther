@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <FileUpgradeFlags>40</FileUpgradeFlags>
     <UpgradeBackupLocation>C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\Backup\AEther.WindowsForms\</UpgradeBackupLocation>
     <OldToolsVersion>2.0</OldToolsVersion>
     <LangVersion>default</LangVersion>
+    <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="lib\**" />
