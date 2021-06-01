@@ -56,8 +56,8 @@ namespace AEther.Benchmarks
                 for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                 {
                     var src = output.GetChannel(c);
-                    src.CopyTo(outputFloats);
-                    Buffer.BlockCopy(outputFloats, 0, outputBytes, 0, outputBytes.Length);
+                    src.CopyTo(outputDoubles);
+                    Buffer.BlockCopy(outputDoubles, 0, outputBytes, 0, outputBytes.Length);
                     await outputStream.WriteAsync(outputBytes);
                 }
                 output.Dispose();
