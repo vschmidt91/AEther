@@ -18,17 +18,17 @@ namespace AEther
 
         readonly FixedHeap<T> Below;
         readonly FixedHeap<T> Above;
-        readonly Comparison<T> Comparison;
+        readonly Comparer<T> Comparer;
         readonly bool[] Flags;
 
-        public MovingMedianHeap(int windowSize, Comparison<T> comparison)
+        public MovingMedianHeap(int windowSize, Comparer<T> comparer)
             : base(windowSize)
         {
             Position = 0;
             Flags = new bool[WindowSize];
-            Comparison = comparison;
-            Below = new(windowSize, (x, y) => -Comparison(x, y));
-            Above = new(windowSize, Comparison);
+            Comparer = comparer;
+            Below = new(windowSize, Comparer<T>.Create((x, y) => -Comparer.Compare(x, y)));
+            Above = new(windowSize, Comparer);
         }
 
         public override void Clear()
@@ -54,7 +54,7 @@ namespace AEther
 
             if(0 < Size)
             {
-                Flags[Position] = 0 < Comparison(value, Median);
+                Flags[Position] = 0 < Comparer.Compare(value, Median);
             }
             
             if (Flags[Position])

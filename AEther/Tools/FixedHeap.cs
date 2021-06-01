@@ -12,15 +12,29 @@ namespace AEther
 
         readonly int[] Indirection;
 
-        public FixedHeap(int maxKey, Comparison<T> comparison)
-            : base(ExtendComparer(comparison))
+        public FixedHeap(int maxKey, IComparer<T> comparer)
+            : base(ExtendComparer(comparer))
         {
             Indirection = new int[maxKey];
         }
 
-        protected static Comparison<(T, int)> ExtendComparer(Comparison<T> comparer)
-            => ((T, int) x, (T, int) y)
-            => comparer(x.Item1, y.Item1);
+        protected static IComparer<(T, int)> ExtendComparer(IComparer<T> comparer)
+        {
+            int Compare((T, int) x, (T, int) y)
+            {
+                var c = comparer.Compare(x.Item1, y.Item1);
+                if (c == 0)
+                {
+                    return c;
+                    //return x.Item2 - y.Item2;
+                }
+                else
+                {
+                    return c;
+                }
+            }
+            return Comparer<(T, int)>.Create(Compare);
+        }
 
         public override void Insert((T, int) item)
         {

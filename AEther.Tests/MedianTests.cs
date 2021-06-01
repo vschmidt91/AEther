@@ -15,7 +15,7 @@ namespace AEther.Tests
         readonly int Width = 1 << 8;
         readonly int Count = 1 << 16;
         readonly int Seed = 123;
-        readonly Comparison<float> Comparison = Comparer<float>.Default.Compare;
+        readonly Comparer<float> Comparer = Comparer<float>.Default;
 
         [SetUp]
         public void Setup()
@@ -24,7 +24,7 @@ namespace AEther.Tests
 
         [Test]
         public void TestMedianArray()
-            => TestMedian(new MovingMedianRef<float>(Width, Comparison), new MovingMedianArray<float>(Width, Comparison), Count, Seed);
+            => TestMedian(new MovingMedianRef<float>(Width, Comparer), new MovingMedianArray<float>(Width, Comparer), Count, Seed);
 
         //[Test]
         //public void TestMedianBST()
@@ -32,7 +32,7 @@ namespace AEther.Tests
 
         [Test]
         public void TestMedianHeap()
-            => TestMedian(new MovingMedianRef<float>(Width, Comparison), new MovingMedianHeap<float>(Width, Comparison), Count, Seed);
+            => TestMedian(new MovingMedianRef<float>(Width, Comparer), new MovingMedianHeap<float>(Width, Comparer), Count, Seed);
 
         static void TestMedian(MovingFilter<float> a, MovingFilter<float> b, int length, int seed = 0)
         {

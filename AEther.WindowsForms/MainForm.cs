@@ -33,18 +33,14 @@ namespace AEther.WindowsForms
         CancellationTokenSource Cancel = new();
         SpectrumAccumulator[] Spectrum = Array.Empty<SpectrumAccumulator>();
         Histogram[] Histogram = Array.Empty<Histogram>();
-
-        TimeSpan Latency;
-        TimeSpan FrameTime;
-        int EventCounter = 0;
-
-        readonly Stopwatch FrameTimer = Stopwatch.StartNew();
-        readonly Stopwatch LatencyUpdateTimer = Stopwatch.StartNew();
-        readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
+        double Latency;
+        DateTime LastLatencyUpdate = DateTime.MinValue;
+        int InputCounter;
 
         readonly Graphics Graphics;
         readonly Shader HistogramShader;
         readonly Shader SpectrumShader;
+        readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
         readonly EffectScalarVariable HistogramShiftVariable;
         readonly TaskScheduler UIScheduler;
 
@@ -95,8 +91,8 @@ namespace AEther.WindowsForms
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            Graphics.Resize(ClientSize.Width, ClientSize.Height);
-
+            Graphics.Resize(ClientSize.Width, ClientSize.Height); 
+            
             _ = Task.Factory.StartNew(() =>
             {
                 while (!IsDisposed)
@@ -109,9 +105,6 @@ namespace AEther.WindowsForms
             }, CancellationToken.None, TaskCreationOptions.LongRunning, UIScheduler);
 
             _ = Task.Run(RunAsync);
-
-
-            //SharpDX.Windows.RenderLoop.Run(this, Render);
 
         }
 
@@ -182,32 +175,37 @@ namespace AEther.WindowsForms
             }
 
             Cancel.Token.Register(sampleSource.Stop);
-            var events = session.RunAsync();
+            var outputs = session.RunAsync();
 
             IsRunning = true;
             sampleSource.Start();
             try
             {
-                await foreach (var evt in events)
+                await foreach (var output in outputs)
                 {
+                    var latency = (DateTime.Now - output.Time).TotalMilliseconds;
+                    Latency = Math.Max(Latency, latency);
 
-                    var latency = DateTime.Now - evt.Time;
-                    if (Latency < latency)
-                    {
-                        Latency = latency;
-                    }
-
-                    dmx?.Process(evt);
-
+                    dmx?.Process(output);
                     for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                     {
-                        var channel = evt.GetChannel(c);
-                        Spectrum[c].Add(channel.Span);
-                        Histogram[c].Add(channel.Span);
+                        var src = output.GetChannel(c);
+                        lock (Spectrum[c])
+                        {
+                            Spectrum[c].Add(src.Span);
+                        }
+                    }
+                    for (int c = 0; c < Histogram.Length; ++c)
+                    {
+                        var src = output.GetChannel(c);
+                        lock (Histogram[c])
+                        {
+                            Histogram[c].Add(src.Span);
+                        }
                     }
 
-                    evt.Dispose();
-                    Interlocked.Increment(ref EventCounter);
+                    InputCounter++;
+                    output.Dispose();
                 }
             }
             catch(Exception) { }
@@ -235,6 +233,8 @@ namespace AEther.WindowsForms
             }
         }
 
+        DateTime LastDraw = DateTime.Now;
+
         public void Render()
         {
 
@@ -244,43 +244,45 @@ namespace AEther.WindowsForms
             if (!IsRunning)
                 return;
 
-            var frameTime = FrameTimer.Elapsed;
-            FrameTimer.Restart();
-
-            if (FrameTime < frameTime)
+            var now = DateTime.Now;
+            if (LatencyUpdateInterval < now - LastLatencyUpdate)
             {
-                FrameTime = frameTime;
+                var drawTime = (now - LastDraw).TotalMilliseconds;
+                //Text = ().TotalMilliseconds.ToString();
+                Text = $"Latency: {Math.Round(Latency, 0)} ms, Draw Time: {Math.Round(drawTime, 0)} ms";
+                LastLatencyUpdate = now;
+                Latency = 0;
             }
 
-            if (LatencyUpdateInterval < LatencyUpdateTimer.Elapsed)
-            {
-                Text = $"Latency: {Math.Round(Latency.TotalMilliseconds, 0)} ms, Draw Time: {Math.Round(FrameTime.TotalMilliseconds, 0)} ms";
-                Latency = TimeSpan.Zero;
-                FrameTime = TimeSpan.Zero;
-                LatencyUpdateTimer.Restart();
-            }
+            LastDraw = now;
 
-            if(0 < Interlocked.Exchange(ref EventCounter, 0))
+            if (0 < InputCounter)
             {
 
                 foreach (var spectrum in Spectrum)
                 {
-                    spectrum.Update();
-                    spectrum.Clear();
+                    lock(spectrum)
+                    {
+                        spectrum.Update();
+                        spectrum.Clear();
+                    }
                 }
                 SpectrumShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
                 SpectrumShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
 
                 foreach (var histogram in Histogram)
                 {
-                    histogram.Update();
+                    lock (histogram)
+                    {
+                        histogram.Update();
+                    }
                 }
                 HistogramShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
                 HistogramShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
 
                 var histogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
                 HistogramShiftVariable.Set(histogramShift);
-
+                InputCounter = 0;
             }
 
             if(State.SelectedItem is GraphicsState state)

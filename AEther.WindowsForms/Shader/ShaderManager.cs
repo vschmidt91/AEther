@@ -152,6 +152,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
+
             GC.SuppressFinalize(this);
             foreach(var shader in Shaders.Values)
             {

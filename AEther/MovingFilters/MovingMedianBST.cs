@@ -11,7 +11,7 @@ namespace AEther
     public class MovingMedianBST<T> : MovingFilter<T>
     {
 
-        public readonly Comparison<T> Comparison;
+        public readonly Comparer<T> Comparer;
         public readonly T[] Buffer;
         public BinarySearchTree<T> Left;
         public BinarySearchTree<T> Right;
@@ -22,16 +22,16 @@ namespace AEther
         public int LeftCount = 1;
         public int RightCount = 1;
 
-        public MovingMedianBST(IEnumerable<T> items, Comparison<T> comparison)
+        public MovingMedianBST(IEnumerable<T> items, Comparer<T>? comparer = null)
         {
 
-            Comparison = comparison;
+            Comparer = comparer ?? Comparer<T>.Default;
 
             var threeItems = items.Take(3).ToArray();
-            Array.Sort(threeItems, Comparer<T>.Create(comparison));
-            Left = new BinarySearchTree<T>(threeItems[0], null, null, Comparison);
+            Array.Sort(threeItems, Comparer);
+            Left = new BinarySearchTree<T>(threeItems[0], null, null, Comparer);
             Median = threeItems[1];
-            Right = new BinarySearchTree<T>(threeItems[2], null, null, Comparison);
+            Right = new BinarySearchTree<T>(threeItems[2], null, null, Comparer);
 
             Buffer = items.ToArray();
             foreach (var item in items.Skip(3))
@@ -94,7 +94,7 @@ namespace AEther
 
         void Insert(T newItem)
         {
-            var comparison = Comparison(newItem, Median);
+            var comparison = Comparer.Compare(newItem, Median);
             if(comparison <= 0)
             {
                 Left = Left.Insert(newItem);
@@ -109,7 +109,7 @@ namespace AEther
 
         void Remove(T item)
         {
-            var comparison = Comparison(item, Median);
+            var comparison = Comparer.Compare(item, Median);
             if (comparison == 0)
             {
                 if (LeftCount < RightCount)

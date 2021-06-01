@@ -61,7 +61,6 @@ namespace AEther
             Source.OnDataAvailable += (sender, data) =>
             {
                 SamplePipe.Writer.Write(data.Span);
-                //Task.Run(() => SamplePipe.Writer.FlushAsync()); 
                 _ = SamplePipe.Writer.FlushAsync();
             };
 
@@ -76,18 +75,18 @@ namespace AEther
         public async IAsyncEnumerable<SampleEvent> RunAsync([EnumeratorCancellation] CancellationToken cancel = default)
         {
 
-            var batcher = Task.Run(() => RunBatcherAsync(cancel), cancel);
-            var dft = Task.Run(() => RunDFTAsync(cancel), cancel);
-            var splitter = Task.Run(() => RunSplitterAsync(cancel), cancel);
+            var batcherTask = Task.Run(() => RunBatcher(cancel), cancel);
+            var dftTask = Task.Run(() => RunDFT(cancel), cancel);
+            var splitterTask = Task.Run(() => RunSplitter(cancel), cancel);
 
-            await foreach(var evt in RunThrottlerAsync(cancel))
+            //return splitterChannel.Reader.ReadAllAsync(cancel);
+
+            await foreach (var output in SplitterChannel.Reader.ReadAllAsync(cancel))
             {
-                yield return evt;
+                yield return output;
             }
 
-            await batcher;
-            await dft;
-            await splitter;
+            await Task.WhenAll(batcherTask, dftTask, splitterTask);
 
         }
 
@@ -112,7 +111,7 @@ namespace AEther
             }
         }
 
-        public async Task RunBatcherAsync(CancellationToken cancel)
+        public async Task RunBatcher(CancellationToken cancel)
         {
             await foreach (var input in SamplePipe.Reader.ReadAllAsync(cancel))
             {
@@ -149,7 +148,7 @@ namespace AEther
             };
         }
 
-        public async Task RunDFTAsync(CancellationToken cancel)
+        public async Task RunDFT(CancellationToken cancel)
         {
             await foreach (var input in BatcherChannel.Reader.ReadAllAsync(cancel))
             {
@@ -171,7 +170,7 @@ namespace AEther
 
         }
 
-        public async Task RunSplitterAsync(CancellationToken cancel)
+        public async Task RunSplitter(CancellationToken cancel)
         {
             await foreach (var input in DFTChannel.Reader.ReadAllAsync(cancel))
             {
@@ -187,21 +186,6 @@ namespace AEther
             }
             SplitterChannel.Writer.Complete();
 
-        }
-
-        public async IAsyncEnumerable<SampleEvent> RunThrottlerAsync([EnumeratorCancellation] CancellationToken cancel)
-        {
-            var timer = Stopwatch.StartNew();
-            var targetInterval = TimeSpan.FromSeconds(0.9 / Options.TimeResolution);
-            await foreach (var output in SplitterChannel.Reader.ReadAllAsync(cancel))
-            {
-                while (timer.Elapsed < targetInterval)
-                {
-                    Thread.SpinWait(1 << 8);
-                }
-                timer.Restart();
-                yield return output;
-            }
         }
 
     }

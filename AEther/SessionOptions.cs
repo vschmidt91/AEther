@@ -27,13 +27,13 @@ namespace AEther
         public float MaxFrequency { get; set; } = 12000f;
 
         [Category("Domain")]
-        public int FrequencyResolution { get; set; } = 24;
+        public int FrequencyResolution { get; set; } = 12;
 
         [Category("DFT")]
-        public int TimeResolution { get; set; } = 1 << 10;
+        public int TimeResolution { get; set; } = 1 << 8;
 
         [Category("DFT")]
-        public int MaxParallelization { get; set; } = -1;
+        public int MaxParallelization { get; set; } = 1;
 
         [Category("DFT")]
         public bool UseSIMD { get; set; } = true;
@@ -51,7 +51,7 @@ namespace AEther
         public float SinuoidThreshold { get; set; } = 0.1f;
 
         [Category("DMX")]
-        public float TransientThreshold { get; set; } = 0.01f;
+        public float TransientThreshold { get; set; } = 0.05f;
 
         public static SessionOptions ReadFromFile(string path)
         {

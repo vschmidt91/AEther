@@ -18,12 +18,12 @@ namespace AEther
         public readonly T[] Buffer;
         readonly Comparer<T> Comparer;
 
-        public MovingMedianRef(int windowSize, Comparison<T> comparison)
+        public MovingMedianRef(int windowSize, Comparer<T> comparer)
             : base(windowSize)
         {
             Size = 0;
             Position = 0;
-            Comparer = Comparer<T>.Create(comparison);
+            Comparer = comparer;
             Buffer = new T[WindowSize];
         }
 
@@ -50,8 +50,7 @@ namespace AEther
                 Position = 0;
             }
 
-            
-            return Buffer.Take(Size).OrderBy(v => v).Skip((Size - 1) / 2).First();
+            return Buffer.Take(Size).OrderBy(v => v, Comparer).Skip((Size - 1) / 2).First();
 
         }
 

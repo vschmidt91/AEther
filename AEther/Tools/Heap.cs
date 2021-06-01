@@ -18,11 +18,11 @@ namespace AEther
         public int Capacity => Items.Length;
 
         protected T[] Items = Array.Empty<T>();
-        protected readonly Comparison<T> Comparison;
+        protected readonly IComparer<T> Comparer;
 
-        public Heap(Comparison<T> comparison)
+        public Heap(IComparer<T> comparer)
         {
-            Comparison = comparison;
+            Comparer = comparer;
         }
 
         public virtual void Insert(T item)
@@ -71,7 +71,7 @@ namespace AEther
             if (0 < i)
             {
                 var p = Parent(i);
-                if (Comparison(Items[i], Items[p]) < 0)
+                if (Comparer.Compare(Items[i], Items[p]) < 0)
                 {
                     Swap(i, p);
                     BubbleUp(p);
@@ -85,11 +85,11 @@ namespace AEther
             var smallest = i;
 
             var l = LeftChild(i);
-            if (l < Size && Comparison(Items[l], Items[smallest]) < 0)
+            if (l < Size && Comparer.Compare(Items[l], Items[smallest]) < 0)
                 smallest = l;
 
             var r = RightChild(i);
-            if (r < Size && Comparison(Items[r], Items[smallest]) < 0)
+            if (r < Size && Comparer.Compare(Items[r], Items[smallest]) < 0)
                 smallest = r;
 
             if (smallest != i)

@@ -10,44 +10,44 @@ namespace AEther
     public class BinarySearchTree<T> : BinaryTree<T, BinarySearchTree<T>>
     {
 
-        readonly Comparison<T> Comparison;
+        readonly Comparer<T> Comparer;
 
-        public BinarySearchTree(T item, BinarySearchTree<T>? left, BinarySearchTree<T>? right, Comparison<T> comparison)
+        public BinarySearchTree(T item, BinarySearchTree<T>? left = null, BinarySearchTree<T>? right = null, Comparer<T>? comparer = null)
             : base(item, left, right)
         {
-            Comparison = comparison;
+            Comparer = comparer ?? Comparer<T>.Default;
         }
 
         public BinarySearchTree<T> Insert(T newItem)
         {
-            var comparison = Comparison(newItem, Item);
+            var comparison = Comparer.Compare(newItem, Item);
             if(comparison <= 0)
             {
                 if(Left == null)
                 {
-                    return new BinarySearchTree<T>(Item, new BinarySearchTree<T>(newItem, null, null, Comparison), Right, Comparison);
+                    return new BinarySearchTree<T>(Item, new BinarySearchTree<T>(newItem), Right, Comparer);
                 }
                 else
                 {
-                    return new BinarySearchTree<T>(Item, Left.Insert(newItem), Right, Comparison);
+                    return new BinarySearchTree<T>(Item, Left.Insert(newItem), Right, Comparer);
                 }
             }
             else
             {
                 if (Right == null)
                 {
-                    return new BinarySearchTree<T>(Item, Left, new BinarySearchTree<T>(newItem, null, null, Comparison), Comparison);
+                    return new BinarySearchTree<T>(Item, Left, new BinarySearchTree<T>(newItem), Comparer);
                 }
                 else
                 {
-                    return new BinarySearchTree<T>(Item, Left, Right.Insert(newItem), Comparison);
+                    return new BinarySearchTree<T>(Item, Left, Right.Insert(newItem), Comparer);
                 }
             }
         }
 
         public BinarySearchTree<T>? Remove(T oldItem)
         {
-            var comparison = Comparison(oldItem, Item);
+            var comparison = Comparer.Compare(oldItem, Item);
             if(comparison == 0)
             {
                 if (Left == null)
@@ -63,7 +63,7 @@ namespace AEther
                     //var newLeft, predecessorItem = Left.RemoveRightmost();
                     //return new BinarySearchTree<T>(predecessorItem, newLeft, Right, Comparer);
                     var (newRight, successorItem) = Right.RemoveLeftmost();
-                    return new BinarySearchTree<T>(successorItem, Left, newRight, Comparison);
+                    return new BinarySearchTree<T>(successorItem, Left, newRight, Comparer);
                 }
             }
             else if(comparison < 0)
@@ -74,7 +74,7 @@ namespace AEther
                 }
                 else
                 {
-                    return new BinarySearchTree<T>(Item, Left.Remove(oldItem), Right, Comparison);
+                    return new BinarySearchTree<T>(Item, Left.Remove(oldItem), Right, Comparer);
                 }
             }
             else
@@ -85,7 +85,7 @@ namespace AEther
                 }
                 else
                 {
-                    return new BinarySearchTree<T>(Item, Left, Right.Remove(oldItem), Comparison);
+                    return new BinarySearchTree<T>(Item, Left, Right.Remove(oldItem), Comparer);
                 }
             }
         }
@@ -99,7 +99,7 @@ namespace AEther
             else
             {
                 var (newRight, rightmostItem) = Right.RemoveRightmost();
-                return (new BinarySearchTree<T>(Item, Left, newRight, Comparison), rightmostItem);
+                return (new BinarySearchTree<T>(Item, Left, newRight, Comparer), rightmostItem);
             }
         }
 
@@ -112,7 +112,7 @@ namespace AEther
             else
             {
                 var (newLeft, leftmostItem) = Left.RemoveLeftmost();
-                return (new BinarySearchTree<T>(Item, newLeft, Right, Comparison), leftmostItem);
+                return (new BinarySearchTree<T>(Item, newLeft, Right, Comparer), leftmostItem);
             }
         }
 
