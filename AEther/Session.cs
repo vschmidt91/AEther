@@ -33,6 +33,7 @@ namespace AEther
         readonly Splitter[] Splitter;
 
         readonly Pipe SamplePipe;
+        readonly Stream SampleStream;
         readonly Channel<SampleEvent<double>> BatcherChannel;
         readonly Channel<SampleEvent<double>> DFTChannel;
         readonly Channel<SampleEvent<double>> SplitterChannel;
@@ -47,29 +48,37 @@ namespace AEther
             BatchSize = Format.SampleRate / Options.TimeResolution;
             Batch = new byte[BatchSize * Format.Size];
             DFT = Enumerable.Range(0, Format.ChannelCount)
-                .Select(c => new DFTProcessor(Domain, Format.SampleRate, Options.UseSIMD, Options.MaxParallelization))
+                .Select(c => new DFTProcessor(Domain, Format.SampleRate, Options.SIMDEnabled, Options.MaxParallelization))
                 .ToArray();
             Splitter = Enumerable.Range(0, Format.ChannelCount)
-                .Select(c => new Splitter(Domain, Options.TimeResolution, Options.FrequencyWindow, Options.TimeWindow))
+                .Select(c => new Splitter(Domain, Options))
                 .ToArray();
 
             SamplePipe = new Pipe();
+            SampleStream = SamplePipe.Writer.AsStream();
             BatcherChannel = CreateChannel<SampleEvent<double>>();
             DFTChannel = CreateChannel<SampleEvent<double>>();
             SplitterChannel = CreateChannel<SampleEvent<double>>();
 
-            Source.OnDataAvailable += (sender, data) =>
-            {
-                SamplePipe.Writer.Write(data.Span);
-                _ = SamplePipe.Writer.FlushAsync();
-            };
+            Source.OnDataAvailable += Source_OnDataAvailable;
+            Source.OnStopped += Source_OnStopped;
 
-            Source.OnStopped += async (sender, data) =>
-            {
-                await SamplePipe.Writer.FlushAsync();
-                await SamplePipe.Writer.CompleteAsync();
-            };
+        }
 
+        void Source_OnDataAvailable(object? sender, ReadOnlyMemory<byte> data)
+        {
+            SampleStream.Write(data.Span);
+            SampleStream.Flush();
+        }
+
+        void Source_OnStopped(object? sender, Exception? error)
+        {
+            if(error != null)
+            {
+                throw error;
+            }
+            SampleStream.Flush();
+            SampleStream.Close();
         }
 
         public async IAsyncEnumerable<SampleEvent<double>> RunAsync([EnumeratorCancellation] CancellationToken cancel = default)
@@ -79,7 +88,7 @@ namespace AEther
             var dft = Task.Run(() => RunDFTAsync(cancel), cancel);
             var splitter = Task.Run(() => RunSplitterAsync(cancel), cancel);
 
-            await foreach (var evt in RunThrottlerAsync(cancel))
+            await foreach (var evt in SplitterChannel.Reader.ReadAllAsync(cancel))
             {
                 yield return evt;
             }
@@ -153,7 +162,6 @@ namespace AEther
             await foreach (var input in BatcherChannel.Reader.ReadAllAsync(cancel))
             {
                 var output = new SampleEvent<double>(Domain.Count, Format.ChannelCount, input.Time);
-
                 for (var c = 0; c < Format.ChannelCount; ++c)
                 {
                     var inputChannel = input.GetChannel(c);
@@ -162,7 +170,6 @@ namespace AEther
                     DFT[c].Process(inputChannel);
                     DFT[c].Output(outputChannel);
                 }
-
                 input.Dispose();
                 DFTChannel.Writer.TryWrite(output);
             }
@@ -172,38 +179,26 @@ namespace AEther
 
         public async Task RunSplitterAsync(CancellationToken cancel)
         {
+            var timer = Stopwatch.StartNew();
+            var targetInterval = TimeSpan.FromSeconds(1.0 / Options.TimeResolution);
             await foreach (var input in DFTChannel.Reader.ReadAllAsync(cancel))
             {
                 var output = new SampleEvent<double>(4 * Domain.Count, Format.ChannelCount, input.Time);
-
                 for (var c = 0; c < Format.ChannelCount; ++c)
                 {
                     Splitter[c].Process(input.GetChannel(c), output.GetChannel(c));
                 }
-
-                input.Dispose();
-                SplitterChannel.Writer.TryWrite(output);
-            }
-            SplitterChannel.Writer.Complete();
-
-        }
-
-        public async IAsyncEnumerable<SampleEvent<double>> RunThrottlerAsync([EnumeratorCancellation] CancellationToken cancel)
-        {
-
-            var timer = Stopwatch.StartNew();
-            var targetInterval = TimeSpan.FromSeconds(1.0 / Options.TimeResolution);
-            await foreach (var output in SplitterChannel.Reader.ReadAllAsync(cancel))
-            {
                 timer.Stop();
                 var remainingInterval = targetInterval - timer.Elapsed;
-                if (1 <= remainingInterval.TotalMilliseconds)
+                if (Options.MicroTimingEnabled && 1 <= remainingInterval.TotalMilliseconds)
                 {
                     await MultimediaTimer.Delay((int)remainingInterval.TotalMilliseconds, cancel);
                 }
                 timer.Restart();
-                yield return output;
+                input.Dispose();
+                SplitterChannel.Writer.TryWrite(output);
             }
+            SplitterChannel.Writer.Complete();
         }
 
     }

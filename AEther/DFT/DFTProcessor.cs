@@ -28,9 +28,9 @@ namespace AEther
         };
 
         readonly IDFTFilter[] Filters;
-        readonly ParallelOptions ParallelOptions;
+        readonly ParallelOptions? ParallelOptions;
 
-        public DFTProcessor(Domain domain, double sampleRate, bool useSIMD = true, int maxParallelism = -1)
+        public DFTProcessor(Domain domain, double sampleRate, bool useSIMD, int maxParallelism)
         {
             
             //Console.WriteLine(Vector<float>.Count);
@@ -43,10 +43,13 @@ namespace AEther
 
             var window = CreateWindow(cosines);
 
-            ParallelOptions = new ParallelOptions
+            if (0 < maxParallelism)
             {
-                MaxDegreeOfParallelism = maxParallelism,
-            };
+                ParallelOptions = new ParallelOptions
+                {
+                    MaxDegreeOfParallelism = maxParallelism,
+                };
+            }
 
             if (cosines.Length == 1)
             {
@@ -112,7 +115,7 @@ namespace AEther
                 filter.Process(samples);
             }
 
-            if (ParallelOptions.MaxDegreeOfParallelism == 1)
+            if (ParallelOptions == null)
             {
                 foreach (var filter in Filters)
                 {

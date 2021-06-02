@@ -45,7 +45,9 @@ namespace AEther.WindowsForms
         readonly Graphics Graphics;
         readonly Shader HistogramShader;
         readonly Shader SpectrumShader;
+        readonly Shader MandelboxShader;
         readonly EffectScalarVariable HistogramShiftVariable;
+        readonly EffectScalarVariable HistogramShiftVariable2;
         readonly TaskScheduler UIScheduler;
 
         public MainForm()
@@ -56,8 +58,10 @@ namespace AEther.WindowsForms
             Graphics = new Graphics(Handle);
             HistogramShader = Graphics.CreateShader("histogram.fx");
             SpectrumShader = Graphics.CreateShader("spectrum.fx");
+            MandelboxShader = Graphics.CreateShader("mandelbox.fx");
 
             HistogramShiftVariable = HistogramShader.Variables["HistogramShift"].AsScalar();
+            HistogramShiftVariable2 = MandelboxShader.Variables["HistogramShift"].AsScalar();
 
             var audioDevices = Recorder.GetAvailableDeviceNames();
             Input.Items.Clear();
@@ -70,6 +74,7 @@ namespace AEther.WindowsForms
             {
                 new ShaderState(Graphics, HistogramShader, "Histogramm"),
                 new ShaderState(Graphics, SpectrumShader, "Spectrum"),
+                new ShaderState(Graphics, MandelboxShader, "Mandelbox"),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
             });
@@ -92,12 +97,13 @@ namespace AEther.WindowsForms
             Graphics.Dispose();
         }
 
-        protected override void OnShown(EventArgs e)
+        protected async override void OnShown(EventArgs e)
         {
             base.OnShown(e);
             Graphics.Resize(ClientSize.Width, ClientSize.Height);
 
-            _ = Task.Factory.StartNew(() =>
+            var renderOptions = TaskCreationOptions.LongRunning;
+            var render = Task.Factory.StartNew(() =>
             {
                 while (!IsDisposed)
                 {
@@ -106,12 +112,10 @@ namespace AEther.WindowsForms
                     IsRendering = false;
                     Application.DoEvents();
                 }
-            }, CancellationToken.None, TaskCreationOptions.LongRunning, UIScheduler);
+            }, CancellationToken.None, renderOptions, UIScheduler);
 
-            _ = Task.Run(RunAsync);
-
-
-            //SharpDX.Windows.RenderLoop.Run(this, Render);
+            await RunAsync();
+            await render;
 
         }
 
@@ -124,7 +128,7 @@ namespace AEther.WindowsForms
                     break;
                 case Keys.F5:
                     await StopAsync();
-                    _ = Task.Run(RunAsync);
+                    await RunAsync();
                     break;
                 case Keys.F11:
                     ToggleFullscreen();
@@ -271,6 +275,11 @@ namespace AEther.WindowsForms
                 SpectrumShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
                 SpectrumShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
 
+                MandelboxShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
+                MandelboxShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
+                MandelboxShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
+                MandelboxShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
+
                 foreach (var histogram in Histogram)
                 {
                     histogram.Update();
@@ -280,6 +289,7 @@ namespace AEther.WindowsForms
 
                 var histogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
                 HistogramShiftVariable.Set(histogramShift);
+                HistogramShiftVariable2.Set(histogramShift);
 
             }
 
@@ -341,7 +351,7 @@ namespace AEther.WindowsForms
             if (IsRunning)
             {
                 await StopAsync();
-                _ = Task.Run(RunAsync);
+                await RunAsync();
             }
         }
 
@@ -350,7 +360,7 @@ namespace AEther.WindowsForms
             if (IsRunning)
             {
                 await StopAsync();
-                _ = Task.Run(RunAsync);
+                await RunAsync();
             }
         }
     }

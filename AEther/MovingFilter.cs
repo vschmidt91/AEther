@@ -19,7 +19,6 @@ namespace AEther
             Debug.Assert(source.Length <= destination.Length);
 
             var buffer = ArrayPool<T>.Shared.Rent(source.Length);
-            Array.Clear(buffer, 0, source.Length);
 
             Clear();
             for (var i = 0; i < source.Length; ++i)

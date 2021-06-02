@@ -15,41 +15,36 @@ namespace AEther
 
         readonly Domain Domain;
 
-        readonly MovingFilter<double> Frequency;
-        readonly MovingFilter<double>[] Time;
-
-        readonly MovingFilter<double> Frequency2;
-        readonly MovingFilter<double>[] Time2;
+        readonly MovingFilter<double> FrequencyTransients;
+        readonly MovingFilter<double>[] TimeSinuoids;
+        readonly MovingFilter<double> FrequencySinuoids;
+        readonly MovingFilter<double>[] TimeTransients;
 
         readonly double[] Buffer1;
         readonly double[] Buffer2;
         readonly double[] Buffer3;
         readonly double[] Buffer4;
-
         readonly double[] KeyWeights;
 
-        public Splitter(Domain domain, double timeResolution, double frequencyWindow, double timeWindow)
+        public Splitter(Domain domain, SessionOptions options)
         {
 
             Domain = domain;
 
-            int halfSizeFrequency = (int)(frequencyWindow * domain.Resolution);
-            int halfSizeTime = (int)(timeWindow * timeResolution);
-
-            KeyWeights = new double[Domain.Resolution];
             Buffer1 = new double[Domain.Count];
             Buffer2 = new double[Domain.Count];
             Buffer3 = new double[Domain.Count];
             Buffer4 = new double[Domain.Count];
+            KeyWeights = new double[Domain.Resolution];
 
-            Frequency = CreateFilter(1 + 2 * halfSizeFrequency);
-            Time = Enumerable.Range(0, domain.Count)
-                .Select(k => CreateFilter(1 + 2 * halfSizeTime))
+            FrequencyTransients = CreateFilter((int)(options.TransientWidth * domain.Resolution));
+            FrequencySinuoids = CreateFilter((int)(options.SinuoidWidth * domain.Resolution));
+
+            TimeSinuoids = Enumerable.Range(0, domain.Count)
+                .Select(k => CreateFilter((int)(options.SinuoidLength * options.TimeResolution)))
                 .ToArray();
-
-            Frequency2 = CreateFilter(1 + 2 * halfSizeFrequency);
-            Time2 = Enumerable.Range(0, domain.Count)
-                .Select(k => CreateFilter(1 + 2 * halfSizeTime))
+            TimeTransients = Enumerable.Range(0, domain.Count)
+                .Select(k => CreateFilter((int)(options.TransientLength * options.TimeResolution)))
                 .ToArray();
 
         }
@@ -57,21 +52,24 @@ namespace AEther
         static WindowedFilter<double> CreateFilter(int windowSize)
             => new MovingMedianArray<double>(windowSize, Comparer<double>.Default);
 
+        static double Rolloff(double x) => 1 - Math.Exp(-x);
+
         public void Process(ReadOnlyMemory<double> input, Memory<double> output)
         {
 
             var src = input.Span;
             var dst = output.Span;
 
-            Frequency.FilterSpan(src, Buffer1, (x, y) => .5f * (x + y));
+            FrequencyTransients.FilterSpan(src, Buffer1, (x, y) => .5 * (x + y));
             for (int k = 0; k < Domain.Count; ++k)
             {
-                Buffer2[k] = Time[k].Filter(src[k]);
-                Buffer3[k] = Time2[k].Filter(Buffer1[k]);
+                Buffer2[k] = TimeSinuoids[k].Filter(src[k]);
+                Buffer3[k] = TimeTransients[k].Filter(Buffer1[k]);
             }
-            Frequency2.FilterSpan(Buffer2, Buffer4, (x, y) => .5f * (x + y));
+            FrequencySinuoids.FilterSpan(Buffer2, Buffer4, (x, y) => .5 * (x + y));
 
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
+            var noiseFloor = Enumerable.Range(0, input.Length).Sum(k => input.Span[k]) / input.Length;
 
             for (int k = 0; k < Domain.Count; ++k)
             {
@@ -80,13 +78,18 @@ namespace AEther
 
                 var sinuoids = Math.Max(0, Buffer2[k] - Buffer4[k]);
                 var transients = Math.Max(0, Buffer1[k] - Buffer3[k]);
+                var noise = Math.Max(0, src[k] - noiseFloor);
 
                 KeyWeights[k % KeyWeights.Length] += sinuoids * Domain.Resolution / Domain.Count;
 
-                y[0] = sinuoids;
-                y[1] = transients;
-                //y[2] = 1 + .1f * src[k];
-                y[2] = 0;
+                //y[0] = Rolloff(sinuoids);
+                //y[1] = Rolloff(transients);
+                //y[2] = Rolloff(noise);
+                //y[3] = 0;
+
+                y[0] = .6 * sinuoids;
+                y[1] = .6 * transients;
+                y[2] = .6 * noise;
                 y[3] = 0;
 
             }

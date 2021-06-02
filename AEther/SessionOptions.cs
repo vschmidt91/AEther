@@ -18,13 +18,16 @@ namespace AEther
         public Domain Domain => Domain.FromRange(MinFrequency, MaxFrequency, FrequencyResolution);
 
         [Category("Pipeline")]
-        public int BufferCapacity { get; set; } = -1;
+        public int BufferCapacity { get; set; } =
+#if DEBUG
+            -1
+#else
+            16
+#endif
+            ;
 
         [Category("Pipeline")]
-        public double TimingAmount { get; set; } = .95;
-
-        [Category("Pipeline")]
-        public int TimingSpins { get; set; } = 1 << 8;
+        public bool MicroTimingEnabled { get; set; } = true;
 
         [Category("Domain")]
         public double MinFrequency { get; set; } = 27.5;
@@ -33,22 +36,28 @@ namespace AEther
         public double MaxFrequency { get; set; } = 12000;
 
         [Category("Domain")]
-        public int FrequencyResolution { get; set; } = 12;
+        public int FrequencyResolution { get; set; } = 24;
 
         [Category("DFT")]
-        public int TimeResolution { get; set; } = 1 << 8;
+        public int TimeResolution { get; set; } = 1 << 10;
 
         [Category("DFT")]
-        public int MaxParallelization { get; set; } = 1;
+        public int MaxParallelization { get; set; } = 0;
 
         [Category("DFT")]
-        public bool UseSIMD { get; set; } = true;
+        public bool SIMDEnabled { get; set; } = true;
 
         [Category("Splitter")]
-        public double FrequencyWindow { get; set; } = 1;
+        public double SinuoidWidth { get; set; } = .5;
 
         [Category("Splitter")]
-        public double TimeWindow { get; set; } = .03;
+        public double SinuoidLength { get; set; } = 0.2;
+
+        [Category("Splitter")]
+        public double TransientWidth { get; set; } = 2.0;
+
+        [Category("Splitter")]
+        public double TransientLength { get; set; } = .05;
 
         [Category("DMX")]
         public int DMXPort { get; set; } = 0;
@@ -57,7 +66,7 @@ namespace AEther
         public double SinuoidThreshold { get; set; } = 0.1;
 
         [Category("DMX")]
-        public double TransientThreshold { get; set; } = 0.05;
+        public double TransientThreshold { get; set; } = 0.1;
 
         public static SessionOptions ReadFromFile(string path)
         {

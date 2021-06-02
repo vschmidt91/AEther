@@ -118,8 +118,8 @@ namespace AEther
             while (l < r)
             {
                 var m = (l + r) / 2;
-                if(Comparer.Compare(data[m], value) < 0)
-                    l = m + 1;
+                if (Comparer.Compare(data[m], value) < 0)
+                        l = m + 1;
                 else
                     r = m;
             }
