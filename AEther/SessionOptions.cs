@@ -36,10 +36,10 @@ namespace AEther
         public double MaxFrequency { get; set; } = 12000;
 
         [Category("Domain")]
-        public int FrequencyResolution { get; set; } = 24;
+        public int FrequencyResolution { get; set; } = 12;
 
         [Category("DFT")]
-        public int TimeResolution { get; set; } = 1 << 10;
+        public int TimeResolution { get; set; } = 1 << 8;
 
         [Category("DFT")]
         public int MaxParallelization { get; set; } = 0;

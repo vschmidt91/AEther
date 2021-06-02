@@ -166,7 +166,6 @@ namespace AEther
                 {
                     var inputChannel = input.GetChannel(c);
                     var outputChannel = output.GetChannel(c);
-
                     DFT[c].Process(inputChannel);
                     DFT[c].Output(outputChannel);
                 }
@@ -188,6 +187,7 @@ namespace AEther
                 {
                     Splitter[c].Process(input.GetChannel(c), output.GetChannel(c));
                 }
+                input.Dispose();
                 timer.Stop();
                 var remainingInterval = targetInterval - timer.Elapsed;
                 if (Options.MicroTimingEnabled && 1 <= remainingInterval.TotalMilliseconds)
@@ -195,7 +195,6 @@ namespace AEther
                     await MultimediaTimer.Delay((int)remainingInterval.TotalMilliseconds, cancel);
                 }
                 timer.Restart();
-                input.Dispose();
                 SplitterChannel.Writer.TryWrite(output);
             }
             SplitterChannel.Writer.Complete();

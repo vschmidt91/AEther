@@ -10,8 +10,8 @@ namespace AEther.Benchmarks
     public class MedianBenchmark
     {
 
-        readonly int Width = 1 << 12;
-        readonly int Length = 1 << 16;
+        readonly int Width = 1 << 14;
+        readonly int Length = 1 << 15;
         readonly int Seed = 0;
         readonly Comparer<double> Comparer = Comparer<double>.Default;
 
@@ -23,9 +23,9 @@ namespace AEther.Benchmarks
         public void MovingMedianArray()
             => Median(new MovingMedianArray<double>(Width, Comparer), Length, Seed);
 
-        //[Benchmark]
-        //public void MovingMedianBST()
-        //    => Median(new MovingMedianBST<float>(Width, Comparer), Length, Seed);
+        [Benchmark]
+        public void MovingMedianBST()
+            => Median(new MovingMedianBST<double>(Width, Comparer), Length, Seed);
 
         [Benchmark]
         public void MovingMedianHeap()

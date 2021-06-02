@@ -26,9 +26,9 @@ namespace AEther.Tests
         public void TestMedianArray()
             => TestMedian(new MovingMedianRef<double>(Width, Comparer), new MovingMedianArray<double>(Width, Comparer), Count, Seed);
 
-        //[Test]
-        //public void TestMedianBST()
-        //    => TestMedian(new MovingMedianRef<float>(Width, Comparer), new MovingMedianBST<float>(Width, Comparer), Count, Seed);
+        [Test]
+        public void TestMedianBST()
+            => TestMedian(new MovingMedianRef<double>(Width, Comparer), new MovingMedianBST<double>(Width, Comparer), Count, Seed);
 
         [Test]
         public void TestMedianHeap()

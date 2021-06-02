@@ -8,51 +8,47 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-    public class MovingMedianBST<T> : MovingFilter<T>
+    public class MovingMedianBST<T> : WindowedFilter<T>
     {
 
         public readonly Comparer<T> Comparer;
         public readonly T[] Buffer;
-        public BinarySearchTree<T> Left;
-        public BinarySearchTree<T> Right;
-
-        public T Median { get; protected set; }
+        public BinarySearchTree<T>? Tree;
 
         public int BufferPosition = 0;
-        public int LeftCount = 1;
-        public int RightCount = 1;
+        public int LeftCount = 0;
+        public int RightCount = 0;
 
-        public MovingMedianBST(IEnumerable<T> items, Comparer<T>? comparer = null)
+        public MovingMedianBST(int windowSize, Comparer<T> comparer)
+            : base(windowSize)
         {
-
-            Comparer = comparer ?? Comparer<T>.Default;
-
-            var threeItems = items.Take(3).ToArray();
-            Array.Sort(threeItems, Comparer);
-            Left = new BinarySearchTree<T>(threeItems[0], null, null, Comparer);
-            Median = threeItems[1];
-            Right = new BinarySearchTree<T>(threeItems[2], null, null, Comparer);
-
-            Buffer = items.ToArray();
-            foreach (var item in items.Skip(3))
-            {
-                Insert(item);
-                Balance();
-            }
-
+            Comparer = comparer;
+            Tree = null;
+            Buffer = new T[windowSize];
         }
 
         public override void Clear()
         {
-            throw new NotImplementedException();
+            Array.Clear(Buffer, 0, Buffer.Length);
+            Tree = null;
+            LeftCount = 0;
+            RightCount = 0;
         }
+
+        int Count => (Tree == null ? 0 : 1) + LeftCount + RightCount;
+
+        T Median => Tree.Item;
 
         public override T Filter(T newItem)
         {
-            var oldItem = Buffer[BufferPosition];
+            if(WindowSize <= Count)
+            {
+                var oldItem = Buffer[BufferPosition];
+                Remove(oldItem);
+                Balance();
+            }
             Buffer[BufferPosition] = newItem;
             BufferPosition = (BufferPosition + 1) % Buffer.Length;
-            Remove(oldItem);
             Insert(newItem);
             Balance();
             return Median;
@@ -60,99 +56,50 @@ namespace AEther
 
         void Balance()
         {
-            if (2 < Math.Abs(LeftCount - RightCount))
+            while (LeftCount + 1 < RightCount)
             {
-                throw new Exception();
-            }
-            else if (LeftCount + 1 <= RightCount - 1)
-            {
-                Left = Left.Insert(Median);
-                LeftCount++;
-                var (newRight, leftmost) = Right.RemoveLeftmost();
-                if(newRight == null)
-                {
-                    throw new Exception();
-                }
-                Median = leftmost;
-                Right = newRight;
+                Tree.RotateLeft();
                 RightCount--;
+                LeftCount++;
             }
-            else if (RightCount + 1 <= LeftCount - 1)
+            while (RightCount < LeftCount)
             {
-                Right = Right.Insert(Median);
-                RightCount++;
-                var (newLeft, rightmost) = Left.RemoveRightmost();
-                if (newLeft == null)
-                {
-                    throw new Exception();
-                }
-                Median = rightmost;
-                Left = newLeft;
+                Tree.RotateRight();
                 LeftCount--;
+                RightCount++;
             }
         }
 
         void Insert(T newItem)
         {
-            var comparison = Comparer.Compare(newItem, Median);
-            if(comparison <= 0)
+            if(Tree == null)
             {
-                Left = Left.Insert(newItem);
-                LeftCount++;
+                Tree = new BinarySearchTree<T>(newItem, null, null, Comparer);
             }
-            else if(0 < comparison)
+            else
             {
-                Right = Right.Insert(newItem);
-                RightCount++;
+                var comparison = Tree.Insert(newItem);
+                if (comparison < 0)
+                {
+                    LeftCount++;
+                }
+                else
+                {
+                    RightCount++;
+                }
             }
         }
 
         void Remove(T item)
         {
             var comparison = Comparer.Compare(item, Median);
-            if (comparison == 0)
+            Tree = Tree.Remove(item);
+            if (comparison <= 0)
             {
-                if (LeftCount < RightCount)
-                {
-                    var (newRight, leftmost) = Right.RemoveLeftmost();
-                    if(newRight == null)
-                    {
-                        throw new Exception();
-                    }    
-                    Right = newRight;
-                    Median = leftmost;
-                    RightCount--;
-                }
-                else
-                {
-                    var (newLeft, rightmost) = Left.RemoveRightmost();
-                    if (newLeft == null)
-                    {
-                        throw new Exception();
-                    }
-                    Left = newLeft;
-                    Median = rightmost;
-                    LeftCount--;
-                }
-            }
-            else if (comparison < 0)
-            {
-                var newLeft = Left.Remove(item);
-                if(newLeft == null)
-                {
-                    throw new Exception();
-                }
-                Left = newLeft;
                 LeftCount--;
             }
-            else if (0 < comparison)
+            else
             {
-                var newRight = Right.Remove(item);
-                if (newRight == null)
-                {
-                    throw new Exception();
-                }
-                Right = newRight;
                 RightCount--;
             }
         }

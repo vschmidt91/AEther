@@ -12,37 +12,38 @@ namespace AEther
 
         readonly Comparer<T> Comparer;
 
-        public BinarySearchTree(T item, BinarySearchTree<T>? left = null, BinarySearchTree<T>? right = null, Comparer<T>? comparer = null)
+        public BinarySearchTree(T item, BinarySearchTree<T>? left, BinarySearchTree<T>? right, Comparer<T> comparer)
             : base(item, left, right)
         {
-            Comparer = comparer ?? Comparer<T>.Default;
+            Comparer = comparer;
         }
 
-        public BinarySearchTree<T> Insert(T newItem)
+        public int Insert(T newItem)
         {
             var comparison = Comparer.Compare(newItem, Item);
-            if(comparison <= 0)
+            if(comparison < 0)
             {
                 if(Left == null)
                 {
-                    return new BinarySearchTree<T>(Item, new BinarySearchTree<T>(newItem), Right, Comparer);
+                    Left = new BinarySearchTree<T>(newItem, null, null, Comparer);
                 }
                 else
                 {
-                    return new BinarySearchTree<T>(Item, Left.Insert(newItem), Right, Comparer);
+                    Left.Insert(newItem);
                 }
             }
             else
             {
                 if (Right == null)
                 {
-                    return new BinarySearchTree<T>(Item, Left, new BinarySearchTree<T>(newItem), Comparer);
+                    Right = new BinarySearchTree<T>(newItem, null, null, Comparer);
                 }
                 else
                 {
-                    return new BinarySearchTree<T>(Item, Left, Right.Insert(newItem), Comparer);
+                    Right.Insert(newItem);
                 }
             }
+            return comparison;
         }
 
         public BinarySearchTree<T>? Remove(T oldItem)
@@ -60,10 +61,9 @@ namespace AEther
                 }
                 else
                 {
-                    //var newLeft, predecessorItem = Left.RemoveRightmost();
-                    //return new BinarySearchTree<T>(predecessorItem, newLeft, Right, Comparer);
-                    var (newRight, successorItem) = Right.RemoveLeftmost();
-                    return new BinarySearchTree<T>(successorItem, Left, newRight, Comparer);
+                    (Left, Item) = Left.RemoveRightmost();
+                    //(Right, Item) = Right.RemoveLeftmost();
+                    return this;
                 }
             }
             else if(comparison < 0)
@@ -74,7 +74,8 @@ namespace AEther
                 }
                 else
                 {
-                    return new BinarySearchTree<T>(Item, Left.Remove(oldItem), Right, Comparer);
+                    Left = Left.Remove(oldItem);
+                    return this;
                 }
             }
             else
@@ -85,9 +86,24 @@ namespace AEther
                 }
                 else
                 {
-                    return new BinarySearchTree<T>(Item, Left, Right.Remove(oldItem), Comparer);
+                    Right = Right.Remove(oldItem);
+                    return this;
                 }
             }
+        }
+
+        public void RotateRight()
+        {
+            var item = Item;
+            (Left, Item) = Left.RemoveRightmost();
+            Insert(item);
+        }
+
+        public void RotateLeft()
+        {
+            var item = Item;
+            (Right, Item) = Right.RemoveLeftmost();
+            Insert(item);
         }
 
         public (BinarySearchTree<T>?, T) RemoveRightmost()
@@ -99,7 +115,8 @@ namespace AEther
             else
             {
                 var (newRight, rightmostItem) = Right.RemoveRightmost();
-                return (new BinarySearchTree<T>(Item, Left, newRight, Comparer), rightmostItem);
+                Right = newRight;
+                return (this, rightmostItem);
             }
         }
 
@@ -112,7 +129,8 @@ namespace AEther
             else
             {
                 var (newLeft, leftmostItem) = Left.RemoveLeftmost();
-                return (new BinarySearchTree<T>(Item, newLeft, Right, Comparer), leftmostItem);
+                Left = newLeft;
+                return (this, leftmostItem);
             }
         }
 

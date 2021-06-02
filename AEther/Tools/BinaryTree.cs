@@ -9,9 +9,9 @@ namespace AEther
     public class BinaryTree<T, X> where X : BinaryTree<T, X>
     {
 
-        public readonly T Item;
-        public readonly X? Left;
-        public readonly X? Right;
+        public T Item;
+        public X? Left;
+        public X? Right;
 
         public BinaryTree(T item, X? left = null, X? right = null)
         {
@@ -19,6 +19,9 @@ namespace AEther
             Left = left;
             Right = right;
         }
+
+        public X? Leftmost() => Left?.Leftmost() ?? (X)this;
+        public X? Rightmost() => Right?.Rightmost() ?? (X)this;
 
     }
 }
