@@ -21,6 +21,10 @@ namespace AEther
 {
     public class Session
     {
+
+        public event EventHandler<SampleEvent<double>>? OnSamplesAvailable;
+        public event EventHandler? OnStopped;
+
         public SampleFormat Format => Source.Format;
 
         public readonly SessionOptions Options;
@@ -73,35 +77,38 @@ namespace AEther
 
         void Source_OnStopped(object? sender, Exception? error)
         {
-            if(error != null)
+            if (error != null)
             {
                 throw error;
             }
-            SampleStream.Flush();
-            SampleStream.Close();
+            else
+            {
+                Stop();
+            }
         }
 
-        public async IAsyncEnumerable<SampleEvent<double>> RunAsync([EnumeratorCancellation] CancellationToken cancel = default)
+        public async Task RunAsync(CancellationToken cancel)
         {
-
-            var batcher = Task.Run(() => RunBatcherAsync(cancel), cancel);
-            var dft = Task.Run(() => RunDFTAsync(cancel), cancel);
-            var splitter = Task.Run(() => RunSplitterAsync(cancel), cancel);
-
-            await foreach (var evt in SplitterChannel.Reader.ReadAllAsync(cancel))
+            await Task.WhenAll(new[]
             {
-                yield return evt;
-            }
+                Task.Run(() => RunBatcherAsync(cancel), cancel),
+                Task.Run(() => RunDFTAsync(cancel), cancel),
+                Task.Run(() => RunSplitterAsync(cancel), cancel),
+                Task.Run(() => RunOutputAsync(cancel), cancel)
+            });
+            Stop();
+        }
 
-            await batcher;
-            await dft;
-            await splitter;
-
+        public void Stop()
+        {
+            SampleStream.Flush();
+            SampleStream.Close();
+            OnStopped?.Invoke(this, EventArgs.Empty);
         }
 
         Channel<T> CreateChannel<T>()
         {
-            if(Options.BufferCapacity == -1)
+            if (Options.BufferCapacity == -1)
             {
                 return Channel.CreateUnbounded<T>(new UnboundedChannelOptions
                 {
@@ -138,7 +145,6 @@ namespace AEther
                         }
                     }
                     BatcherChannel.Writer.TryWrite(output);
-                    //await outputs.WriteAsync(output, cancel);
                 }
                 input.AdvanceTo(input.Data.GetPosition(offset), input.Data.End);
             }
@@ -189,15 +195,24 @@ namespace AEther
                 }
                 input.Dispose();
                 timer.Stop();
-                var remainingInterval = targetInterval - timer.Elapsed;
-                if (Options.MicroTimingEnabled && 1 <= remainingInterval.TotalMilliseconds)
+                var remainingInterval = (int)(targetInterval - timer.Elapsed).TotalMilliseconds;
+                if (Options.MicroTimingEnabled && 0 < remainingInterval)
                 {
-                    await MultimediaTimer.Delay((int)remainingInterval.TotalMilliseconds, cancel);
+                    await MultimediaTimer.Delay(remainingInterval, cancel);
                 }
                 timer.Restart();
                 SplitterChannel.Writer.TryWrite(output);
             }
             SplitterChannel.Writer.Complete();
+        }
+
+        public async Task RunOutputAsync(CancellationToken cancel)
+        {
+            await foreach (var evt in SplitterChannel.Reader.ReadAllAsync(cancel))
+            {
+                OnSamplesAvailable?.Invoke(this, evt);
+                evt.Dispose();
+            }
         }
 
     }

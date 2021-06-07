@@ -18,13 +18,7 @@ namespace AEther
         public Domain Domain => Domain.FromRange(MinFrequency, MaxFrequency, FrequencyResolution);
 
         [Category("Pipeline")]
-        public int BufferCapacity { get; set; } =
-#if DEBUG
-            -1
-#else
-            16
-#endif
-            ;
+        public int BufferCapacity { get; set; } = -1;
 
         [Category("Pipeline")]
         public bool MicroTimingEnabled { get; set; } = true;
@@ -33,10 +27,10 @@ namespace AEther
         public double MinFrequency { get; set; } = 27.5;
 
         [Category("Domain")]
-        public double MaxFrequency { get; set; } = 12000;
+        public double MaxFrequency { get; set; } = 8000;
 
         [Category("Domain")]
-        public int FrequencyResolution { get; set; } = 12;
+        public int FrequencyResolution { get; set; } = 8;
 
         [Category("DFT")]
         public int TimeResolution { get; set; } = 1 << 8;

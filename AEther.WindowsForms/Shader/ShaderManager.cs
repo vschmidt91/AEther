@@ -15,42 +15,22 @@ using SharpDX.DXGI;
 
 using Device = SharpDX.Direct3D11.Device;
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace AEther.WindowsForms
 {
     public class ShaderManager : GraphicsComponent, IDisposable
     {
 
-        public ShaderBytecode this[string key]
-        {
-            get
-            {
-                if (Shaders.TryGetValue(key, out var shader))
-                {
-                    return shader;
-                }
-                else
-                {
-                    return Shaders[key] = LoadShader(key);
-                }
-            }
-        }
+        public event EventHandler<FileSystemEventArgs>? FileChanged;
 
-        public IEnumerable<string> Keys => Shaders.Keys;
-
-        readonly Dictionary<string, ShaderBytecode> Shaders = new();
         readonly IncludeHandler Includes;
         readonly FileSystemWatcher? Watcher;
         readonly string BasePath;
 
-        public ShaderManager(Graphics graphics, string basePath, bool watch = false, bool preload = true)
+        public ShaderManager(Graphics graphics, string basePath, bool watch = false)
             : base(graphics)
         {
-
-            if (!Directory.Exists(basePath))
-            {
-                throw new DirectoryNotFoundException();
-            }
 
             BasePath = basePath;
 
@@ -58,68 +38,23 @@ namespace AEther.WindowsForms
                 .ToDictionary(path => new FileInfo(path).Name, File.ReadAllText);
             Includes = new IncludeHandler(includes);
 
-            if(preload)
-            {
-                var effects = Directory.EnumerateFiles(basePath, "*.fx", SearchOption.AllDirectories);
-                foreach (var effect in effects)
-                {
-                    var file = new FileInfo(effect);
-                    Shaders[file.Name] = LoadShader(file);
-                }
-            }
-
             if (watch)
             {
-                Watcher = new(basePath, "*.fx")
+                Watcher = new(basePath)
                 {
-                    NotifyFilter = NotifyFilters.Attributes
-                    | NotifyFilters.CreationTime
-                    | NotifyFilters.DirectoryName
-                    | NotifyFilters.FileName
-                    | NotifyFilters.LastAccess
-                    | NotifyFilters.LastWrite
-                    | NotifyFilters.Security
-                    | NotifyFilters.Size
+                    NotifyFilter = NotifyFilters.LastWrite,
+                    EnableRaisingEvents = true,
                 };
-                Watcher.Changed += Watcher_Changed;
-                Watcher.EnableRaisingEvents = true;
+                Watcher.Changed += (obj, evt) => FileChanged?.Invoke(this, evt);
             }
 
-        }
-
-        private void Watcher_Changed(object sender, FileSystemEventArgs e)
-        {
-            if (string.IsNullOrEmpty(e.Name))
-                return;
-            for(int i = 0; i < 10; ++i)
-            {
-                try
-                {
-                    var file = new FileInfo(e.FullPath);
-                    Shaders[file.Name] = LoadShader(file);
-                }
-                catch(IOException)
-                {
-                    Thread.Sleep(100);
-                    continue;
-                }
-                catch(CompilationException exc)
-                {
-#if DEBUG
-                    MessageBox.Show(null, exc.Message, string.Empty);
-#else
-                    Debug.WriteLine(exc.Message);
-#endif
-                }
-                return;
-            }
         }
 
         public ShaderBytecode LoadShader(string key)
-            => LoadShader(new FileInfo(Path.Join(BasePath, key)));
-
-        private ShaderBytecode LoadShader(FileInfo file)
         {
+
+            var path = Path.Join(BasePath, key);
+            var file = new FileInfo(path);
 
             ShaderFlags shaderFlags = ShaderFlags.None;
             EffectFlags effectFlags = EffectFlags.None;
@@ -154,11 +89,6 @@ namespace AEther.WindowsForms
         {
 
             GC.SuppressFinalize(this);
-            foreach(var shader in Shaders.Values)
-            {
-                shader.Dispose();
-            }
-            Shaders.Clear();
             Includes.Dispose();
             Watcher?.Dispose();
         }

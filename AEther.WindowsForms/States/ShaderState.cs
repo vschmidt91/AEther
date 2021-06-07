@@ -31,10 +31,8 @@ namespace AEther.WindowsForms
 
         public override void Render()
         {
-
             Graphics.SetFullscreenTarget(Graphics.BackBuffer);
             Graphics.Draw(Shader);
-
         }
 
         public override string ToString()

@@ -114,6 +114,8 @@ namespace AEther.WindowsForms
         public override void Dispose()
         {
             GC.SuppressFinalize(this);
+            Source.Dispose();
+            Target.Dispose();
             InputShader.Dispose();
             OutputShader.Dispose();
             foreach(var element in Elements)

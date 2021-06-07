@@ -48,7 +48,7 @@ namespace AEther.WindowsForms
 
         readonly Device Device;
         readonly ConstantBuffer<FrameConstants> FrameConstants;
-        readonly ShaderManager Shaders;
+        public readonly ShaderManager Shaders;
         readonly DeviceDebug? Debug;
         readonly SwapChain Chain;
         readonly Model Quad;
@@ -240,7 +240,7 @@ namespace AEther.WindowsForms
 
         public Shader CreateShader(string key)
         {
-            var bytecode = Shaders[key];
+            var bytecode = Shaders.LoadShader(key);
             var shader = new Shader(Device, bytecode);
             shader.ConstantBuffers[0].SetConstantBuffer(FrameConstants.Buffer);
             return shader;

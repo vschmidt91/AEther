@@ -67,6 +67,10 @@ namespace AEther.WindowsForms
         {
             GC.SuppressFinalize(this);
             DiffusionVariable.Dispose();
+            Velocity.Dispose();
+            VelocityNew.Dispose();
+            Pressure.Dispose();
+            Divergence.Dispose();
             Input.Dispose();
             Advect.Dispose();
             Diffuse.Dispose();

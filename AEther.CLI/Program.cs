@@ -35,30 +35,30 @@ namespace AEther.CLI
             var session = new Session(sampleSource, options);
             var hash = MD5.Create();
 
-            var outputs = session.RunAsync();
+            //var outputs = session.RunAsync();
 
-            sampleSource.Start();
+            //sampleSource.Start();
 
-            var pool = ArrayPool<byte>.Shared;
-            byte[] buffer = pool.Rent(1 << 10);
+            //var pool = ArrayPool<byte>.Shared;
+            //byte[] buffer = pool.Rent(1 << 10);
 
-            await foreach(var output in outputs)
-            {
-                var byteCount = sizeof(double) * output.SampleCount;
-                if(buffer.Length < byteCount)
-                {
-                    pool.Return(buffer);
-                    buffer = pool.Rent(byteCount);
-                }
-                Buffer.BlockCopy(output.Samples, 0, buffer, 0, byteCount);
+            //await foreach(var output in outputs)
+            //{
+            //    var byteCount = sizeof(double) * output.SampleCount;
+            //    if(buffer.Length < byteCount)
+            //    {
+            //        pool.Return(buffer);
+            //        buffer = pool.Rent(byteCount);
+            //    }
+            //    Buffer.BlockCopy(output.Samples, 0, buffer, 0, byteCount);
 
-                //Console.WriteLine(BitConverter.ToString(hash.ComputeHash(buffer, 0, byteCount)));
-                await outputStream.WriteAsync(buffer.AsMemory(0, byteCount));
+            //    //Console.WriteLine(BitConverter.ToString(hash.ComputeHash(buffer, 0, byteCount)));
+            //    await outputStream.WriteAsync(buffer.AsMemory(0, byteCount));
 
-                output.Dispose();
-            }
+            //    output.Dispose();
+            //}
 
-            pool.Return(buffer);
+            //pool.Return(buffer);
 
         }
 

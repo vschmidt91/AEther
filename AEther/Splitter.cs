@@ -87,9 +87,9 @@ namespace AEther
                 //y[2] = Rolloff(noise);
                 //y[3] = 0;
 
-                y[0] = .6 * sinuoids;
-                y[1] = .6 * transients;
-                y[2] = .6 * noise;
+                y[0] = sinuoids;
+                y[1] = transients;
+                y[2] = 1 + .1 * src[k];
                 y[3] = 0;
 
             }

@@ -18,6 +18,7 @@ using AEther.CSCore;
 using SharpDX.Direct3D11;
 using System.Threading.Tasks.Dataflow;
 using System.DirectoryServices;
+using System.Reflection;
 
 namespace AEther.WindowsForms
 {
@@ -28,33 +29,49 @@ namespace AEther.WindowsForms
         const bool UseMapping = true;
         const bool UseFloatTextures = false;
 
-        bool IsRunning = false;
-        bool IsRendering = false;
-        CancellationTokenSource Cancel = new();
         SpectrumAccumulator[] Spectrum = Array.Empty<SpectrumAccumulator>();
         Histogram[] Histogram = Array.Empty<Histogram>();
 
-        TimeSpan Latency;
-        TimeSpan FrameTime;
+        CancellationTokenSource Cancel = new CancellationTokenSource();
+        Session? Session = null;
+        Task SessionTask = Task.CompletedTask;
+        TimeSpan Latency = TimeSpan.Zero;
+        TimeSpan FrameTime = TimeSpan.Zero;
         int EventCounter = 0;
 
         readonly Stopwatch FrameTimer = Stopwatch.StartNew();
         readonly Stopwatch LatencyUpdateTimer = Stopwatch.StartNew();
         readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
-
-        readonly Graphics Graphics;
-        readonly Shader HistogramShader;
-        readonly Shader SpectrumShader;
-        readonly Shader MandelboxShader;
-        readonly EffectScalarVariable HistogramShiftVariable;
-        readonly EffectScalarVariable HistogramShiftVariable2;
         readonly TaskScheduler UIScheduler;
+
+        Graphics Graphics;
+        Shader HistogramShader;
+        Shader SpectrumShader;
+        Shader MandelboxShader;
+        EffectScalarVariable HistogramShiftVariable;
+        EffectScalarVariable HistogramShiftVariable2;
 
         public MainForm()
         {
 
-            UIScheduler = TaskScheduler.FromCurrentSynchronizationContext();
             InitializeComponent();
+            UIScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+
+            InitGraphics();
+
+            var audioDevices = Recorder.GetAvailableDeviceNames();
+            Input.Items.Clear();
+            Input.Items.Add(LoopbackEntry);
+            Input.Items.AddRange(audioDevices.ToArray());
+            Input.SelectedItem = LoopbackEntry;
+
+            Options.SelectedObject = new SessionOptions();
+
+        }
+
+        void InitGraphics()
+        {
+
             Graphics = new Graphics(Handle);
             HistogramShader = Graphics.CreateShader("histogram.fx");
             SpectrumShader = Graphics.CreateShader("spectrum.fx");
@@ -62,12 +79,6 @@ namespace AEther.WindowsForms
 
             HistogramShiftVariable = HistogramShader.Variables["HistogramShift"].AsScalar();
             HistogramShiftVariable2 = MandelboxShader.Variables["HistogramShift"].AsScalar();
-
-            var audioDevices = Recorder.GetAvailableDeviceNames();
-            Input.Items.Clear();
-            Input.Items.Add(LoopbackEntry);
-            Input.Items.AddRange(audioDevices.ToArray());
-            Input.SelectedItem = LoopbackEntry;
 
             State.Items.Clear();
             State.Items.AddRange(new GraphicsState[]
@@ -79,174 +90,141 @@ namespace AEther.WindowsForms
                 new IFSState(Graphics),
             });
             State.SelectedIndex = 0;
-
-            Options.SelectedObject = new SessionOptions();
+            Graphics.Shaders.FileChanged += Shaders_FileChanged;
 
         }
 
-        protected override void OnResizeEnd(EventArgs e)
+        private async void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
         {
-            base.OnResizeEnd(e);
-            Graphics.Resize(ClientSize.Width, ClientSize.Height);
-        }
-
-        protected async override void OnFormClosing(FormClosingEventArgs e)
-        {
-            base.OnFormClosing(e);
             await StopAsync();
+            await Task.Factory.StartNew(DisposeGraphics, CancellationToken.None, TaskCreationOptions.None, UIScheduler);
+            await Task.Factory.StartNew(InitGraphics, CancellationToken.None, TaskCreationOptions.None, UIScheduler);
+            SessionTask = RunAsync();
+        }
+
+        void DisposeGraphics()
+        {
+            HistogramShiftVariable.Dispose();
+            HistogramShiftVariable2.Dispose();
+            HistogramShader.Dispose();
+            SpectrumShader.Dispose();
+            MandelboxShader.Dispose();
+            foreach (var state in State.Items.OfType<GraphicsState>())
+            {
+                state.Dispose();
+            }
+            State.Items.Clear();
             Graphics.Dispose();
         }
 
-        protected async override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-            Graphics.Resize(ClientSize.Width, ClientSize.Height);
-
-            var renderOptions = TaskCreationOptions.LongRunning;
-            var render = Task.Factory.StartNew(() =>
-            {
-                while (!IsDisposed)
-                {
-                    IsRendering = true;
-                    Render();
-                    IsRendering = false;
-                    Application.DoEvents();
-                }
-            }, CancellationToken.None, renderOptions, UIScheduler);
-
-            await RunAsync();
-            await render;
-
-        }
-
-        protected async override void OnKeyDown(KeyEventArgs e)
-        {
-            switch (e.KeyCode)
-            {
-                case Keys.Space:
-                    TogglePanel();
-                    break;
-                case Keys.F5:
-                    await StopAsync();
-                    await RunAsync();
-                    break;
-                case Keys.F11:
-                    ToggleFullscreen();
-                    break;
-                case Keys.Escape:
-                    Close();
-                    break;
-                default:
-                    base.OnKeyDown(e);
-                    break;
-            }
-        }
-
-        void TogglePanel()
-        {
-            tlpPanel.Visible ^= true;
-        }
-
-
-        async Task RunAsync()
+        (SampleSource, SessionOptions) Init()
         {
 
-            Cancel = new();
-
-            (AudioDevice, SessionOptions) Init()
-            {
-                var deviceName = Input.SelectedItem.ToString();
-                AudioDevice device = deviceName is LoopbackEntry
-                    ? new Loopback()
-                    : new Recorder(deviceName ?? string.Empty);
-                if (Options.SelectedObject is not SessionOptions options)
-                {
-                    throw new InvalidCastException();
-                }
-                Spectrum = CreateSpectrum(device.Format.ChannelCount, options.Domain.Count);
-                Histogram = CreateHistogram(device.Format.ChannelCount, options.Domain.Count, options.TimeResolution);
-
-
-                return (device, options);
-            }
-
-            var (device, options) = await Task.Factory.StartNew(Init, Cancel.Token, TaskCreationOptions.None, UIScheduler);
+            var deviceName = Input.SelectedItem.ToString();
+            AudioDevice device = deviceName is LoopbackEntry
+                ? new Loopback()
+                : new Recorder(deviceName ?? string.Empty);
             var sampleSource = new AudioInput(device);
-            var session = new Session(sampleSource, options);
-
-            DMXController? dmx = null;
-            if (0 < options.DMXPort)
+            if (Options.SelectedObject is not SessionOptions options)
             {
-                var comPort = $"COM{options.DMXPort}";
-                dmx = new DMXController(comPort, options.Domain)
+                throw new InvalidCastException();
+            }
+            Spectrum = CreateSpectrum(device.Format.ChannelCount, options.Domain.Count);
+            Histogram = CreateHistogram(device.Format.ChannelCount, options.Domain.Count, options.TimeResolution);
+
+            SpectrumShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
+            SpectrumShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
+            MandelboxShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
+            MandelboxShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
+            MandelboxShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
+            MandelboxShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
+            HistogramShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
+            HistogramShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
+
+            return (sampleSource, options);
+
+        }
+
+        public async Task RunAsync()
+        {
+            var (sampleSource, options) = await Task.Factory.StartNew(Init, CancellationToken.None, TaskCreationOptions.None, UIScheduler);
+            Cancel = new CancellationTokenSource();
+            Session = new Session(sampleSource, options);
+            Cancel.Token.Register(sampleSource.Stop);
+
+            Session.OnSamplesAvailable += (obj, evt) =>
+            {
+                var latency = DateTime.Now - evt.Time;
+                if (Latency < latency)
                 {
-                    SinuoidThreshold = options.SinuoidThreshold,
-                    TransientThreshold = options.TransientThreshold,
+                    Latency = latency;
+                }
+                for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
+                {
+                    var channel = evt.GetChannel(c);
+                    Spectrum[c].Add(channel.Span);
+                    Histogram[c].Add(channel.Span);
+                }
+                Interlocked.Increment(ref EventCounter);
+            };
+
+            if (0 < Session.Options.DMXPort)
+            {
+                var comPort = $"COM{Session.Options.DMXPort}";
+                var dmx = new DMXController(comPort, Session.Options.Domain)
+                {
+                    SinuoidThreshold = Session.Options.SinuoidThreshold,
+                    TransientThreshold = Session.Options.TransientThreshold,
                 };
+                Session.OnSamplesAvailable += (obj, evt) => dmx.Process(evt);
+                Session.OnStopped += async (obj, evt) => await dmx.DisposeAsync();
             }
 
-            Cancel.Token.Register(sampleSource.Stop);
-            var events = session.RunAsync();
+            Session.OnStopped += async (obj, evt) =>
+            {
+                await Task.Factory.StartNew(sampleSource.Dispose, CancellationToken.None, TaskCreationOptions.LongRunning, UIScheduler);
+            };
 
-            IsRunning = true;
+            var sessionTask = Task.Run(() => Session.RunAsync(Cancel.Token), Cancel.Token);
+            var renderTask = Task.Factory.StartNew(() => Render(Cancel.Token), Cancel.Token, TaskCreationOptions.LongRunning, UIScheduler);
+
             sampleSource.Start();
+
+            await sessionTask;
+            await renderTask;
+
+        }
+
+        async Task StopAsync()
+        {
+            Cancel.Cancel();
             try
             {
-                await foreach (var evt in events)
-                {
-
-                    var latency = DateTime.Now - evt.Time;
-                    if (Latency < latency)
-                    {
-                        Latency = latency;
-                    }
-
-                    dmx?.Process(evt);
-
-                    for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
-                    {
-                        var channel = evt.GetChannel(c);
-                        Spectrum[c].Add(channel.Span);
-                        Histogram[c].Add(channel.Span);
-                    }
-
-                    evt.Dispose();
-                    Interlocked.Increment(ref EventCounter);
-                }
+                await SessionTask;
             }
-            catch (Exception) { }
-
-            if (dmx is not null)
+            catch(OperationCanceledException)
+            { }
+            foreach (var spectrum in Spectrum)
             {
-                await dmx.DisposeAsync();
+                spectrum.Dispose();
             }
-            sampleSource.Dispose();
-            IsRunning = false;
-
-        }
-
-        void ToggleFullscreen()
-        {
-            if (Graphics.IsFullscreen)
+            foreach (var histogram in Histogram)
             {
-                Hide();
-                Show();
-            }
-            else
-            {
-                Graphics.Resize(Graphics.NativeMode);
-                Graphics.IsFullscreen = true;
+                histogram.Dispose();
             }
         }
 
-        public void Render()
+        void Render(CancellationToken cancel)
         {
+            while (!cancel.IsCancellationRequested)
+            {
+                RenderFrame();
+                Application.DoEvents();
+            }
+        }
 
-            if (IsDisposed)
-                return;
-
-            if (!IsRunning)
-                return;
+        public void RenderFrame()
+        {
 
             var frameTime = FrameTimer.Elapsed;
             FrameTimer.Restart();
@@ -272,20 +250,11 @@ namespace AEther.WindowsForms
                     spectrum.Update();
                     spectrum.Clear();
                 }
-                SpectrumShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
-                SpectrumShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
-
-                MandelboxShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
-                MandelboxShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
-                MandelboxShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
-                MandelboxShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
 
                 foreach (var histogram in Histogram)
                 {
                     histogram.Update();
                 }
-                HistogramShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
-                HistogramShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
 
                 var histogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
                 HistogramShiftVariable.Set(histogramShift);
@@ -325,43 +294,80 @@ namespace AEther.WindowsForms
             return histogram;
         }
 
-        async Task StopAsync()
+        void ToggleFullscreen()
         {
-            Cancel.Cancel();
-            while (IsRunning)
+            if (Graphics.IsFullscreen)
             {
-                await Task.Delay(10);
+                Hide();
+                Show();
             }
-            while (IsRendering)
+            else
             {
-                await Task.Delay(10);
+                Graphics.Resize(Graphics.NativeMode);
+                Graphics.IsFullscreen = true;
             }
-            foreach (var spectrum in Spectrum)
+        }
+
+        protected override void OnResizeEnd(EventArgs e)
+        {
+            base.OnResizeEnd(e);
+            Graphics.Resize(ClientSize.Width, ClientSize.Height);
+        }
+
+        protected async override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            await StopAsync();
+            DisposeGraphics();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            Graphics.Resize(ClientSize.Width, ClientSize.Height);
+            SessionTask = RunAsync();
+        }
+
+        protected async override void OnKeyDown(KeyEventArgs e)
+        {
+            switch (e.KeyCode)
             {
-                spectrum.Dispose();
-            }
-            foreach (var histogram in Histogram)
-            {
-                histogram.Dispose();
+                case Keys.Space:
+                    tlpPanel.Visible ^= true;
+                    break;
+                case Keys.F5:
+                    await StopAsync();
+                    SessionTask = RunAsync();
+                    break;
+                case Keys.F11:
+                    ToggleFullscreen();
+                    break;
+                case Keys.Escape:
+                    Close();
+                    break;
+                default:
+                    base.OnKeyDown(e);
+                    break;
             }
         }
 
         private async void Options_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
         {
-            if (IsRunning)
+            if (Session != null)
             {
                 await StopAsync();
-                await RunAsync();
+                SessionTask = RunAsync();
             }
         }
 
         private async void Input_SelectedValueChanged(object sender, EventArgs e)
         {
-            if (IsRunning)
+            if(Session != null)
             {
                 await StopAsync();
-                await RunAsync();
+                SessionTask = RunAsync();
             }
         }
+
     }
 }

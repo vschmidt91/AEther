@@ -147,7 +147,7 @@ namespace AEther.WindowsForms
                 .Concat(Variables.Values.Cast<ComObject>());
 
             foreach (var obj in comObjects)
-                obj.Dispose();
+                obj?.Dispose();
 
             ShaderResources.Clear();
             DepthStencils.Clear();

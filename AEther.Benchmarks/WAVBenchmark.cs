@@ -48,20 +48,20 @@ namespace AEther.Benchmarks
             var outputDoubles = new double[4 * Options.Domain.Count];
             var outputBytes = new byte[sizeof(double) * outputDoubles.Length];
 
-            var outputs = session.RunAsync();
-            sampleSource.Start();
+            //var outputs = session.RunAsync();
+            //sampleSource.Start();
 
-            await foreach(var output in outputs)
-            {
-                for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
-                {
-                    var src = output.GetChannel(c);
-                    src.CopyTo(outputDoubles);
-                    Buffer.BlockCopy(outputDoubles, 0, outputBytes, 0, outputBytes.Length);
-                    await outputStream.WriteAsync(outputBytes);
-                }
-                output.Dispose();
-            }
+            //await foreach(var output in outputs)
+            //{
+            //    for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
+            //    {
+            //        var src = output.GetChannel(c);
+            //        src.CopyTo(outputDoubles);
+            //        Buffer.BlockCopy(outputDoubles, 0, outputBytes, 0, outputBytes.Length);
+            //        await outputStream.WriteAsync(outputBytes);
+            //    }
+            //    output.Dispose();
+            //}
 
         }
 
