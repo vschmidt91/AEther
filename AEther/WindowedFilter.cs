@@ -11,7 +11,8 @@ namespace AEther
 
         public readonly int WindowSize;
 
-        public WindowedFilter(int windowSize)
+        public WindowedFilter(T state, int windowSize)
+            : base(state)
         {
             WindowSize = windowSize;
         }

@@ -1,15 +1,49 @@
 ﻿using SharpDX.Direct3D11;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {
     public static class Extensions
     {
+
+        public static void InvokeIfRequired(this ISynchronizeInvoke obj, Action a)
+        {
+            if (obj.InvokeRequired)
+            {
+                var args = Array.Empty<object?>();
+                obj.Invoke(a, args);
+            }
+            else
+            {
+                a.Invoke();
+            }
+        }
+
+        public static T InvokeIfRequired<T>(this ISynchronizeInvoke obj, Func<T> a)
+        {
+            object? result;
+            if (obj.InvokeRequired)
+            {
+                var args = Array.Empty<object?>();
+                result = obj.Invoke(a, args);
+            }
+            else
+            {
+                result = a.Invoke();
+            }
+            if(result is not T t)
+            {
+                throw new InvalidCastException();
+            }
+            return t;
+        }
 
         public static IEnumerable<T[]> ToBatches<T>(this IEnumerable<T> values, int batchSize)
         {

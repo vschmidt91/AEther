@@ -21,23 +21,26 @@ namespace AEther
         readonly Comparer<T> Comparer;
         readonly bool[] Flags;
 
-        public MovingMedianHeap(int windowSize, Comparer<T> comparer)
-            : base(windowSize)
+        public MovingMedianHeap(T state, int windowSize, Comparer<T> comparer)
+            : base(state, windowSize)
         {
-            Position = 0;
             Flags = new bool[WindowSize];
             Comparer = comparer;
             Below = new(windowSize, Comparer<T>.Create((x, y) => -Comparer.Compare(x, y)));
             Above = new(windowSize, Comparer);
+            Clear(state);
         }
 
-        public override void Clear()
+        public override void Clear(T state)
         {
+            base.Clear(state);
             Below.Clear();
             Above.Clear();
+            Above.Insert((state, 0));
+            Position = 1;
         }
 
-        public override T Filter(T value)
+        public override void Filter(T value)
         {
 
             if (WindowSize <= Size)
@@ -54,7 +57,7 @@ namespace AEther
 
             if(0 < Size)
             {
-                Flags[Position] = 0 < Comparer.Compare(value, Median);
+                Flags[Position] = 0 < Comparer.Compare(value, State);
             }
             
             if (Flags[Position])
@@ -81,13 +84,11 @@ namespace AEther
                 Position = 0;
             }
 
-            return Median;
+            State = Below.Size < Above.Size
+                ? Above.Root.Item1
+                : Below.Root.Item1;
 
         }
-
-        T Median => Below.Size < Above.Size
-            ? Above.Root.Item1
-            : Below.Root.Item1;
 
         int Size => Below.Size + Above.Size;
 

@@ -44,7 +44,7 @@ namespace AEther
                 }
                 OnDataAvailable?.Invoke(this, buffer.AsMemory(0, count));
             }
-            OnStopped?.Invoke(this, null);
+            //OnStopped?.Invoke(this, null);
         }
 
         public override void Stop()

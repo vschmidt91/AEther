@@ -60,8 +60,8 @@ cbuffer FrameConstants : register(b0)
 {
 	float T;
 	float DT;
-	float S;
-	float DS;
+	float _;
+	float HistogramShift;
 	float AspectRatio;
 };
 

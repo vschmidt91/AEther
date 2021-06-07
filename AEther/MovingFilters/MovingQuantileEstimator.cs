@@ -12,31 +12,20 @@ namespace AEther
         public readonly double Quantile;
         public readonly double Mix;
 
-        double State;
-
-        public MovingQuantileEstimator(double quantile, double mix, double initialState = 0)
+        public MovingQuantileEstimator(double state, double quantile, double mix)
+            : base(state)
         {
-
             Quantile = quantile;
             Mix = mix;
-
-            State = initialState;
-
         }
 
-        public override void Clear()
-        {
-            State = 0;
-        }
-
-        public override double Filter(double value)
+        public override void Filter(double value)
         {
             //var mix = Math.Max(Mix, Math.Abs(State));
             State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);
             //State += Mix * (Math.Sign(value - State) + 2 * Quantile - 1);
             if (double.IsNaN(value))
                 throw new Exception();
-            return State;
         }
 
     }

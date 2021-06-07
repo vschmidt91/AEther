@@ -10,35 +10,33 @@ namespace AEther
         readonly double[] Buffer;
         readonly int HalfSize;
 
-        double Average;
         int Position;
 
-        public MovingAverage(int halfSize)
+        public MovingAverage(double state, int halfSize)
+            : base(state)
         {
             HalfSize = halfSize;
-            Average = 0f;
             Buffer = new double[2 * HalfSize + 1];
             Position = 0;
         }
 
-        public override void Clear()
+        public override void Clear(double state)
         {
-            Average = 0f;
-            Array.Clear(Buffer, 0, Buffer.Length);
+            base.Clear(state);
+            Array.Fill(Buffer, state, 0, Buffer.Length);
             Position = 0;
         }
 
-        public override double Filter(double newValue)
+        public override void Filter(double newValue)
         {
             var oldValue = Buffer[Position];
             Buffer[Position] = newValue;
-            Average += (newValue - oldValue) / Buffer.Length;
+            State += (newValue - oldValue) / Buffer.Length;
             Position++;
             if(Position == Buffer.Length)
             {
                 Position = 0;
             }
-            return Average;
         }
 
     }

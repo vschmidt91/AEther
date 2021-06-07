@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using SharpDX;
 using SharpDX.D3DCompiler;
+using SharpDX.Diagnostics;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
@@ -42,12 +43,13 @@ namespace AEther.WindowsForms
 
         public readonly ModeDescription NativeMode;
 
+        SharpDX.Direct3D11.Texture2D BackBufferResource;
         public Texture2D BackBuffer { get; protected set; }
 
         DeviceContext Context => Device.ImmediateContext;
 
         readonly Device Device;
-        readonly ConstantBuffer<FrameConstants> FrameConstants;
+        public readonly ConstantBuffer<FrameConstants> FrameConstants;
         public readonly ShaderManager Shaders;
         readonly DeviceDebug? Debug;
         readonly SwapChain Chain;
@@ -57,7 +59,6 @@ namespace AEther.WindowsForms
 
         public Graphics(IntPtr handle)
         {
-
 
             var format = Format.R8G8B8A8_UNorm;
             var modeFlags = DisplayModeEnumerationFlags.Scaling;
@@ -72,12 +73,12 @@ namespace AEther.WindowsForms
 
             var desc = new SwapChainDescription()
             {
-                BufferCount = 1,
+                BufferCount = 2,
                 ModeDescription = NativeMode,
                 IsWindowed = true,
                 OutputHandle = handle,
                 SampleDescription = new SampleDescription(1, 0),
-                SwapEffect = SwapEffect.Discard,
+                SwapEffect = SwapEffect.FlipDiscard,
                 Usage = Usage.RenderTargetOutput,
                 Flags = SwapChainFlags.AllowModeSwitch,
             };
@@ -105,10 +106,9 @@ namespace AEther.WindowsForms
                 Debug = new DeviceDebug(Device);
             }
 
-
-            BackBuffer = new Texture2D(Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0));
+            BackBufferResource = Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0);
+            BackBuffer = new Texture2D(BackBufferResource);
             FrameConstants = new ConstantBuffer<FrameConstants>(Device);
-
             Shaders = CreateShaderManager();
             Quad = new Model(Device, new Grid(2, 2));
 
@@ -148,15 +148,18 @@ namespace AEther.WindowsForms
             {
 
                 BackBuffer.Dispose();
+                BackBufferResource.Dispose();
 
-                Debug?.ReportLiveDeviceObjects(ReportingLevel.Detail);
+                //Debug?.ReportLiveDeviceObjects(ReportingLevel.Detail);
 
                 Context.ClearState();
                 Context.Flush();
+
                 Chain.ResizeBuffers(Chain.Description.BufferCount, mode.Width, mode.Height, mode.Format, SwapChainFlags.AllowModeSwitch);
                 Chain.ResizeTarget(ref mode);
 
-                BackBuffer = new Texture2D(Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0));
+                BackBufferResource = Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0);
+                BackBuffer = new Texture2D(BackBufferResource);
 
             }
 
@@ -166,15 +169,16 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
 
-            Context.ClearState();
-            Context.Flush();
-
             Shaders.Dispose();
             FrameConstants.Dispose();
             Quad.Dispose();
-            BackBuffer.Dispose();
+            //BackBuffer.Dispose();
 
             Chain.Dispose();
+
+
+            Context.ClearState();
+            Context.Flush();
             Context.Dispose();
             Device.Dispose();
 

@@ -47,7 +47,7 @@ namespace AEther
             var coeffRe = new Vector<double>(coeff.Select(c => c.Real).ToArray());
             var coeffIm = new Vector<double>(coeff.Select(c => c.Imaginary).ToArray());
             Coefficients = new ComplexVector<double>(coeffRe, coeffIm);
-
+             
         }
 
         public Complex GetOutput()

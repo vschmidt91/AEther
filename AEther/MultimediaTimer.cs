@@ -51,7 +51,7 @@ namespace AEther
                 CheckDisposed();
 
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
 
                 interval = value;
                 if (Resolution > Interval)
@@ -73,7 +73,7 @@ namespace AEther
                 CheckDisposed();
 
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
 
                 resolution = value;
             }
@@ -87,32 +87,47 @@ namespace AEther
             get { return timerId != 0; }
         }
 
-        public static Task Delay(int millisecondsDelay, CancellationToken token = default(CancellationToken))
+        static AutoResetEvent WaitHandle = new AutoResetEvent(false);
+
+        public static void Sleep(uint millisecondsDelay)
         {
-            if (millisecondsDelay < 0)
+            void callback(uint id, uint msg, ref uint uCtx, uint rsv1, uint rsv2)
             {
-                throw new ArgumentOutOfRangeException("millisecondsDelay", millisecondsDelay, "The value cannot be less than 0.");
+                WaitHandle.Set();
             }
+            if (millisecondsDelay == 0)
+            {
+                return;
+            }
+            uint userCtx = 0;
+            var timerId = NativeMethods.TimeSetEvent(millisecondsDelay, 0, callback, ref userCtx, EventTypeSingle);
+            if (timerId == 0)
+            {
+                int error = Marshal.GetLastWin32Error();
+                throw new Win32Exception(error);
+            }
+            WaitHandle.WaitOne();
+        }
+
+        public static Task Delay(uint millisecondsDelay, CancellationToken cancel = default)
+        {
 
             if (millisecondsDelay == 0)
             {
                 return Task.CompletedTask;
             }
 
-            token.ThrowIfCancellationRequested();
+            cancel.ThrowIfCancellationRequested();
 
-            // allocate an object to hold the callback in the async state.
-            object[] state = new object[1];
-            var completionSource = new TaskCompletionSource<object>(state);
-            MultimediaTimerCallback callback = (uint id, uint msg, ref uint uCtx, uint rsv1, uint rsv2) =>
+            var completionSource = new TaskCompletionSource<object>();
+
+            void callback(uint id, uint msg, ref uint uCtx, uint rsv1, uint rsv2)
             {
-                // Note we don't need to kill the timer for one-off events.
                 completionSource.TrySetResult(0);
-            };
+            }
 
-            state[0] = callback;
-            UInt32 userCtx = 0;
-            var timerId = NativeMethods.TimeSetEvent((uint)millisecondsDelay, (uint)0, callback, ref userCtx, EventTypeSingle);
+            uint userCtx = 0;
+            var timerId = NativeMethods.TimeSetEvent(millisecondsDelay, 0, callback, ref userCtx, EventTypeSingle);
             if (timerId == 0)
             {
                 int error = Marshal.GetLastWin32Error();
@@ -143,10 +158,10 @@ namespace AEther
         public void Stop()
         {
             CheckDisposed();
-
             if (!IsRunning)
+            {
                 throw new InvalidOperationException("Timer has not been started");
-
+            }
             StopInternal();
         }
 
@@ -160,16 +175,13 @@ namespace AEther
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Dispose(true);
         }
 
         private void TimerCallbackMethod(uint id, uint msg, ref uint userCtx, uint rsv1, uint rsv2)
         {
-            var handler = Elapsed;
-            if (handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
+            Elapsed?.Invoke(this, EventArgs.Empty);
         }
 
         private void CheckDisposed()
@@ -192,7 +204,6 @@ namespace AEther
             if (disposing)
             {
                 Elapsed = null;
-                GC.SuppressFinalize(this);
             }
         }
     }

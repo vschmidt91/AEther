@@ -9,9 +9,19 @@ namespace AEther
     public abstract class MovingFilter<T>
     {
 
-        public abstract void Clear();
+        public T State { get; protected set; }
 
-        public abstract T Filter(T x);
+        public MovingFilter(T state)
+        {
+            State = state;
+        }
+
+        public virtual void Clear(T state)
+        {
+            State = state;
+        }
+
+        public abstract void Filter(T value);
 
         public void FilterSpan(ReadOnlySpan<T> source, Span<T> destination, Func<T, T, T> op)
         {
@@ -20,16 +30,18 @@ namespace AEther
 
             var buffer = ArrayPool<T>.Shared.Rent(source.Length);
 
-            Clear();
-            for (var i = 0; i < source.Length; ++i)
+            Clear(buffer[0] = source[0]);
+            for (var i = 1; i < source.Length; ++i)
             {
-                buffer[i] = Filter(source[i]);
+                Filter(source[i]);
+                buffer[i] = State;
             }
 
-            Clear();
-            for (var i = source.Length - 1; 0 <= i; --i)
+            Clear(destination[^1] = buffer[^1]);
+            for (var i = source.Length - 2; 0 <= i; --i)
             {
-                destination[i] = op(buffer[i], Filter(source[i]));
+                Filter(source[i]);
+                destination[i] = op(buffer[i], State);
             }
 
         }

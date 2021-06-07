@@ -115,10 +115,16 @@ namespace AEther.WindowsForms
                 .Select(i => Effect.GetVariableByIndex(i))
                 .ToDictionary(v => v.Description.Name, v => v);
 
-            ShaderResources = Variables.ToDictionary(v => v.Key, v => v.Value.AsShaderResource());
-            DepthStencils = Variables.ToDictionary(v => v.Key, v => v.Value.AsDepthStencilView());
-            RenderTargets = Variables.ToDictionary(v => v.Key, v => v.Value.AsRenderTargetView());
-            UnorderedAccesses = Variables.ToDictionary(v => v.Key, v => v.Value.AsUnorderedAccessView());
+            static Dictionary<string, T> filter<T>(Dictionary<string, EffectVariable> d, Func<EffectVariable, T> f)
+                => d
+                .ToDictionary(v => v.Key, v => f(v.Value))
+                .Where(v => v.Value != null)
+                .ToDictionary(v => v.Key, v => v.Value);
+
+            ShaderResources = filter(Variables, v => v.AsShaderResource());
+            DepthStencils = filter(Variables, v => v.AsDepthStencilView());
+            RenderTargets = filter(Variables, v => v.AsRenderTargetView());
+            UnorderedAccesses = filter(Variables, v => v.AsUnorderedAccessView());
 
             ConstantBuffers = Enumerable.Range(0, Effect.Description.ConstantBufferCount)
                 .Select(i => Effect.GetConstantBufferByIndex(i))

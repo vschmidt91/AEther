@@ -23,11 +23,11 @@ namespace AEther.WindowsForms
 
         public IDisposable Shadow { get; set; } = new ShadowType();
 
-        readonly Dictionary<string, string> Includes;
+        readonly string BasePath;
 
-        public IncludeHandler(Dictionary<string, string> includes)
+        public IncludeHandler(string basePath)
         {
-            Includes = includes;
+            BasePath = basePath;
         }
 
         public void Close(Stream stream)
@@ -39,14 +39,18 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            Includes.Clear();
+            Shadow.Dispose();
         }
 
         public Stream Open(IncludeType type, string fileName, Stream parentStream)
         {
-            if (!Includes.TryGetValue(fileName, out var include))
-                throw new FileNotFoundException(fileName);
-            return new MemoryStream(new UTF8Encoding().GetBytes(include));
+            var path = Path.Join(BasePath, fileName);
+            var str = File.ReadAllText(path);
+            var utf8 = new MemoryStream(Encoding.UTF8.GetBytes(str));
+            return utf8;
+            //if (!Includes.TryGetValue(fileName, out var include))
+            //    throw new FileNotFoundException(fileName);
+            //return new MemoryStream(new UTF8Encoding().GetBytes(include));
         }
 
     }

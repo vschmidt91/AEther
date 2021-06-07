@@ -51,24 +51,24 @@ namespace AEther
             var comparison = Comparer.Compare(oldItem, Item);
             if(comparison == 0)
             {
-                if (Left == null)
+                if (Left is null)
                 {
                     return Right;
                 }
-                else if (Right == null)
+                else if (Right is null)
                 {
                     return Left;
                 }
                 else
                 {
-                    (Left, Item) = Left.RemoveRightmost();
-                    //(Right, Item) = Right.RemoveLeftmost();
+                    //(Left, Item) = Left?.RemoveRightmost() ?? throw new KeyNotFoundException();
+                    (Right, Item) = Right?.RemoveLeftmost() ?? throw new KeyNotFoundException();
                     return this;
                 }
             }
             else if(comparison < 0)
             {
-                if(Left == null)
+                if(Left is null)
                 {
                     throw new KeyNotFoundException();
                 }
@@ -80,7 +80,7 @@ namespace AEther
             }
             else
             {
-                if (Right == null)
+                if (Right is null)
                 {
                     throw new KeyNotFoundException();
                 }
@@ -95,20 +95,20 @@ namespace AEther
         public void RotateRight()
         {
             var item = Item;
-            (Left, Item) = Left.RemoveRightmost();
+            (Left, Item) = Left?.RemoveRightmost() ?? throw new KeyNotFoundException();
             Insert(item);
         }
 
         public void RotateLeft()
         {
             var item = Item;
-            (Right, Item) = Right.RemoveLeftmost();
+            (Right, Item) = Right?.RemoveLeftmost() ?? throw new KeyNotFoundException();
             Insert(item);
         }
 
         public (BinarySearchTree<T>?, T) RemoveRightmost()
         {
-            if(Right == null)
+            if(Right is null)
             {
                 return (Left, Item);
             }
@@ -122,7 +122,7 @@ namespace AEther
 
         public (BinarySearchTree<T>?, T) RemoveLeftmost()
         {
-            if (Left == null)
+            if (Left is null)
             {
                 return (Right, Item);
             }

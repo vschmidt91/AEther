@@ -35,6 +35,7 @@
             this.State = new System.Windows.Forms.ListBox();
             this.OptionsGroup = new System.Windows.Forms.GroupBox();
             this.Options = new System.Windows.Forms.PropertyGrid();
+            this.Reset = new System.Windows.Forms.Button();
             this.tlpPanel.SuspendLayout();
             this.InputGroup.SuspendLayout();
             this.StateGroup.SuspendLayout();
@@ -48,13 +49,15 @@
             this.tlpPanel.Controls.Add(this.InputGroup, 0, 0);
             this.tlpPanel.Controls.Add(this.StateGroup, 0, 1);
             this.tlpPanel.Controls.Add(this.OptionsGroup, 0, 2);
+            this.tlpPanel.Controls.Add(this.Reset, 0, 3);
             this.tlpPanel.Dock = System.Windows.Forms.DockStyle.Left;
             this.tlpPanel.Location = new System.Drawing.Point(0, 0);
             this.tlpPanel.Name = "tlpPanel";
-            this.tlpPanel.RowCount = 3;
+            this.tlpPanel.RowCount = 4;
             this.tlpPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tlpPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tlpPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tlpPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F));
             this.tlpPanel.Size = new System.Drawing.Size(240, 561);
             this.tlpPanel.TabIndex = 0;
             this.tlpPanel.Visible = false;
@@ -108,7 +111,7 @@
             this.OptionsGroup.Dock = System.Windows.Forms.DockStyle.Fill;
             this.OptionsGroup.Location = new System.Drawing.Point(3, 203);
             this.OptionsGroup.Name = "OptionsGroup";
-            this.OptionsGroup.Size = new System.Drawing.Size(234, 355);
+            this.OptionsGroup.Size = new System.Drawing.Size(234, 325);
             this.OptionsGroup.TabIndex = 2;
             this.OptionsGroup.TabStop = false;
             this.OptionsGroup.Text = "Options";
@@ -118,9 +121,20 @@
             this.Options.Dock = System.Windows.Forms.DockStyle.Fill;
             this.Options.Location = new System.Drawing.Point(3, 19);
             this.Options.Name = "Options";
-            this.Options.Size = new System.Drawing.Size(228, 333);
+            this.Options.Size = new System.Drawing.Size(228, 303);
             this.Options.TabIndex = 1;
             this.Options.PropertyValueChanged += new System.Windows.Forms.PropertyValueChangedEventHandler(this.Options_PropertyValueChanged);
+            // 
+            // Reset
+            // 
+            this.Reset.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.Reset.Location = new System.Drawing.Point(3, 534);
+            this.Reset.Name = "Reset";
+            this.Reset.Size = new System.Drawing.Size(234, 24);
+            this.Reset.TabIndex = 3;
+            this.Reset.Text = "&Reset";
+            this.Reset.UseVisualStyleBackColor = true;
+            this.Reset.Click += new System.EventHandler(this.ResetGraphics_Click);
             // 
             // MainForm
             // 
@@ -150,5 +164,6 @@
         private System.Windows.Forms.GroupBox InputGroup;
         private System.Windows.Forms.GroupBox StateGroup;
         private System.Windows.Forms.GroupBox OptionsGroup;
+        private System.Windows.Forms.Button Reset;
     }
 }

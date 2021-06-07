@@ -12,7 +12,7 @@ namespace AEther.Benchmarks
     {
 
         [Benchmark]
-        public void MovingMedianRef()
+        public void MMTimer()
         {
 
             var timer = new MultimediaTimer()

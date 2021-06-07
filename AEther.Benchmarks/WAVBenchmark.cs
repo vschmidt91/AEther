@@ -18,28 +18,34 @@ namespace AEther.Benchmarks
         SessionOptions Options;
 
         [Benchmark]
-        public async Task RunA()
+        public void RunA()
         {
-            Options = new SessionOptions();
-            await RunAsync();
+            Options = new SessionOptions
+            {
+            };
+            Run();
         }
 
         [Benchmark]
-        public async Task RunB()
+        public void RunB()
         {
             Options = new SessionOptions
             {
                 MaxParallelization = 4
             };
-            await RunAsync();
+            Run();
         }
 
-        public async Task RunAsync()
+        public void Run()
         {
-
-            //var path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
-            var path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "..", "..", "..", "..", "TestFiles", "test_sine.wav");
+            var path = Environment.CurrentDirectory;
+#if !DEBUG
+            path = Path.Join(path, "..", "..", "..", "..");
+#endif
+            path = Path.Join(path, "..", "..", "..", "..", "TestFiles", "test_sine.wav");
             path = new FileInfo(path).FullName;
+            //Console.WriteLine(path);
+
             using var inputStream = File.OpenRead(path);
             using var outputStream = new MemoryStream();
             using var sampleSource = new WAVReader(inputStream);
@@ -47,21 +53,21 @@ namespace AEther.Benchmarks
             var session = new Session(sampleSource, Options);
             var outputDoubles = new double[4 * Options.Domain.Count];
             var outputBytes = new byte[sizeof(double) * outputDoubles.Length];
+            var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
-            //var outputs = session.RunAsync();
-            //sampleSource.Start();
+            session.OnSamplesAvailable += async (obj, evt) =>
+            {
+                for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
+                {
+                    var src = evt.GetChannel(c);
+                    src.CopyTo(outputDoubles);
+                    Buffer.BlockCopy(outputDoubles, 0, outputBytes, 0, outputBytes.Length);
+                    await outputStream.WriteAsync(outputBytes);
+                }
+            };
+            //session.OnStopped += (obj, evt) => waitHandle.Set();
 
-            //await foreach(var output in outputs)
-            //{
-            //    for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
-            //    {
-            //        var src = output.GetChannel(c);
-            //        src.CopyTo(outputDoubles);
-            //        Buffer.BlockCopy(outputDoubles, 0, outputBytes, 0, outputBytes.Length);
-            //        await outputStream.WriteAsync(outputBytes);
-            //    }
-            //    output.Dispose();
-            //}
+            sampleSource.Start();
 
         }
 

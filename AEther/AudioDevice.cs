@@ -14,8 +14,7 @@ namespace AEther
 
         public abstract SampleFormat Format { get; }
 
-        public virtual void Dispose()
-        { }
+        public abstract void Dispose();
 
         public abstract void Start();
 

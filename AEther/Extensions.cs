@@ -14,46 +14,29 @@ using System.Runtime.CompilerServices;
 namespace AEther
 {
 
-    public readonly struct PipeHandle
-    {
-
-        public readonly ReadOnlySequence<byte> Data;
-        readonly PipeReader Reader;
-
-        public PipeHandle(ReadOnlySequence<byte> data, PipeReader reader)
-        {
-            Data = data;
-            Reader = reader;
-        }
-
-        public void AdvanceTo(SequencePosition consumed, SequencePosition? observed = null)
-        {
-            Reader.AdvanceTo(consumed, observed ?? consumed);
-        }
-
-    }
-
     public static class Extensions
     {
 
-        public static async IAsyncEnumerable<PipeHandle> ReadAllAsync(this PipeReader reader, [EnumeratorCancellation]CancellationToken cancel = default)
+        public static async IAsyncEnumerable<ReadResult> ReadAllAsync(this PipeReader reader, [EnumeratorCancellation]CancellationToken cancel = default)
         {
-            while (!cancel.IsCancellationRequested)
+            while (true)
             {
-                var result = await reader.ReadAsync(cancel);
+                cancel.ThrowIfCancellationRequested();
+                ReadResult result = await reader.ReadAsync(cancel);
                 if (result.IsCompleted || result.IsCanceled)
                 {
                     break;
                 }
-                yield return new PipeHandle(result.Buffer, reader);
+                yield return result;
             }
         }
 
-        public static double Clamp(this double x, double a, double b)
+        public static T Clamp<T>(this T x, T a, T b)
+            where T : IComparable<T>
         {
-            if (x < a)
+            if (x.CompareTo(a) < 0)
                 return a;
-            else if (b < x)
+            else if (0 < x.CompareTo(b))
                 return b;
             else
                 return x;

@@ -34,8 +34,8 @@ namespace AEther.DMX
             Channels = EuroliteLEDMultiFXBar.Create();
             Domain = domain;
 
-            SinuoidFilter = new MovingQuantileEstimator(.95f, .003f);
-            TransientFilter = new MovingQuantileEstimator(.95f, .003f);
+            SinuoidFilter = new MovingQuantileEstimator(.0, .95, .003);
+            TransientFilter = new MovingQuantileEstimator(.0, .95, .003);
 
             KeyWeights = new double[Domain.Resolution];
             var ports = SerialPort.GetPortNames();
@@ -85,8 +85,11 @@ namespace AEther.DMX
             //var sinuoid = sum[0] / SinuoidThreshold;
             //var transients = sum[1] / TransientThreshold;
 
-            var sinuoid = sum[0] / SinuoidFilter.Filter(sum[0]);
-            var transients = sum[1] / TransientFilter.Filter(sum[1]);
+            SinuoidFilter.Filter(sum[0]);
+            TransientFilter.Filter(sum[1]);
+
+            var sinuoid = sum[0] / SinuoidFilter.State;
+            var transients = sum[1] / TransientFilter.State;
 
             Array.Clear(Frame, 0, Frame.Length);
             for (var i = 0; i < Channels.Length; ++i)
@@ -117,8 +120,14 @@ namespace AEther.DMX
 
         public async ValueTask DisposeAsync()
         {
-            Cancel.Cancel();
-            await WriterTask;
+            GC.SuppressFinalize(this);
+            try
+            {
+                Cancel.Cancel();
+                await WriterTask;
+            }
+            catch(OperationCanceledException)
+            { }
             Serial.Close();
             Serial.Dispose();
         }

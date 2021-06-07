@@ -11,26 +11,18 @@ namespace AEther
 
         readonly double Mix;
 
-        double State;
-
-        public MovingExponentialAverage(double mix)
+        public MovingExponentialAverage(double state, double mix)
+            : base(state)
         {
             Mix = mix;
-            State = 0f;
         }
 
-        public static MovingExponentialAverage FromWindow(int window)
-            => new(2f / (1 + window));
+        public static MovingExponentialAverage FromWindow(double state, int window)
+            => new(state, 2 / (1.0 + window));
 
-        public override void Clear()
-        {
-            State = 0f;
-        }
-
-        public override double Filter(double newValue)
+        public override void Filter(double newValue)
         {
             State += Mix * (newValue - State);
-            return State;
         }
 
     }

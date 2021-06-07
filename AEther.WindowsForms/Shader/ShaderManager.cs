@@ -34,9 +34,9 @@ namespace AEther.WindowsForms
 
             BasePath = basePath;
 
-            var includes = Directory.EnumerateFiles(basePath, "*.fxi", SearchOption.AllDirectories)
-                .ToDictionary(path => new FileInfo(path).Name, File.ReadAllText);
-            Includes = new IncludeHandler(includes);
+            //var includes = Directory.EnumerateFiles(basePath, "*.fxi", SearchOption.AllDirectories);
+                //.ToDictionary(path => new FileInfo(path).Name, File.ReadAllText);
+            Includes = new IncludeHandler(Path.Join(basePath, "include"));
 
             if (watch)
             {
@@ -60,6 +60,7 @@ namespace AEther.WindowsForms
             EffectFlags effectFlags = EffectFlags.None;
 
 #if DEBUG
+            shaderFlags |= ShaderFlags.EnableStrictness;
             shaderFlags |= ShaderFlags.Debug;
 #else
             shaderFlags |= ShaderFlags.OptimizationLevel3;

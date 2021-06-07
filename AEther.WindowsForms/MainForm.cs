@@ -13,7 +13,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 
 using AEther.DMX;
-using AEther.CSCore;
+using AEther.NAudio;
 
 using SharpDX.Direct3D11;
 using System.Threading.Tasks.Dataflow;
@@ -25,39 +25,55 @@ namespace AEther.WindowsForms
     public partial class MainForm : Form
     {
 
+        internal class ActiveSession
+        {
+
+            readonly SampleSource SampleSource;
+            readonly Session Session;
+
+            internal ActiveSession(SampleSource sampleSource, Session session)
+            {
+                SampleSource = sampleSource;
+                Session = session;
+            }
+
+            internal void Start()
+            {
+                SampleSource.Start();
+            }
+
+            async internal Task StopAsync()
+            {
+                SampleSource.Stop();
+                await Session.StopAsync();
+            }
+
+        }
+
         const string LoopbackEntry = "Loopback";
         const bool UseMapping = true;
         const bool UseFloatTextures = false;
-
-        SpectrumAccumulator[] Spectrum = Array.Empty<SpectrumAccumulator>();
-        Histogram[] Histogram = Array.Empty<Histogram>();
-
-        CancellationTokenSource Cancel = new CancellationTokenSource();
-        Session? Session = null;
-        Task SessionTask = Task.CompletedTask;
-        TimeSpan Latency = TimeSpan.Zero;
-        TimeSpan FrameTime = TimeSpan.Zero;
-        int EventCounter = 0;
+        public static readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
 
         readonly Stopwatch FrameTimer = Stopwatch.StartNew();
         readonly Stopwatch LatencyUpdateTimer = Stopwatch.StartNew();
-        readonly TimeSpan LatencyUpdateInterval = TimeSpan.FromSeconds(1);
-        readonly TaskScheduler UIScheduler;
+        readonly List<Shader> Shaders = new();
+        readonly Graphics Graphics;
 
-        Graphics Graphics;
-        Shader HistogramShader;
-        Shader SpectrumShader;
-        Shader MandelboxShader;
-        EffectScalarVariable HistogramShiftVariable;
-        EffectScalarVariable HistogramShiftVariable2;
+        SpectrumAccumulator[] Spectrum = Array.Empty<SpectrumAccumulator>();
+        Histogram[] Histogram = Array.Empty<Histogram>();
+        ActiveSession? Session = null;
+        TimeSpan Latency = TimeSpan.Zero;
+        TimeSpan FrameTime = TimeSpan.Zero;
+        int EventCounter = 0;
 
         public MainForm()
         {
 
             InitializeComponent();
-            UIScheduler = TaskScheduler.FromCurrentSynchronizationContext();
 
-            InitGraphics();
+            Graphics = new Graphics(Handle);
+            InitStates();
 
             var audioDevices = Recorder.GetAvailableDeviceNames();
             Input.Items.Clear();
@@ -69,23 +85,32 @@ namespace AEther.WindowsForms
 
         }
 
-        void InitGraphics()
+        void ResetGraphics()
+        {
+            Stop();
+            this.InvokeIfRequired(DisposeStates);
+            this.InvokeIfRequired(InitStates);
+            Start();
+        }
+
+        void InitStates()
         {
 
-            Graphics = new Graphics(Handle);
-            HistogramShader = Graphics.CreateShader("histogram.fx");
-            SpectrumShader = Graphics.CreateShader("spectrum.fx");
-            MandelboxShader = Graphics.CreateShader("mandelbox.fx");
+            var histogramShader = Graphics.CreateShader("histogram.fx");
+            var spectrumShader = Graphics.CreateShader("spectrum.fx");
+            var mandelboxShader = Graphics.CreateShader("mandelbox.fx");
 
-            HistogramShiftVariable = HistogramShader.Variables["HistogramShift"].AsScalar();
-            HistogramShiftVariable2 = MandelboxShader.Variables["HistogramShift"].AsScalar();
+            Shaders.Clear();
+            Shaders.Add(histogramShader);
+            Shaders.Add(spectrumShader);
+            Shaders.Add(mandelboxShader);
 
             State.Items.Clear();
             State.Items.AddRange(new GraphicsState[]
             {
-                new ShaderState(Graphics, HistogramShader, "Histogramm"),
-                new ShaderState(Graphics, SpectrumShader, "Spectrum"),
-                new ShaderState(Graphics, MandelboxShader, "Mandelbox"),
+                new ShaderState(Graphics, histogramShader, "Histogramm"),
+                new ShaderState(Graphics, spectrumShader, "Spectrum"),
+                new ShaderState(Graphics, mandelboxShader, "Mandelbox"),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
             });
@@ -94,27 +119,23 @@ namespace AEther.WindowsForms
 
         }
 
-        private async void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
+        private void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
         {
-            await StopAsync();
-            await Task.Factory.StartNew(DisposeGraphics, CancellationToken.None, TaskCreationOptions.None, UIScheduler);
-            await Task.Factory.StartNew(InitGraphics, CancellationToken.None, TaskCreationOptions.None, UIScheduler);
-            SessionTask = RunAsync();
+            ResetGraphics();
         }
 
-        void DisposeGraphics()
+        void DisposeStates()
         {
-            HistogramShiftVariable.Dispose();
-            HistogramShiftVariable2.Dispose();
-            HistogramShader.Dispose();
-            SpectrumShader.Dispose();
-            MandelboxShader.Dispose();
+            foreach(var shader in Shaders)
+            {
+                shader.Dispose();
+            }
+            Shaders.Clear();
             foreach (var state in State.Items.OfType<GraphicsState>())
             {
                 state.Dispose();
             }
             State.Items.Clear();
-            Graphics.Dispose();
         }
 
         (SampleSource, SessionOptions) Init()
@@ -129,30 +150,38 @@ namespace AEther.WindowsForms
             {
                 throw new InvalidCastException();
             }
+
             Spectrum = CreateSpectrum(device.Format.ChannelCount, options.Domain.Count);
             Histogram = CreateHistogram(device.Format.ChannelCount, options.Domain.Count, options.TimeResolution);
 
-            SpectrumShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
-            SpectrumShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
-            MandelboxShader.ShaderResources["Spectrum0"].SetResource(Spectrum[0].Texture.GetShaderResourceView());
-            MandelboxShader.ShaderResources["Spectrum1"].SetResource(Spectrum[1].Texture.GetShaderResourceView());
-            MandelboxShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
-            MandelboxShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
-            HistogramShader.ShaderResources["Histogram0"].SetResource(Histogram[0].Texture.GetShaderResourceView());
-            HistogramShader.ShaderResources["Histogram1"].SetResource(Histogram[1].Texture.GetShaderResourceView());
+            var d = new Dictionary<string, Texture2D>()
+            {
+                { "Spectrum0", Spectrum[0].Texture },
+                { "Spectrum1", Spectrum[1].Texture },
+                { "Histogram0", Histogram[0].Texture },
+                { "Histogram1", Histogram[1].Texture },
+            };
+
+            foreach (var (key, value) in d)
+            {
+                foreach (var shader in Shaders)
+                {
+                    if (shader.ShaderResources.TryGetValue(key, out var v))
+                        v?.SetResource(value.GetShaderResourceView());
+                }
+            }
 
             return (sampleSource, options);
 
         }
 
-        public async Task RunAsync()
+        public void Start()
         {
-            var (sampleSource, options) = await Task.Factory.StartNew(Init, CancellationToken.None, TaskCreationOptions.None, UIScheduler);
-            Cancel = new CancellationTokenSource();
-            Session = new Session(sampleSource, options);
-            Cancel.Token.Register(sampleSource.Stop);
 
-            Session.OnSamplesAvailable += (obj, evt) =>
+            var (sampleSource, options) = this.InvokeIfRequired(Init);
+            var session = new Session(sampleSource, options);
+
+            session.OnSamplesAvailable += (obj, evt) =>
             {
                 var latency = DateTime.Now - evt.Time;
                 if (Latency < latency)
@@ -168,39 +197,39 @@ namespace AEther.WindowsForms
                 Interlocked.Increment(ref EventCounter);
             };
 
-            if (0 < Session.Options.DMXPort)
+            if (0 < options.DMXPort)
             {
-                var comPort = $"COM{Session.Options.DMXPort}";
-                var dmx = new DMXController(comPort, Session.Options.Domain)
+                var comPort = $"COM{session.Options.DMXPort}";
+                var dmx = new DMXController(comPort, options.Domain)
                 {
-                    SinuoidThreshold = Session.Options.SinuoidThreshold,
-                    TransientThreshold = Session.Options.TransientThreshold,
+                    SinuoidThreshold = options.SinuoidThreshold,
+                    TransientThreshold = options.TransientThreshold,
                 };
-                Session.OnSamplesAvailable += (obj, evt) => dmx.Process(evt);
-                Session.OnStopped += async (obj, evt) => await dmx.DisposeAsync();
+                session.OnSamplesAvailable += (obj, evt) => dmx.Process(evt);
+                session.OnStopped += async (obj, evt) => await dmx.DisposeAsync();
             }
 
-            Session.OnStopped += async (obj, evt) =>
+            session.OnStopped += (obj, evt) =>
             {
-                await Task.Factory.StartNew(sampleSource.Dispose, CancellationToken.None, TaskCreationOptions.LongRunning, UIScheduler);
+                //sampleSource.Stop();
+                //this.InvokeIfRequired(sampleSource.Dispose);
             };
 
-            var sessionTask = Task.Run(() => Session.RunAsync(Cancel.Token), Cancel.Token);
-            var renderTask = Task.Factory.StartNew(() => Render(Cancel.Token), Cancel.Token, TaskCreationOptions.LongRunning, UIScheduler);
+            sampleSource.OnDataAvailable += async (obj, evt) =>
+            {
+                await session.PostSamplesAsync(evt);
+            };
 
-            sampleSource.Start();
-
-            await sessionTask;
-            await renderTask;
+            Session = new ActiveSession(sampleSource, session);
+            Session.Start();
 
         }
 
-        async Task StopAsync()
+        async Task Stop()
         {
-            Cancel.Cancel();
             try
             {
-                await SessionTask;
+                await (Session?.StopAsync() ?? Task.CompletedTask);
             }
             catch(OperationCanceledException)
             { }
@@ -214,16 +243,7 @@ namespace AEther.WindowsForms
             }
         }
 
-        void Render(CancellationToken cancel)
-        {
-            while (!cancel.IsCancellationRequested)
-            {
-                RenderFrame();
-                Application.DoEvents();
-            }
-        }
-
-        public void RenderFrame()
+        public void Render()
         {
 
             var frameTime = FrameTimer.Elapsed;
@@ -257,8 +277,7 @@ namespace AEther.WindowsForms
                 }
 
                 var histogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
-                HistogramShiftVariable.Set(histogramShift);
-                HistogramShiftVariable2.Set(histogramShift);
+                Graphics.FrameConstants.Value.Time.W = histogramShift;
 
             }
 
@@ -314,21 +333,21 @@ namespace AEther.WindowsForms
             Graphics.Resize(ClientSize.Width, ClientSize.Height);
         }
 
-        protected async override void OnFormClosing(FormClosingEventArgs e)
+        protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            await StopAsync();
-            DisposeGraphics();
+            Stop();
+            DisposeStates();
         }
 
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
             Graphics.Resize(ClientSize.Width, ClientSize.Height);
-            SessionTask = RunAsync();
+            Start();
         }
 
-        protected async override void OnKeyDown(KeyEventArgs e)
+        protected override void OnKeyDown(KeyEventArgs e)
         {
             switch (e.KeyCode)
             {
@@ -336,8 +355,8 @@ namespace AEther.WindowsForms
                     tlpPanel.Visible ^= true;
                     break;
                 case Keys.F5:
-                    await StopAsync();
-                    SessionTask = RunAsync();
+                    Stop();
+                    Start();
                     break;
                 case Keys.F11:
                     ToggleFullscreen();
@@ -351,23 +370,27 @@ namespace AEther.WindowsForms
             }
         }
 
-        private async void Options_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        private void Options_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
         {
             if (Session != null)
             {
-                await StopAsync();
-                SessionTask = RunAsync();
+                Stop();
+                Start();
             }
         }
 
-        private async void Input_SelectedValueChanged(object sender, EventArgs e)
+        private void Input_SelectedValueChanged(object sender, EventArgs e)
         {
             if(Session != null)
             {
-                await StopAsync();
-                SessionTask = RunAsync();
+                Stop();
+                Start();
             }
         }
 
+        private void ResetGraphics_Click(object sender, EventArgs e)
+        {
+            ResetGraphics();
+        }
     }
 }

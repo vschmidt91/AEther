@@ -7,11 +7,6 @@ Texture2D<float4> Histogram1 : register(t1);
 Texture2D<float4> Spectrum0 : register(t2);
 Texture2D<float4> Spectrum1 : register(t3);
 
-cbuffer EffectConstants : register(b1)
-{
-	float HistogramShift;
-};
-
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 

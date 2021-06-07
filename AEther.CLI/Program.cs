@@ -19,7 +19,7 @@ namespace AEther.CLI
 {
     class Program
     {
-        static async Task Main(string path)
+        static void Main(string path)
         {
 
             //path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
@@ -29,36 +29,30 @@ namespace AEther.CLI
 
             using var inputStream = Console.OpenStandardInput();
             using var outputStream = new MemoryStream();
-            //using var standardOutput = Console.OpenStandardOutput();
+            using var standardOutput = Console.OpenStandardOutput();
             using var sampleSource = new WAVReader(File.OpenRead(path));
 
             var session = new Session(sampleSource, options);
             var hash = MD5.Create();
+            byte[] buffer = Array.Empty<byte>();
+            var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
-            //var outputs = session.RunAsync();
+            session.OnSamplesAvailable += async (obj, evt) =>
+            {
+                var byteCount = sizeof(double) * evt.SampleCount;
+                if (buffer.Length < byteCount)
+                {
+                    buffer = new byte[byteCount];
+                }
+                Buffer.BlockCopy(evt.Samples, 0, buffer, 0, byteCount);
 
-            //sampleSource.Start();
+                Console.WriteLine(BitConverter.ToString(hash.ComputeHash(buffer, 0, byteCount)));
+                await outputStream.WriteAsync(buffer.AsMemory(0, byteCount));
+            };
+            session.OnStopped += (obj, evt) => waitHandle.Set();
 
-            //var pool = ArrayPool<byte>.Shared;
-            //byte[] buffer = pool.Rent(1 << 10);
-
-            //await foreach(var output in outputs)
-            //{
-            //    var byteCount = sizeof(double) * output.SampleCount;
-            //    if(buffer.Length < byteCount)
-            //    {
-            //        pool.Return(buffer);
-            //        buffer = pool.Rent(byteCount);
-            //    }
-            //    Buffer.BlockCopy(output.Samples, 0, buffer, 0, byteCount);
-
-            //    //Console.WriteLine(BitConverter.ToString(hash.ComputeHash(buffer, 0, byteCount)));
-            //    await outputStream.WriteAsync(buffer.AsMemory(0, byteCount));
-
-            //    output.Dispose();
-            //}
-
-            //pool.Return(buffer);
+            sampleSource.Start();
+            waitHandle.WaitOne();
 
         }
 

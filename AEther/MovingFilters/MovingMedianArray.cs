@@ -19,33 +19,25 @@ namespace AEther
         public readonly T[] Buffer;
         readonly Comparer<T> Comparer;
 
-        public MovingMedianArray(int windowSize, Comparer<T> comparer)
-            : base(windowSize)
+        public MovingMedianArray(T state, int windowSize, Comparer<T> comparer)
+            : base(state, windowSize)
         {
-            Size = 0;
-            Position = 0;
-            Comparer = comparer;
             Sorted = new T[WindowSize];
             Buffer = new T[WindowSize];
+            Comparer = comparer;
+            Clear(state);
         }
 
-        public bool Check()
+        public override void Clear(T state)
         {
-            var buffer = ArrayPool<T>.Shared.Rent(Size);
-            Array.Copy(Buffer, buffer, Size);
-            Array.Sort(buffer, 0, Size, Comparer);
-            return buffer.Take(Size).SequenceEqual(Sorted.Take(Size));
-        }
-
-        public override void Clear()
-        {
-            Size = 0;
+            base.Clear(state);
+            Size = 1;
             Position = 0;
-            Array.Clear(Buffer, 0, WindowSize);
-            Array.Clear(Sorted, 0, WindowSize);
+            Array.Fill(Buffer, state, 0, WindowSize);
+            Array.Fill(Sorted, state, 0, WindowSize);
         }
 
-        public override T Filter(T value)
+        public override void Filter(T value)
         {
 
             if (Size < WindowSize)
@@ -86,7 +78,7 @@ namespace AEther
             if (Position == WindowSize)
                 Position = 0;
 
-            return Sorted[(Size - 1) / 2];
+            State = Sorted[(Size - 1) / 2];
 
         }
 

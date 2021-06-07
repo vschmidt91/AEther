@@ -22,7 +22,15 @@ namespace AEther.WindowsForms
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+
+            using var form = new MainForm();
+
+            form.Show();
+            while(!form.IsDisposed)
+            {
+                form.Render();
+                Application.DoEvents();
+            }
 
         }
     }

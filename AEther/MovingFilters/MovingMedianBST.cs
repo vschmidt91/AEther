@@ -13,45 +13,45 @@ namespace AEther
 
         public readonly Comparer<T> Comparer;
         public readonly T[] Buffer;
-        public BinarySearchTree<T>? Tree;
+        public BinarySearchTree<T> Tree;
 
-        public int BufferPosition = 0;
+        public int Position = 0;
         public int LeftCount = 0;
         public int RightCount = 0;
 
-        public MovingMedianBST(int windowSize, Comparer<T> comparer)
-            : base(windowSize)
+        public MovingMedianBST(T state, int windowSize, Comparer<T> comparer)
+            : base(state, windowSize)
         {
             Comparer = comparer;
-            Tree = null;
+            Tree = new BinarySearchTree<T>(state, null, null, Comparer);
             Buffer = new T[windowSize];
         }
 
-        public override void Clear()
+        public override void Clear(T state)
         {
-            Array.Clear(Buffer, 0, Buffer.Length);
-            Tree = null;
+            base.Clear(state);
+            Position = 0;
+            Array.Fill(Buffer, state, 0, Buffer.Length);
+            Tree = new BinarySearchTree<T>(state, null, null, Comparer);
             LeftCount = 0;
             RightCount = 0;
         }
 
-        int Count => (Tree == null ? 0 : 1) + LeftCount + RightCount;
+        int Count => 1 + LeftCount + RightCount;
 
-        T Median => Tree.Item;
-
-        public override T Filter(T newItem)
+        public override void Filter(T newItem)
         {
             if(WindowSize <= Count)
             {
-                var oldItem = Buffer[BufferPosition];
+                var oldItem = Buffer[Position];
                 Remove(oldItem);
                 Balance();
             }
-            Buffer[BufferPosition] = newItem;
-            BufferPosition = (BufferPosition + 1) % Buffer.Length;
+            Buffer[Position] = newItem;
+            Position = (Position + 1) % Buffer.Length;
             Insert(newItem);
             Balance();
-            return Median;
+            State = Tree.Item;
         }
 
         void Balance()
@@ -72,35 +72,33 @@ namespace AEther
 
         void Insert(T newItem)
         {
-            if(Tree == null)
+            if (Tree.Insert(newItem) < 0)
             {
-                Tree = new BinarySearchTree<T>(newItem, null, null, Comparer);
+                LeftCount++;
             }
             else
             {
-                var comparison = Tree.Insert(newItem);
-                if (comparison < 0)
-                {
-                    LeftCount++;
-                }
-                else
-                {
-                    RightCount++;
-                }
+                RightCount++;
             }
         }
 
         void Remove(T item)
         {
-            var comparison = Comparer.Compare(item, Median);
-            Tree = Tree.Remove(item);
-            if (comparison <= 0)
+            if (Comparer.Compare(item, State) <= 0)
             {
                 LeftCount--;
             }
             else
             {
                 RightCount--;
+            }
+            if (Tree.Remove(item) is BinarySearchTree<T> t)
+            {
+                Tree = t;
+            }
+            else
+            {
+                throw new IndexOutOfRangeException();
             }
         }
 

@@ -50,9 +50,7 @@ namespace AEther
         }
 
         static WindowedFilter<double> CreateFilter(int windowSize)
-            => new MovingMedianArray<double>(windowSize, Comparer<double>.Default);
-
-        static double Rolloff(double x) => 1 - Math.Exp(-x);
+            => new MovingMedianArray<double>(0.0, windowSize, Comparer<double>.Default);
 
         public void Process(ReadOnlyMemory<double> input, Memory<double> output)
         {
@@ -63,8 +61,11 @@ namespace AEther
             FrequencyTransients.FilterSpan(src, Buffer1, (x, y) => .5 * (x + y));
             for (int k = 0; k < Domain.Count; ++k)
             {
-                Buffer2[k] = TimeSinuoids[k].Filter(src[k]);
-                Buffer3[k] = TimeTransients[k].Filter(Buffer1[k]);
+                TimeSinuoids[k].Filter(src[k]);
+                Buffer2[k] = TimeSinuoids[k].State;
+
+                TimeTransients[k].Filter(Buffer1[k]);
+                Buffer3[k] = TimeTransients[k].State;
             }
             FrequencySinuoids.FilterSpan(Buffer2, Buffer4, (x, y) => .5 * (x + y));
 
@@ -82,10 +83,8 @@ namespace AEther
 
                 KeyWeights[k % KeyWeights.Length] += sinuoids * Domain.Resolution / Domain.Count;
 
-                //y[0] = Rolloff(sinuoids);
-                //y[1] = Rolloff(transients);
-                //y[2] = Rolloff(noise);
-                //y[3] = 0;
+                //sinuoids = Math.Max(0, 1 + 1.3 * (sinuoids - 1));
+                //transients = Math.Max(0, 1 + 1.3 * (transients - 1));
 
                 y[0] = sinuoids;
                 y[1] = transients;

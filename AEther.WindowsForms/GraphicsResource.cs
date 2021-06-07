@@ -13,13 +13,7 @@ namespace AEther.WindowsForms
         where T : Resource
     {
 
-        public string DebugName
-        {
-            get => Resource.DebugName;
-            set => Resource.DebugName = value;
-        }
-
-        protected T Resource;
+        protected readonly T Resource;
 
         RenderTargetView? RTView;
         ShaderResourceView? SRView;
@@ -107,10 +101,11 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            Utilities.Dispose(ref RTView);
-            Utilities.Dispose(ref SRView);
-            Utilities.Dispose(ref DSView);
-            Utilities.Dispose(ref Resource);
+            //Resource.Dispose();
+            //Resource = null;
+            RTView?.Dispose();
+            SRView?.Dispose();
+            DSView?.Dispose();
         }
 
     }
