@@ -9,6 +9,8 @@ namespace AEther
     public abstract class MovingFilter<T>
     {
 
+        static ArrayPool<T> Pool => ArrayPool<T>.Shared;
+
         public T State { get; protected set; }
 
         public MovingFilter(T state)
@@ -28,7 +30,7 @@ namespace AEther
 
             Debug.Assert(source.Length <= destination.Length);
 
-            var buffer = ArrayPool<T>.Shared.Rent(source.Length);
+            var buffer = Pool.Rent(source.Length);
 
             Clear(buffer[0] = source[0]);
             for (var i = 1; i < source.Length; ++i)
@@ -43,6 +45,8 @@ namespace AEther
                 Filter(source[i]);
                 destination[i] = op(buffer[i], State);
             }
+
+            Pool.Return(buffer);
 
         }
 

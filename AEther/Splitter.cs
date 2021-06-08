@@ -40,11 +40,11 @@ namespace AEther
             FrequencyTransients = CreateFilter((int)(options.TransientWidth * domain.Resolution));
             FrequencySinuoids = CreateFilter((int)(options.SinuoidWidth * domain.Resolution));
 
-            TimeSinuoids = Enumerable.Range(0, domain.Count)
-                .Select(k => CreateFilter((int)(options.SinuoidLength * options.TimeResolution)))
+            TimeSinuoids = domain
+                .Select((f, k) => CreateFilter((int)(options.SinuoidLength * options.TimeResolution)))
                 .ToArray();
-            TimeTransients = Enumerable.Range(0, domain.Count)
-                .Select(k => CreateFilter((int)(options.TransientLength * options.TimeResolution)))
+            TimeTransients = domain
+                .Select((f, k) => CreateFilter((int)(options.TransientLength * options.TimeResolution)))
                 .ToArray();
 
         }
@@ -52,13 +52,19 @@ namespace AEther
         static WindowedFilter<double> CreateFilter(int windowSize)
             => new MovingMedianArray<double>(0.0, windowSize, Comparer<double>.Default);
 
+
         public void Process(ReadOnlyMemory<double> input, Memory<double> output)
         {
+
+            static double combine(double x, double y)
+            {
+                return .5 * (x + y);
+            }
 
             var src = input.Span;
             var dst = output.Span;
 
-            FrequencyTransients.FilterSpan(src, Buffer1, (x, y) => .5 * (x + y));
+            FrequencyTransients.FilterSpan(src, Buffer1, combine);
             for (int k = 0; k < Domain.Count; ++k)
             {
                 TimeSinuoids[k].Filter(src[k]);
@@ -67,7 +73,7 @@ namespace AEther
                 TimeTransients[k].Filter(Buffer1[k]);
                 Buffer3[k] = TimeTransients[k].State;
             }
-            FrequencySinuoids.FilterSpan(Buffer2, Buffer4, (x, y) => .5 * (x + y));
+            FrequencySinuoids.FilterSpan(Buffer2, Buffer4, combine);
 
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
             var noiseFloor = Enumerable.Range(0, input.Length).Sum(k => input.Span[k]) / input.Length;
@@ -83,8 +89,8 @@ namespace AEther
 
                 KeyWeights[k % KeyWeights.Length] += sinuoids * Domain.Resolution / Domain.Count;
 
-                //sinuoids = Math.Max(0, 1 + 1.3 * (sinuoids - 1));
-                //transients = Math.Max(0, 1 + 1.3 * (transients - 1));
+                sinuoids = Math.Max(0, 1 + 1.2 * (sinuoids - 1));
+                transients = Math.Max(0, 1 + 1.2 * (transients - 1));
 
                 y[0] = sinuoids;
                 y[1] = transients;

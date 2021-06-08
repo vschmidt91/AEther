@@ -14,8 +14,8 @@ namespace AEther.Benchmarks
 #if DEBUG
             new WAVBenchmark().RunA();
 #else
-            BenchmarkRunner.Run<WAVBenchmark>();
-            //BenchmarkRunner.Run<MedianBenchmark>();
+            //BenchmarkRunner.Run<WAVBenchmark>();
+            BenchmarkRunner.Run<MedianBenchmark>();
             //BenchmarkRunner.Run<TimerBenchmark>();
 #endif
         }

@@ -25,14 +25,12 @@ namespace AEther.WindowsForms
         Texture2D VelocityNew;
         readonly Texture2D Pressure;
         readonly Texture2D Divergence;
-
         readonly Shader Input;
         readonly Shader Advect;
         readonly Shader Diffuse;
         readonly Shader DivergenceShader;
         readonly Shader Project;
         readonly Shader Output;
-
         readonly IPoissonSolver PoissonSolver;
 
         public FluidState(Graphics graphics)
@@ -50,7 +48,7 @@ namespace AEther.WindowsForms
             //var width = Graphics.BackBuffer.Width;
             //var height = Graphics.BackBuffer.Height;
 
-            var width = 1 << 10;
+            var width = 1 << 11;
             var height = width;
 
             //PoissonSolver = new SOR(graphics, width, height, Format.R16_Float) { Iterations = 256, Omega = 1.8f };

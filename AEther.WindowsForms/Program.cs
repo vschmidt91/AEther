@@ -26,9 +26,9 @@ namespace AEther.WindowsForms
             using var form = new MainForm();
 
             form.Show();
-            while(!form.IsDisposed)
+            while (!form.IsDisposed)
             {
-                form.Render();
+                form.InvokeIfRequired(form.Render);
                 Application.DoEvents();
             }
 

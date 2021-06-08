@@ -85,9 +85,9 @@ namespace AEther.WindowsForms
 
         }
 
-        void ResetGraphics()
+        async Task ResetGraphicsAsync()
         {
-            Stop();
+            await StopAsync();
             this.InvokeIfRequired(DisposeStates);
             this.InvokeIfRequired(InitStates);
             Start();
@@ -119,9 +119,9 @@ namespace AEther.WindowsForms
 
         }
 
-        private void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
+        private async void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
         {
-            ResetGraphics();
+            await ResetGraphicsAsync();
         }
 
         void DisposeStates()
@@ -209,15 +209,9 @@ namespace AEther.WindowsForms
                 session.OnStopped += async (obj, evt) => await dmx.DisposeAsync();
             }
 
-            session.OnStopped += (obj, evt) =>
+            sampleSource.OnDataAvailable += (obj, evt) =>
             {
-                //sampleSource.Stop();
-                //this.InvokeIfRequired(sampleSource.Dispose);
-            };
-
-            sampleSource.OnDataAvailable += async (obj, evt) =>
-            {
-                await session.PostSamplesAsync(evt);
+                session.PostSamples(evt);
             };
 
             Session = new ActiveSession(sampleSource, session);
@@ -225,7 +219,7 @@ namespace AEther.WindowsForms
 
         }
 
-        async Task Stop()
+        async Task StopAsync()
         {
             try
             {
@@ -333,10 +327,10 @@ namespace AEther.WindowsForms
             Graphics.Resize(ClientSize.Width, ClientSize.Height);
         }
 
-        protected override void OnFormClosing(FormClosingEventArgs e)
+        protected async override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
-            Stop();
+            await StopAsync();
             DisposeStates();
         }
 
@@ -347,7 +341,7 @@ namespace AEther.WindowsForms
             Start();
         }
 
-        protected override void OnKeyDown(KeyEventArgs e)
+        protected async override void OnKeyDown(KeyEventArgs e)
         {
             switch (e.KeyCode)
             {
@@ -355,7 +349,7 @@ namespace AEther.WindowsForms
                     tlpPanel.Visible ^= true;
                     break;
                 case Keys.F5:
-                    Stop();
+                    await StopAsync();
                     Start();
                     break;
                 case Keys.F11:
@@ -370,27 +364,27 @@ namespace AEther.WindowsForms
             }
         }
 
-        private void Options_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
+        private async void Options_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
         {
             if (Session != null)
             {
-                Stop();
+                await StopAsync();
                 Start();
             }
         }
 
-        private void Input_SelectedValueChanged(object sender, EventArgs e)
+        private async void Input_SelectedValueChanged(object sender, EventArgs e)
         {
             if(Session != null)
             {
-                Stop();
+                await StopAsync();
                 Start();
             }
         }
 
-        private void ResetGraphics_Click(object sender, EventArgs e)
+        private async void ResetGraphics_Click(object sender, EventArgs e)
         {
-            ResetGraphics();
+            await ResetGraphicsAsync();
         }
     }
 }

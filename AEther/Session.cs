@@ -25,8 +25,6 @@ namespace AEther
         public event EventHandler<SampleEvent<double>>? OnSamplesAvailable;
         public event EventHandler? OnStopped;
 
-        public SampleFormat Format => Source.Format;
-
         public readonly SessionOptions Options;
         public readonly SampleSource Source;
         public readonly Domain Domain;
@@ -36,7 +34,10 @@ namespace AEther
         readonly DFTProcessor[] DFT;
         readonly Splitter[] Splitter;
 
+        readonly Stopwatch SplitterTimer = Stopwatch.StartNew();
+        readonly TimeSpan SplitterInterval;
         readonly Pipe SamplePipe;
+        readonly Stream SampleStream;
         readonly CancellationTokenSource Cancel;
         readonly Task BatcherTask;
         readonly TransformBlock<SampleEvent<double>, SampleEvent<double>> DFTBlock;
@@ -50,16 +51,18 @@ namespace AEther
             Domain = Options.Domain;
             Source = source;
 
-            BatchSize = Format.SampleRate / Options.TimeResolution;
-            Batch = new byte[BatchSize * Format.Size];
-            DFT = Enumerable.Range(0, Format.ChannelCount)
-                .Select(c => new DFTProcessor(Domain, Format.SampleRate, Options.SIMDEnabled, Options.MaxParallelization))
+            SplitterInterval = TimeSpan.FromSeconds(Options.MicroTimingAmount / Options.TimeResolution);
+            BatchSize = Source.Format.SampleRate / Options.TimeResolution;
+            Batch = new byte[BatchSize * Source.Format.Size];
+            DFT = Enumerable.Range(0, Source.Format.ChannelCount)
+                .Select(c => new DFTProcessor(Domain, Source.Format.SampleRate, Options.SIMDEnabled, Options.MaxParallelization))
                 .ToArray();
-            Splitter = Enumerable.Range(0, Format.ChannelCount)
+            Splitter = Enumerable.Range(0, Source.Format.ChannelCount)
                 .Select(c => new Splitter(Domain, Options))
                 .ToArray();
 
             SamplePipe = new Pipe();
+            SampleStream = SamplePipe.Writer.AsStream();
 
             Source.OnDataAvailable += Source_OnDataAvailable;
             Source.OnStopped += Source_OnStopped;
@@ -82,21 +85,20 @@ namespace AEther
 
             var linkOptions = new DataflowLinkOptions
             {
-                PropagateCompletion = true,
+                //PropagateCompletion = true,
             };
 
-            //BatcherBlock.LinkTo(DFTBlock, linkOptions);
             DFTBlock.LinkTo(SplitterBlock, linkOptions);
             SplitterBlock.LinkTo(OutputBlock, linkOptions);
 
         }
 
-        public async Task PostSamplesAsync(ReadOnlyMemory<byte> samples)
+        public void PostSamples(ReadOnlyMemory<byte> samples)
         {
-            //SampleStream.Write(samples.Span);
-            //SampleStream.Flush();
-            await SamplePipe.Writer.WriteAsync(samples, Cancel.Token);
-            await SamplePipe.Writer.FlushAsync(Cancel.Token);
+            SampleStream.Write(samples.Span);
+            SampleStream.Flush();
+            //await SamplePipe.Writer.WriteAsync(samples, Cancel.Token);
+            //await SamplePipe.Writer.FlushAsync(Cancel.Token);
         }
 
         void Source_OnDataAvailable(object? sender, ReadOnlyMemory<byte> data)
@@ -124,6 +126,7 @@ namespace AEther
             Cancel.Cancel();
             try
             {
+                await SamplePipe.Writer.CompleteAsync();
                 await BatcherTask;
                 await DFTBlock.Completion;
                 await SplitterBlock.Completion;
@@ -149,8 +152,8 @@ namespace AEther
                 for (; offset + Batch.Length < input.Length; offset += Batch.Length)
                 {
                     input.Slice(offset, Batch.Length).CopyTo(Batch);
-                    var output = new SampleEvent<double>(BatchSize, Format.ChannelCount, DateTime.Now);
-                    for (var c = 0; c < Format.ChannelCount; ++c)
+                    var output = new SampleEvent<double>(BatchSize, Source.Format.ChannelCount, DateTime.Now);
+                    for (var c = 0; c < Source.Format.ChannelCount; ++c)
                     {
                         var channel = output.GetChannel(c);
                         for (var i = 0; i < output.SampleCount; ++i)
@@ -166,9 +169,9 @@ namespace AEther
 
         private double GetSample(byte[] source, int sampleIndex, int channel)
         {
-            var index = sampleIndex * Format.ChannelCount + channel;
-            var offset = Format.Type.GetSize() * index;
-            return Format.Type switch
+            var index = sampleIndex * Source.Format.ChannelCount + channel;
+            var offset = Source.Format.Type.GetSize() * index;
+            return Source.Format.Type switch
             {
                 SampleType.UInt16 => BitConverter.ToInt16(source, offset) / (double)short.MaxValue,
                 SampleType.Float32 => BitConverter.ToSingle(source, offset),
@@ -178,8 +181,8 @@ namespace AEther
 
         public SampleEvent<double> RunDFT(SampleEvent<double> input)
         {
-            var output = new SampleEvent<double>(Domain.Count, Format.ChannelCount, input.Time);
-            for (var c = 0; c < Format.ChannelCount; ++c)
+            var output = new SampleEvent<double>(Domain.Count, Source.Format.ChannelCount, input.Time);
+            for (var c = 0; c < Source.Format.ChannelCount; ++c)
             {
                 var inputChannel = input.GetChannel(c);
                 var outputChannel = output.GetChannel(c);
@@ -190,22 +193,18 @@ namespace AEther
             return output;
         }
 
-        Stopwatch SplitterTimer = Stopwatch.StartNew();
-        TimeSpan SplitterInterval => TimeSpan.FromSeconds(1.0 / Options.TimeResolution);
 
-        public SampleEvent<double> RunSplitter(SampleEvent<double> input)
+        public async Task<SampleEvent<double>> RunSplitter(SampleEvent<double> input)
         {
-            var output = new SampleEvent<double>(4 * Domain.Count, Format.ChannelCount, input.Time);
-            for (var c = 0; c < Format.ChannelCount; ++c)
+            var output = new SampleEvent<double>(4 * Domain.Count, Source.Format.ChannelCount, input.Time);
+            for (var c = 0; c < Source.Format.ChannelCount; ++c)
             {
                 Splitter[c].Process(input.GetChannel(c), output.GetChannel(c));
             }
             input.Dispose();
-            SplitterTimer.Stop();
-            if (Options.MicroTimingEnabled && SplitterTimer.Elapsed < SplitterInterval)
+            while(SplitterTimer.Elapsed < SplitterInterval)
             {
-                var remainingInterval = (uint)(SplitterInterval - SplitterTimer.Elapsed).TotalMilliseconds;
-                MultimediaTimer.Sleep(remainingInterval);
+                Thread.SpinWait(1000);
             }
             SplitterTimer.Restart();
             return output;
@@ -214,6 +213,7 @@ namespace AEther
         public void RunOutput(SampleEvent<double> input)
         {
             OnSamplesAvailable?.Invoke(this, input);
+            input.Dispose();
         }
 
     }
