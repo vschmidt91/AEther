@@ -12,7 +12,7 @@ namespace AEther.WindowsForms
     public class ContextMapping : IDisposable
     {
 
-        public long Length => Stream?.Length ?? 0;
+        public long Length => Stream.Length;
         public long Pitch => Box.RowPitch;
 
         readonly Resource Resource;

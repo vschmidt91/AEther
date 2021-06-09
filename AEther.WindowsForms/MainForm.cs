@@ -25,17 +25,12 @@ namespace AEther.WindowsForms
     public partial class MainForm : Form
     {
 
-        internal class ActiveSession
+        internal record ActiveSession
+        (
+            SampleSource SampleSource,
+            Session Session
+        )
         {
-
-            readonly SampleSource SampleSource;
-            readonly Session Session;
-
-            internal ActiveSession(SampleSource sampleSource, Session session)
-            {
-                SampleSource = sampleSource;
-                Session = session;
-            }
 
             internal void Start()
             {
@@ -151,8 +146,8 @@ namespace AEther.WindowsForms
                 throw new InvalidCastException();
             }
 
-            Spectrum = CreateSpectrum(device.Format.ChannelCount, options.Domain.Count);
-            Histogram = CreateHistogram(device.Format.ChannelCount, options.Domain.Count, options.TimeResolution);
+            Spectrum = CreateSpectrum(device.Format.ChannelCount, options.Domain.Length);
+            Histogram = CreateHistogram(device.Format.ChannelCount, options.Domain.Length, options.TimeResolution);
 
             var d = new Dictionary<string, Texture2D>()
             {
@@ -167,7 +162,7 @@ namespace AEther.WindowsForms
                 foreach (var shader in Shaders)
                 {
                     if (shader.ShaderResources.TryGetValue(key, out var v))
-                        v?.SetResource(value.GetShaderResourceView());
+                        v?.SetResource(value.ShaderResourceView);
                 }
             }
 

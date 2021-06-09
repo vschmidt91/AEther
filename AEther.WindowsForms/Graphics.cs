@@ -110,7 +110,7 @@ namespace AEther.WindowsForms
             BackBuffer = new Texture2D(BackBufferResource);
             FrameConstants = new ConstantBuffer<FrameConstants>(Device);
             Shaders = CreateShaderManager();
-            Quad = new Model(Device, new Grid(2, 2));
+            Quad = new Model(Device, Mesh.CreateGrid(2, 2));
 
         }
 
@@ -269,7 +269,7 @@ namespace AEther.WindowsForms
         {
             SetModel(null);
             Context.Rasterizer.SetViewport(target.ViewPort);
-            Context.OutputMerger.SetRenderTargets(dsv, target.GetRenderTargetView());
+            Context.OutputMerger.SetRenderTargets(dsv, target.RenderTargetView);
         }
 
         public void Compute(Shader shader, (int, int, int)? threadCount = default, int? techniqueIndex = default)

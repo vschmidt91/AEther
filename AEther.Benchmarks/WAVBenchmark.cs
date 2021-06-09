@@ -51,7 +51,7 @@ namespace AEther.Benchmarks
             using var sampleSource = new WAVReader(inputStream);
 
             var session = new Session(sampleSource, Options);
-            var outputDoubles = new double[4 * Options.Domain.Count];
+            var outputDoubles = new double[4 * Options.Domain.Length];
             var outputBytes = new byte[sizeof(double) * outputDoubles.Length];
             var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 

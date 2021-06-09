@@ -21,7 +21,7 @@ namespace AEther.WindowsForms
 
         public BufferDescription Description => Buffer.Description;
 
-        Buffer Buffer;
+        readonly Buffer Buffer;
         UnorderedAccessView? UAView;
         ShaderResourceView? SRView;
 
@@ -95,9 +95,9 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            Utilities.Dispose(ref UAView);
-            Utilities.Dispose(ref SRView);
-            Utilities.Dispose(ref Buffer);
+            UAView?.Dispose();
+            SRView?.Dispose();
+            Buffer.Dispose();
         }
 
     }

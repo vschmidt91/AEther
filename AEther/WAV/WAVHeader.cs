@@ -25,9 +25,9 @@ namespace AEther
         public SampleType GetSampleType()
             => Format.Tag switch
             {
-                WAVFormatTag.PCM when Format.BitsPerSample == 16 => SampleType.UInt16,
-                WAVFormatTag.IEEEFloat when Format.BitsPerSample == 32 => SampleType.Float32,
-                _ => SampleType.Unknown,
+                WAVFormatTag.PCM when Format.BitsPerSample == 16 => SampleType.UInt16.Instance,
+                WAVFormatTag.IEEEFloat when Format.BitsPerSample == 32 => SampleType.Float32.Instance,
+                _ => throw new FormatException(Format.Tag.ToString()),
             };
 
         public SampleFormat GetSampleFormat()

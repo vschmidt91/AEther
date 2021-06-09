@@ -13,7 +13,7 @@ namespace AEther
     public class RingBuffer<T>
     {
 
-        public int Size => Data.Length;
+        public int Length => Data.Length;
 
         readonly T[] Data;
         int Position;

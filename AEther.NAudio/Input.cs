@@ -66,10 +66,10 @@ namespace AEther.NAudio
 
         public static SampleFormat ToSampleFormat(WaveFormat format)
         {
-            var type = (format.Encoding, format.BitsPerSample) switch
+            SampleType type = (format.Encoding, format.BitsPerSample) switch
             {
-                (WaveFormatEncoding.Pcm, 16) => SampleType.UInt16,
-                (WaveFormatEncoding.IeeeFloat, 32) => SampleType.Float32,
+                (WaveFormatEncoding.Pcm, 16) => SampleType.UInt16.Instance,
+                (WaveFormatEncoding.IeeeFloat, 32) => SampleType.Float32.Instance,
                 _ => throw new Exception(),
             };
             return new SampleFormat(type, format.SampleRate, format.Channels);

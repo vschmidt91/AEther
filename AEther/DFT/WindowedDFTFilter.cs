@@ -12,7 +12,7 @@ namespace AEther
     public class WindowedDFTFilter : IDFTFilter
     {
 
-        public int Length => Buffer.Size;
+        public int Length => Buffer.Length;
 
         readonly Complex[] States;
         readonly Complex[] Coefficients;
@@ -50,7 +50,7 @@ namespace AEther
             {
                 result += Window[j] * States[j];
             }
-            return result / Buffer.Size;
+            return result / Buffer.Length;
         }
 
         public void Process(double newSample)

@@ -22,6 +22,8 @@ namespace AEther
     public class Session
     {
 
+        static ArrayPool<double> Pool => ArrayPool<double>.Shared;
+
         public event EventHandler<SampleEvent<double>>? OnSamplesAvailable;
         public event EventHandler? OnStopped;
 
@@ -93,6 +95,17 @@ namespace AEther
 
         }
 
+        static SampleEvent<double> RentEvent(int sampleCount, int channelCount, DateTime time)
+        {
+            var samples = Pool.Rent(sampleCount * channelCount);
+            return new SampleEvent<double>(samples, sampleCount, time);
+        }
+
+        static void ReturnEvent(SampleEvent<double> evt)
+        {
+            Pool.Return(evt.Samples);
+        }
+
         public void PostSamples(ReadOnlyMemory<byte> samples)
         {
             SampleStream.Write(samples.Span);
@@ -152,7 +165,7 @@ namespace AEther
                 for (; offset + Batch.Length < input.Length; offset += Batch.Length)
                 {
                     input.Slice(offset, Batch.Length).CopyTo(Batch);
-                    var output = new SampleEvent<double>(BatchSize, Source.Format.ChannelCount, DateTime.Now);
+                    var output = RentEvent(BatchSize, Source.Format.ChannelCount, DateTime.Now);
                     for (var c = 0; c < Source.Format.ChannelCount; ++c)
                     {
                         var channel = output.GetChannel(c);
@@ -167,21 +180,17 @@ namespace AEther
             }
         }
 
-        private double GetSample(byte[] source, int sampleIndex, int channel)
+        private double GetSample(ReadOnlySpan<byte> source, int sampleIndex, int channel)
         {
             var index = sampleIndex * Source.Format.ChannelCount + channel;
-            var offset = Source.Format.Type.GetSize() * index;
-            return Source.Format.Type switch
-            {
-                SampleType.UInt16 => BitConverter.ToInt16(source, offset) / (double)short.MaxValue,
-                SampleType.Float32 => BitConverter.ToSingle(source, offset),
-                _ => throw new Exception(),
-            };
+            var offset = Source.Format.Type.Size * index;
+            var span = source[offset..];
+            return Source.Format.Type.ReadFrom(span);
         }
 
         public SampleEvent<double> RunDFT(SampleEvent<double> input)
         {
-            var output = new SampleEvent<double>(Domain.Count, Source.Format.ChannelCount, input.Time);
+            var output = RentEvent(Domain.Length, Source.Format.ChannelCount, input.Time);
             for (var c = 0; c < Source.Format.ChannelCount; ++c)
             {
                 var inputChannel = input.GetChannel(c);
@@ -189,20 +198,19 @@ namespace AEther
                 DFT[c].Process(inputChannel);
                 DFT[c].Output(outputChannel);
             }
-            input.Dispose();
+            ReturnEvent(input);
             return output;
         }
 
-
-        public async Task<SampleEvent<double>> RunSplitter(SampleEvent<double> input)
+        public SampleEvent<double> RunSplitter(SampleEvent<double> input)
         {
-            var output = new SampleEvent<double>(4 * Domain.Count, Source.Format.ChannelCount, input.Time);
+            var output = RentEvent(4 * Domain.Length, Source.Format.ChannelCount, input.Time);
             for (var c = 0; c < Source.Format.ChannelCount; ++c)
             {
                 Splitter[c].Process(input.GetChannel(c), output.GetChannel(c));
             }
-            input.Dispose();
-            while(SplitterTimer.Elapsed < SplitterInterval)
+            ReturnEvent(input);
+            while (SplitterTimer.Elapsed < SplitterInterval)
             {
                 Thread.SpinWait(1000);
             }
@@ -213,7 +221,7 @@ namespace AEther
         public void RunOutput(SampleEvent<double> input)
         {
             OnSamplesAvailable?.Invoke(this, input);
-            input.Dispose();
+            ReturnEvent(input);
         }
 
     }

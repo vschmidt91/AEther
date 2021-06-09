@@ -82,10 +82,10 @@ namespace AEther.WindowsForms
             Debug.Assert(Buffer.Size == solution.Size);
             Debug.Assert(Buffer.Size == target.Size);
 
-            SolverEven.ShaderResources["Target"].SetResource(target.GetShaderResourceView());
-            SolverEven.ShaderResources["Solution"].SetResource(solution.GetShaderResourceView());
-            SolverOdd.ShaderResources["Target"].SetResource(target.GetShaderResourceView());
-            SolverOdd.ShaderResources["Solution"].SetResource(Buffer.GetShaderResourceView());
+            SolverEven.ShaderResources["Target"].SetResource(target.ShaderResourceView);
+            SolverEven.ShaderResources["Solution"].SetResource(solution.ShaderResourceView);
+            SolverOdd.ShaderResources["Target"].SetResource(target.ShaderResourceView);
+            SolverOdd.ShaderResources["Solution"].SetResource(Buffer.ShaderResourceView);
 
             for (var i = 0; i < Iterations; ++i)
             {

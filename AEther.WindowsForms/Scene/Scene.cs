@@ -16,13 +16,13 @@ namespace AEther.WindowsForms
             Children = children;
         }
 
-        public void Update(float dt, AffineTransform parentTransform, RenderBuffer buffer)
+        public void Update(float dt, AffineTransform parentTransform)
         {
             var transform = parentTransform * Node.Transform.ToTransform();
-            //Node.Update(dt, transform, buffer);
+            //Node.Update(dt, transform);
             foreach (var child in Children)
             {
-                child.Update(dt, transform, buffer);
+                child.Update(dt, transform);
             }
         }
 

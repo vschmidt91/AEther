@@ -15,8 +15,10 @@ namespace AEther.WindowsForms
 
         [FieldOffset(0)]
         public Vector3 Position;
+
         [FieldOffset(16)]
         public Vector3 Normal;
+
         [FieldOffset(32)]
         public Vector2 UV;
 

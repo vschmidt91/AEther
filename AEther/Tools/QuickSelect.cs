@@ -6,17 +6,17 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-    public class QuickSelect<T>
-        where T : struct
+    public record QuickSelect<T>
+    (
+        Comparison<T> Comparison
+    )
+    where T : struct
     {
 
-        static GenericOperator<T, T, bool>.Operator LessThan
-            => GenericOperator<T, T, bool>.LessThan;
-
-        public static T Median(T[] values)
+        public T Median(T[] values)
             => Rank(values, values.Length / 2, 0, values.Length - 1);
 
-        public static T Rank(T[] values, int k, int l, int r)
+        public T Rank(T[] values, int k, int l, int r)
         {
             if (l == r)
                 return values[l];
@@ -29,7 +29,7 @@ namespace AEther
                 return Rank(values, k, p + 1, r);
         }
 
-        public static int Partition(T[] values, int l, int r, int p)
+        public int Partition(T[] values, int l, int r, int p)
         {
 
             T pivot = values[p];
@@ -38,7 +38,7 @@ namespace AEther
             int m = l;
             for(int i = l; i < r; ++i)
             {
-                if (LessThan(values[i], pivot))
+                if (Comparison(values[i], pivot) < 0)
                     values.Swap(i, m++);
             }
 

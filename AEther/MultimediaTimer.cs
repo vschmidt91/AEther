@@ -53,7 +53,7 @@ namespace AEther
                 CheckDisposed();
 
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
 
                 interval = value;
                 if (Resolution > Interval)
@@ -75,7 +75,7 @@ namespace AEther
                 CheckDisposed();
 
                 if (value < 0)
-                    throw new ArgumentOutOfRangeException("value");
+                    throw new ArgumentOutOfRangeException(nameof(value));
 
                 resolution = value;
             }
@@ -89,11 +89,11 @@ namespace AEther
             get { return timerId != 0; }
         }
 
-        public static Task Delay(int millisecondsDelay, CancellationToken token = default(CancellationToken))
+        public static Task Delay(int millisecondsDelay, CancellationToken token = default)
         {
             if (millisecondsDelay < 0)
             {
-                throw new ArgumentOutOfRangeException("millisecondsDelay", millisecondsDelay, "The value cannot be less than 0.");
+                throw new ArgumentOutOfRangeException(nameof(millisecondsDelay), millisecondsDelay, "The value cannot be less than 0.");
             }
 
             if (millisecondsDelay == 0)
@@ -167,11 +167,7 @@ namespace AEther
 
         private void TimerCallbackMethod(uint id, uint msg, ref uint userCtx, uint rsv1, uint rsv2)
         {
-            var handler = Elapsed;
-            if (handler != null)
-            {
-                handler(this, EventArgs.Empty);
-            }
+            Elapsed?.Invoke(this, EventArgs.Empty);
         }
 
         private void CheckDisposed()

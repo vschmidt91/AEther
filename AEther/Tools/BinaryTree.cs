@@ -20,8 +20,8 @@ namespace AEther
             Right = right;
         }
 
-        public X? Leftmost() => Left?.Leftmost() ?? (X)this;
-        public X? Rightmost() => Right?.Rightmost() ?? (X)this;
+        public X Leftmost() => Left?.Leftmost() ?? (X)this;
+        public X Rightmost() => Right?.Rightmost() ?? (X)this;
 
     }
 }

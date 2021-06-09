@@ -7,19 +7,14 @@ using SharpDX;
 
 namespace AEther.WindowsForms
 {
-    public class Mesh
+    public record Mesh
+    (
+        Vertex[] Vertices,
+        uint[] Indices
+    )
     {
 
         public static readonly Mesh Empty = new(Array.Empty<Vertex>(), Array.Empty<uint>());
-
-        public readonly Vertex[] Vertices;
-        public readonly uint[] Indices;
-
-        public Mesh(Vertex[] vertices, uint[] indices)
-        {
-            Vertices = vertices;
-            Indices = indices;
-        }
 
         public static Mesh Join(params Mesh[] meshes) => Join((IEnumerable<Mesh>)meshes);
 
@@ -58,6 +53,146 @@ namespace AEther.WindowsForms
 
             return new Mesh(vertices.ToArray(), Enumerable.Range(0, vertices.Count).Select(i => (uint)i).ToArray());
 
+        }
+
+        public static Mesh CreateSphere(int w, int h, bool invert = false)
+        {
+            var vertices = Enumerable.Range(0, w * h)
+                .Select(i =>
+                {
+                    int x = i % w;
+                    int y = i / h;
+                    Vector2 uv = new()
+                    {
+                        X = -1 + 2 * y / (float)(h - 1),
+                        Y = -1 + 2 * x / (float)(w - 1),
+                    };
+                    Vector3 position = -Vector3.Normalize(MapOctahedron(uv));
+                    return new Vertex()
+                    {
+                        Position = position,
+                        Normal = invert ? -position : position,
+                        UV = .5f + .5f * uv,
+                    };
+                }).ToArray();
+            var indices = Enumerable.Range(0, 6 * (w - 1) * (h - 1))
+                .Select(i =>
+                {
+
+                    if (invert)
+                    {
+                        switch (i % 6)
+                        {
+                            case 1: ++i; break;
+                            case 2: --i; break;
+                            case 4: ++i; break;
+                            case 5: --i; break;
+                        }
+                    }
+
+                    int x = (i / 6) % (w - 1);
+                    int y = (i / 6) / (w - 1);
+                    if ((x >= w / 2) == (y >= h / 2))
+                    {
+                        switch (i % 6)
+                        {
+                            case 0: break;
+                            case 1: ++y; break;
+                            case 2: ++x; break;
+                            case 3: ++x; break;
+                            case 4: ++y; break;
+                            case 5: ++x; ++y; break;
+                        }
+                    }
+                    else
+                    {
+                        switch (i % 6)
+                        {
+                            case 0: break;
+                            case 1: ++y; break;
+                            case 2: ++x; ++y; break;
+                            case 3: ++x; break;
+                            case 4: break;
+                            case 5: ++x; ++y; break;
+                        }
+                    }
+
+                    //if (x == 0 && y >= h / 2) y = (h - 1) - y;
+                    //if (y == 0 && x >= w / 2) x = (w - 1) - x;
+                    //if (x == w - 1 && y >= h / 2) y = (h - 1) - y;
+                    //if (y == h - 1 && x >= w / 2) x = (w - 1) - x;
+                    return (uint)(y * w + x);
+                }).ToArray();
+            return new Mesh(vertices, indices);
+        }
+
+        public static Mesh CreateGrid(int w, int h)
+        {
+            var vertices = Enumerable.Range(0, w * h)
+                .Select(i =>
+                {
+                    int x = i % w;
+                    int y = i / w;
+                    Vector2 uv = new()
+                    {
+                        X = x / (float)(w - 1),
+                        Y = y / (float)(h - 1),
+                    };
+                    return new Vertex()
+                    {
+                        Position = new Vector3()
+                        {
+                            X = 2 * uv.X - 1,
+                            Y = 2 * uv.Y - 1,
+                            Z = 0,
+                        },
+                        Normal = -Vector3.UnitZ,
+                        UV = uv,
+                    };
+                }).ToArray();
+            var indices = Enumerable.Range(0, 6 * (w - 1) * (h - 1))
+                .Select(i =>
+                {
+                    int x = (i / 6) % (w - 1);
+                    int y = (i / 6) / (w - 1);
+                    if ((x >= w / 2) == (y >= h / 2))
+                    {
+                        switch (i % 6)
+                        {
+                            case 0: break;
+                            case 1: ++y; break;
+                            case 2: ++x; break;
+                            case 3: ++x; break;
+                            case 4: ++y; break;
+                            case 5: ++x; ++y; break;
+                        }
+                    }
+                    else
+                    {
+                        switch (i % 6)
+                        {
+                            case 0: break;
+                            case 1: ++y; break;
+                            case 2: ++x; ++y; break;
+                            case 3: ++x; break;
+                            case 4: break;
+                            case 5: ++x; ++y; break;
+                        }
+                    }
+                    return (uint)(y * w + x);
+                }).ToArray();
+            return new Mesh(vertices, indices);
+        }
+
+        static Vector3 MapOctahedron(Vector2 uv)
+        {
+            float d = Math.Abs(uv.X) + Math.Abs(uv.Y);
+            return new Vector3()
+            {
+                X = d < 1 ? uv.X : Math.Sign(uv.X) * (1 - Math.Abs(uv.Y)),
+                Y = d < 1 ? uv.Y : Math.Sign(uv.Y) * (1 - Math.Abs(uv.X)),
+                Z = 1 - d,
+            };
         }
 
     }

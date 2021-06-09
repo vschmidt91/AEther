@@ -13,24 +13,18 @@ namespace AEther
         public static readonly ComplexVector<T> Zero = new(Vector<T>.Zero, Vector<T>.Zero);
         public static readonly ComplexVector<T> One = new(Vector<T>.One, Vector<T>.Zero);
         public static readonly ComplexVector<T> ImaginaryOne = new(Vector<T>.Zero, Vector<T>.One);
+        public static int Count => Vector<T>.Count;
 
         public readonly Vector<T> Real;
         public readonly Vector<T> Imaginary;
 
-        public static int Count => Vector<T>.Count;
-
         public (T, T) this[int i] => (Real[i], Imaginary[i]);
 
-        public T LengthSquared => Enumerable.Range(0, Count).Aggregate<int, T>(default, LengthSquaredAggregate);
-
-        T LengthSquaredAggregate(T sum, int i)
+        public T LengthSquared()
         {
-            var re = Real[i];
-            var im = Imaginary[i];
-            var re2 = GenericOperator<T, T, T>.Multiply(re, re);
-            var im2 = GenericOperator<T, T, T>.Multiply(im, im);
-            var re2im2 = GenericOperator<T, T, T>.Add(re2, im2);
-            return GenericOperator<T, T, T>.Add(sum, re2im2);
+            var re2 = Vector.Dot(Real * Real, Vector<T>.One);
+            var im2 = Vector.Dot(Imaginary * Imaginary, Vector<T>.One);
+            return GenericOperator<T, T, T>.Add(re2, im2);
         }
 
         public ComplexVector(Vector<T> real, Vector<T> imaginary)
@@ -40,7 +34,7 @@ namespace AEther
         }
 
         public override string ToString()
-            => $"({Real} + i * {Imaginary})";
+            => $"({Real}, {Imaginary}i)";
 
         public static ComplexVector<T> operator +(ComplexVector<T> a, ComplexVector<T> b)
             => new(a.Real + b.Real, a.Imaginary + b.Imaginary);

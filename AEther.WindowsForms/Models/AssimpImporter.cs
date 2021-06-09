@@ -32,11 +32,18 @@ namespace AEther.WindowsForms
         {
             if (Handler.TryGetValue(typeof(T), out var handler))
                 return handler(path) as T;
-            return default;
+            else
+                throw new KeyNotFoundException(typeof(T).Name);
         }
 
         public static Mesh[] ImportMesh(string path)
         {
+
+            static Vector3 toSharpDX(Vector3D v)
+                => new(v.X, v.Y, v.Z);
+
+            static Vector2 toSharpDX2(Vector3D v)
+                => new(v.X, v.Y);
 
             var flags = PostProcessSteps.None;
 
@@ -51,12 +58,6 @@ namespace AEther.WindowsForms
             flags |= PostProcessSteps.GenerateUVCoords;
 
             var scene = Context.ImportFile(path, flags);
-
-            Vector3 toSharpDX(Vector3D v)
-                => new(v.X, v.Y, v.Z);
-
-            Vector2 toSharpDX2(Vector3D v)
-                => new(v.X, v.Y);
 
             return scene.Meshes
                 .Select(m => new Mesh(

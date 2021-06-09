@@ -5,21 +5,15 @@ using System.Threading.Channels;
 
 namespace AEther
 {
-    public readonly struct SampleFormat
+    public record SampleFormat
+    (
+        SampleType Type,
+        int SampleRate,
+        int ChannelCount
+    )
     {
 
-        public readonly SampleType Type;
-        public readonly int SampleRate;
-        public readonly int ChannelCount;
-
-        public SampleFormat(SampleType type, int sampleRate, int channelCount)
-        {
-            Type = type;
-            SampleRate = sampleRate;
-            ChannelCount = channelCount;
-        }
-
-        public int Size => Type.GetSize() * ChannelCount;
+        public int Size => Type.Size * ChannelCount;
 
     }
 }

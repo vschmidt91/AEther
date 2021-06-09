@@ -17,37 +17,22 @@ namespace AEther.WindowsForms
     public class Model : IDisposable
     {
 
-        public Buffer VertexBuffer;
-        public VertexBufferBinding VertexBufferBinding;
-        public Buffer IndexBuffer;
-        public BoundingBox Bounds;
-
-        readonly Mesh Mesh;
+        public readonly Buffer VertexBuffer;
+        public readonly VertexBufferBinding VertexBufferBinding;
+        public readonly Buffer IndexBuffer;
 
         public Model(SharpDX.Direct3D11.Device device, Mesh mesh)
         {
-
-            Mesh = mesh;
-
-            var min = Mesh.Vertices.Aggregate(+1e6f * Vector3.One, (acc, v) => Vector3.Min(acc, v.Position));
-            var max = Mesh.Vertices.Aggregate(-1e6f * Vector3.One, (acc, v) => Vector3.Max(acc, v.Position));
-            Bounds = new BoundingBox()
-            {
-                Minimum = min,
-                Maximum = max,
-            };
-
-            VertexBuffer = Buffer.Create(device, BindFlags.VertexBuffer, Mesh.Vertices);
-            IndexBuffer = Buffer.Create(device, BindFlags.IndexBuffer, Mesh.Indices);
+            VertexBuffer = Buffer.Create(device, BindFlags.VertexBuffer, mesh.Vertices);
+            IndexBuffer = Buffer.Create(device, BindFlags.IndexBuffer, mesh.Indices);
             VertexBufferBinding = new VertexBufferBinding(VertexBuffer, Marshal.SizeOf<Vertex>(), 0);
-
         }
 
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            Utilities.Dispose(ref VertexBuffer);
-            Utilities.Dispose(ref IndexBuffer);
+            VertexBuffer.Dispose();
+            IndexBuffer.Dispose();
         }
     }
 }

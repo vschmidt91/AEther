@@ -15,76 +15,20 @@ namespace AEther.WindowsForms
 
         protected readonly T Resource;
 
-        RenderTargetView? RTView;
-        ShaderResourceView? SRView;
-        DepthStencilView? DSView;
+        readonly Lazy<RenderTargetView> RTView;
+        readonly Lazy<DepthStencilView> DSView;
+        readonly Lazy<ShaderResourceView> SRView;
+
+        public DepthStencilView DepthStencilView => DSView.Value;
+        public RenderTargetView RenderTargetView => RTView.Value;
+        public ShaderResourceView ShaderResourceView => SRView.Value;
 
         public GraphicsResource(T resource)
         {
             Resource = resource;
-        }
-
-        public RenderTargetView CreateRenderTargetView(RenderTargetViewDescription? description = default)
-        {
-            if (description.HasValue)
-            {
-                return new RenderTargetView(Resource.Device, Resource, description.Value);
-            }
-            else
-            {
-                return new RenderTargetView(Resource.Device, Resource);
-            }
-        }
-
-        public ShaderResourceView CreateShaderResourceView(ShaderResourceViewDescription? description = default)
-        {
-            if (description.HasValue)
-            {
-                return new ShaderResourceView(Resource.Device, Resource, description.Value);
-            }
-            else
-            {
-                return new ShaderResourceView(Resource.Device, Resource);
-            }
-        }
-
-        public DepthStencilView CreateDdepthStencilView(DepthStencilViewDescription? description = default)
-        {
-            if (description.HasValue)
-            {
-                return new DepthStencilView(Resource.Device, Resource, description.Value);
-            }
-            else
-            {
-                return new DepthStencilView(Resource.Device, Resource);
-            }
-        }
-
-        public RenderTargetView GetRenderTargetView()
-        {
-            if (RTView == null)
-            {
-                RTView = CreateRenderTargetView();
-            }
-            return RTView;
-        }
-
-        public DepthStencilView GetDepthStencilView()
-        {
-            if(DSView == null)
-            {
-                DSView = CreateDdepthStencilView();
-            }
-            return DSView;
-        }
-
-        public ShaderResourceView GetShaderResourceView()
-        {
-            if (SRView == null)
-            {
-                SRView = CreateShaderResourceView();
-            }
-            return SRView;
+            RTView = new Lazy<RenderTargetView>(() => new RenderTargetView(Resource.Device, Resource));
+            DSView = new Lazy<DepthStencilView>(() => new DepthStencilView(Resource.Device, Resource));
+            SRView = new Lazy<ShaderResourceView>(() => new ShaderResourceView(Resource.Device, Resource));
         }
 
         public ContextMapping Map(int? subResource = default, MapMode? mode = default, MapFlags? flags = default)
@@ -101,11 +45,12 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            //Resource.Dispose();
-            //Resource = null;
-            RTView?.Dispose();
-            SRView?.Dispose();
-            DSView?.Dispose();
+            if (RTView.IsValueCreated)
+                RTView.Value.Dispose();
+            if (DSView.IsValueCreated)
+                DSView.Value.Dispose();
+            if (SRView.IsValueCreated)
+                SRView.Value.Dispose();
         }
 
     }

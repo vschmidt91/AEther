@@ -12,7 +12,7 @@ namespace AEther
     public class DFTFilter : IDFTFilter
     {
 
-        public int Length => Buffer.Size;
+        public int Length => Buffer.Length;
 
         Complex State;
 
@@ -39,7 +39,7 @@ namespace AEther
 
         public Complex GetOutput()
         {
-            return State / Buffer.Size;
+            return State / Buffer.Length;
         }
 
         public void Process(double newSample)

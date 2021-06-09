@@ -22,7 +22,7 @@ namespace AEther.Bass
 
 
             ManagedBass.Bass.RecordInit(deviceIndex ?? -1);
-            Format = new SampleFormat(SampleType.UInt16, 44100, 2);
+            Format = new SampleFormat(SampleType.UInt16.Instance, 44100, 2);
 
         }
 

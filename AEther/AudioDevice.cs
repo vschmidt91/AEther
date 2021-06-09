@@ -13,11 +13,8 @@ namespace AEther
         public EventHandler<Exception?>? OnStopped;
 
         public abstract SampleFormat Format { get; }
-
         public abstract void Dispose();
-
         public abstract void Start();
-
         public abstract void Stop();
 
     }

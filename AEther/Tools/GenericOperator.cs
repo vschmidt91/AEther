@@ -40,8 +40,6 @@ namespace AEther
         public static readonly Operator Subtract = Compile((a, b) => Expression.Subtract(a, b));
         public static readonly Operator Multiply = Compile((a, b) => Expression.Multiply(a, b));
         public static readonly Operator Divide = Compile((a, b) => Expression.Divide(a, b));
-        public static readonly Operator LessThan = Compile((a, b) => Expression.LessThan(a, b));
-        public static readonly Operator Equal = Compile((a, b) => Expression.Equal(a, b));
 
     }
 

@@ -64,7 +64,7 @@ namespace AEther.DMX
 
 
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
-            for (int k = 0; k < Domain.Count; ++k)
+            for (int k = 0; k < Domain.Length; ++k)
             {
                 KeyWeights[k % KeyWeights.Length] += evt.Samples[4 * k];
             }

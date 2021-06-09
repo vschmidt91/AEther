@@ -9,21 +9,12 @@ using System.Threading.Tasks;
 namespace AEther
 {
 
-    public class Tree<T>
+    public record Tree<T>
+    (
+        T Item,
+        Tree<T>[] Children
+    )
     {
-
-        public readonly T Item;
-        public readonly IList<Tree<T>> Children;
-
-        public Tree(T item, params Tree<T>[] children)
-            : this(item, children.ToList())
-        { }
-
-        public Tree(T item , IEnumerable<Tree<T>> children)
-        {
-            Item = item;
-            Children = children as IList<Tree<T>> ?? children.ToList();
-        }
 
         public static Tree<T> Unfold<S>(S seed, Func<S, (T, IEnumerable<S>)> f)
         {
@@ -35,17 +26,17 @@ namespace AEther
             => f(Item, Children.Select(c => c.Fold(f)));
 
         public Tree<S> Map<S>(Func<T, S> f)
-            => new(f(Item), Children.Select(c => c.Map(f)));
+            => new(f(Item), Children.Select(c => c.Map(f)).ToArray());
 
         public Tree<(T, Tree<T>?)> WithParents(Tree<T>? parent = null)
             => new(
                 (Item, parent),
-                Children.Select(d => d.WithParents(this)));
+                Children.Select(d => d.WithParents(this)).ToArray());
 
         public Tree<(T, int)> WithLevel(int level = 0)
             => new(
                 (Item, level),
-                Children.Select(d => d.WithLevel(level + 1)));
+                Children.Select(d => d.WithLevel(level + 1)).ToArray());
 
         public IEnumerable<T> FlattenPreOrder()
             => new[] { Item }
@@ -63,7 +54,7 @@ namespace AEther
 
         public override string ToString()
             => Children.Any()
-            ? $"{Item} [{string.Join(", ", Children)}]"
+            ? $"{Item} [{string.Join(", ", (IEnumerable<Tree<T>>)Children)}]"
             : Item?.ToString() ?? string.Empty;
 
     }

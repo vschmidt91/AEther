@@ -12,7 +12,7 @@ namespace AEther
     public class WindowedDFTFilterSIMD : IDFTFilter
     {
 
-        public int Length => Buffer.Size;
+        public int Length => Buffer.Length;
 
         ComplexVector<double> States;
         readonly ComplexVector<double> Coefficients;
@@ -47,7 +47,7 @@ namespace AEther
             var coeffRe = new Vector<double>(coeff.Select(c => c.Real).ToArray());
             var coeffIm = new Vector<double>(coeff.Select(c => c.Imaginary).ToArray());
             Coefficients = new ComplexVector<double>(coeffRe, coeffIm);
-             
+
         }
 
         public Complex GetOutput()
@@ -59,7 +59,7 @@ namespace AEther
                 var (re, im) = windowed[j];
                 result += new Complex(re, im);
             }
-            return result / Buffer.Size;
+            return result / Buffer.Length;
         }
 
         public void Process(double newSample)

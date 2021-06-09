@@ -31,10 +31,10 @@ namespace AEther
 
             Domain = domain;
 
-            Buffer1 = new double[Domain.Count];
-            Buffer2 = new double[Domain.Count];
-            Buffer3 = new double[Domain.Count];
-            Buffer4 = new double[Domain.Count];
+            Buffer1 = new double[Domain.Length];
+            Buffer2 = new double[Domain.Length];
+            Buffer3 = new double[Domain.Length];
+            Buffer4 = new double[Domain.Length];
             KeyWeights = new double[Domain.Resolution];
 
             FrequencyTransients = CreateFilter((int)(options.TransientWidth * domain.Resolution));
@@ -65,7 +65,7 @@ namespace AEther
             var dst = output.Span;
 
             FrequencyTransients.FilterSpan(src, Buffer1, combine);
-            for (int k = 0; k < Domain.Count; ++k)
+            for (int k = 0; k < Domain.Length; ++k)
             {
                 TimeSinuoids[k].Filter(src[k]);
                 Buffer2[k] = TimeSinuoids[k].State;
@@ -78,7 +78,7 @@ namespace AEther
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
             var noiseFloor = Enumerable.Range(0, input.Length).Sum(k => input.Span[k]) / input.Length;
 
-            for (int k = 0; k < Domain.Count; ++k)
+            for (int k = 0; k < Domain.Length; ++k)
             {
 
                 var y = dst.Slice(4 * k, 4);
@@ -87,7 +87,7 @@ namespace AEther
                 var transients = Math.Max(0, Buffer1[k] - Buffer3[k]);
                 var noise = Math.Max(0, src[k] - noiseFloor);
 
-                KeyWeights[k % KeyWeights.Length] += sinuoids * Domain.Resolution / Domain.Count;
+                KeyWeights[k % KeyWeights.Length] += sinuoids * Domain.Resolution / Domain.Length;
 
                 sinuoids = Math.Max(0, 1 + 1.2 * (sinuoids - 1));
                 transients = Math.Max(0, 1 + 1.2 * (transients - 1));
