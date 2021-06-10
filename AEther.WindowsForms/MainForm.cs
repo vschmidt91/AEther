@@ -137,17 +137,16 @@ namespace AEther.WindowsForms
         {
 
             var deviceName = Input.SelectedItem.ToString();
-            AudioDevice device = deviceName is LoopbackEntry
+            SampleSource sampleSource = deviceName is LoopbackEntry
                 ? new Loopback()
                 : new Recorder(deviceName ?? string.Empty);
-            var sampleSource = new AudioInput(device);
             if (Options.SelectedObject is not SessionOptions options)
             {
                 throw new InvalidCastException();
             }
 
-            Spectrum = CreateSpectrum(device.Format.ChannelCount, options.Domain.Length);
-            Histogram = CreateHistogram(device.Format.ChannelCount, options.Domain.Length, options.TimeResolution);
+            Spectrum = CreateSpectrum(sampleSource.Format.ChannelCount, options.Domain.Length);
+            Histogram = CreateHistogram(sampleSource.Format.ChannelCount, options.Domain.Length, options.TimeResolution);
 
             var d = new Dictionary<string, Texture2D>()
             {
@@ -272,8 +271,9 @@ namespace AEther.WindowsForms
 
             if (State.SelectedItem is GraphicsState state)
             {
-                using var frame = Graphics.RenderFrame();
+                Graphics.RenderFrame();
                 state.Render();
+                Graphics.Present();
             }
 
         }

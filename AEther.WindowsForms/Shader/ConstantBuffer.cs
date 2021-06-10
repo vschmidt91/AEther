@@ -19,6 +19,8 @@ namespace AEther.WindowsForms
 
         public T Value = default;
         public bool UseResourceMapping = true;
+
+        protected bool IsDisposed;
         
         public ConstantBuffer(Device device, BufferDescription? description = default)
         {
@@ -51,8 +53,12 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            Buffer.Dispose();
+            if (!IsDisposed)
+            {
+                Buffer.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
     }

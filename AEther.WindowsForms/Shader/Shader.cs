@@ -27,8 +27,10 @@ namespace AEther.WindowsForms
             public ShaderPass this[int i] => Passes[i];
             public int PassCount => Passes.Length;
 
-            EffectTechnique Technique;
+            readonly EffectTechnique Technique;
             readonly ShaderPass[] Passes;
+
+            protected bool IsDisposed;
 
             public ShaderTechnique(EffectTechnique technique)
             {
@@ -41,11 +43,15 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
-                GC.SuppressFinalize(this);
-                Utilities.Dispose(ref Technique);
-                foreach(var pass in Passes)
+                if(!IsDisposed)
                 {
-                    pass.Dispose();
+                    Technique.Dispose();
+                    foreach (var pass in Passes)
+                    {
+                        pass.Dispose();
+                    }
+                    GC.SuppressFinalize(this);
+                    IsDisposed = true;
                 }
             }
         }
@@ -55,6 +61,8 @@ namespace AEther.WindowsForms
 
             EffectPass Pass;
             InputLayout? InputLayout;
+
+            protected bool IsDisposed;
 
             public ShaderPass(EffectPass pass)
             {
@@ -75,9 +83,13 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
-                GC.SuppressFinalize(this);
-                Utilities.Dispose(ref InputLayout);
-                Utilities.Dispose(ref Pass);
+                if (!IsDisposed)
+                {
+                    InputLayout?.Dispose();
+                    Pass.Dispose();
+                    GC.SuppressFinalize(this);
+                    IsDisposed = true;
+                }
             }
 
             public InputLayout GetInputLayout(SharpDX.Direct3D11.Device device, InputElement[]? inputElements = default)
@@ -101,9 +113,11 @@ namespace AEther.WindowsForms
         public readonly Dictionary<string, EffectUnorderedAccessViewVariable> UnorderedAccesses;
         public readonly EffectConstantBuffer[] ConstantBuffers;
 
-        ShaderBytecode Bytecode;
-        Effect Effect;
+        readonly ShaderBytecode Bytecode;
+        readonly Effect Effect;
         readonly ShaderTechnique[] Techniques;
+
+        protected bool IsDisposed;
 
         public Shader(SharpDX.Direct3D11.Device device, ShaderBytecode bytecode)
         {
@@ -139,36 +153,42 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
 
-            GC.SuppressFinalize(this);
-
-            foreach (var technique in Techniques)
+            if(!IsDisposed)
             {
-                technique.Dispose();
+
+                foreach (var technique in Techniques)
+                {
+                    technique.Dispose();
+                }
+
+                var comObjects = ShaderResources.Values.Cast<ComObject>()
+                    .Concat(DepthStencils.Values.Cast<ComObject>())
+                    .Concat(RenderTargets.Values.Cast<ComObject>())
+                    .Concat(UnorderedAccesses.Values.Cast<ComObject>())
+                    .Concat(Variables.Values.Cast<ComObject>());
+
+                foreach (var obj in comObjects)
+                    obj?.Dispose();
+
+                ShaderResources.Clear();
+                DepthStencils.Clear();
+                RenderTargets.Clear();
+                UnorderedAccesses.Clear();
+                Variables.Clear();
+
+                foreach (var constantBuffer in ConstantBuffers)
+                {
+                    constantBuffer?.Dispose();
+                }
+                Array.Clear(ConstantBuffers, 0, ConstantBuffers.Length);
+
+                Effect.Dispose();
+                Bytecode.Dispose();
+
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+
             }
-
-            var comObjects = ShaderResources.Values.Cast<ComObject>()
-                .Concat(DepthStencils.Values.Cast<ComObject>())
-                .Concat(RenderTargets.Values.Cast<ComObject>())
-                .Concat(UnorderedAccesses.Values.Cast<ComObject>())
-                .Concat(Variables.Values.Cast<ComObject>());
-
-            foreach (var obj in comObjects)
-                obj?.Dispose();
-
-            ShaderResources.Clear();
-            DepthStencils.Clear();
-            RenderTargets.Clear();
-            UnorderedAccesses.Clear();
-            Variables.Clear();
-
-            foreach (var constantBuffer in ConstantBuffers)
-            {
-                constantBuffer?.Dispose();
-            }
-            Array.Clear(ConstantBuffers, 0, ConstantBuffers.Length);
-
-            Utilities.Dispose(ref Effect);
-            Utilities.Dispose(ref Bytecode);
 
         }
 

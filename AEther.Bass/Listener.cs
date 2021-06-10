@@ -8,7 +8,7 @@ using System.IO.Pipelines;
 
 namespace AEther.Bass
 {
-    public class Listener : SampleSource, IDisposable
+    public class Listener : SampleSource
     {
 
         public override SampleFormat Format { get; }
@@ -65,8 +65,8 @@ namespace AEther.Bass
 
         public override void Dispose()
         {
-            GC.SuppressFinalize(this);
             ManagedBass.Bass.Free();
+            GC.SuppressFinalize(this);
         }
 
     }

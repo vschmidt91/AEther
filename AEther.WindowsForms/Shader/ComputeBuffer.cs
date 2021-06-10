@@ -25,6 +25,8 @@ namespace AEther.WindowsForms
         UnorderedAccessView? UAView;
         ShaderResourceView? SRView;
 
+        protected bool IsDisposed;
+
         public ComputeBuffer(Device device, int stride, int size, bool cpuWrite)
         {
             Buffer = new Buffer(device, new BufferDescription()
@@ -94,10 +96,14 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            UAView?.Dispose();
-            SRView?.Dispose();
-            Buffer.Dispose();
+            if(!IsDisposed)
+            {
+                UAView?.Dispose();
+                SRView?.Dispose();
+                Buffer.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
     }

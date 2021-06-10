@@ -27,11 +27,6 @@ namespace AEther
             Cancel = new CancellationTokenSource();
         }
 
-        public override void Dispose()
-        {
-            GC.SuppressFinalize(this);
-        }
-
         public override void Start()
         {
             var buffer = new byte[BufferSize];
@@ -50,6 +45,11 @@ namespace AEther
         public override void Stop()
         {
             Cancel.Cancel();
+        }
+
+        public override void Dispose()
+        {
+            GC.SuppressFinalize(this);
         }
 
     }

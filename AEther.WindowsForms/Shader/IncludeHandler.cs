@@ -25,6 +25,8 @@ namespace AEther.WindowsForms
 
         readonly string BasePath;
 
+        protected bool IsDisposed;
+
         public IncludeHandler(string basePath)
         {
             BasePath = basePath;
@@ -38,8 +40,12 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            Shadow.Dispose();
+            if(!IsDisposed)
+            {
+                Shadow.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
         public Stream Open(IncludeType type, string fileName, Stream parentStream)

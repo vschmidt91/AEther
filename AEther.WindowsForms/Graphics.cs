@@ -250,7 +250,7 @@ namespace AEther.WindowsForms
             return shader;
         }
 
-        public FrameHandle RenderFrame()
+        public void RenderFrame()
         {
 
             var dt = .01f;
@@ -260,8 +260,6 @@ namespace AEther.WindowsForms
             FrameConstants.Value.Time.X = t;
             FrameConstants.Value.Time.Y = dt;
             FrameConstants.Update(Context);
-
-            return new FrameHandle(this);
 
         }
 

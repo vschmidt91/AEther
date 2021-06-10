@@ -23,6 +23,8 @@ namespace AEther.WindowsForms
         public RenderTargetView RenderTargetView => RTView.Value;
         public ShaderResourceView ShaderResourceView => SRView.Value;
 
+        protected bool IsDisposed;
+
         public GraphicsResource(T resource)
         {
             Resource = resource;
@@ -44,13 +46,17 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            if (RTView.IsValueCreated)
-                RTView.Value.Dispose();
-            if (DSView.IsValueCreated)
-                DSView.Value.Dispose();
-            if (SRView.IsValueCreated)
-                SRView.Value.Dispose();
+            if(!IsDisposed)
+            {
+                if (RTView.IsValueCreated)
+                    RTView.Value.Dispose();
+                if (DSView.IsValueCreated)
+                    DSView.Value.Dispose();
+                if (SRView.IsValueCreated)
+                    SRView.Value.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
     }

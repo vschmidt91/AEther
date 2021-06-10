@@ -20,6 +20,8 @@ namespace AEther.WindowsForms
         readonly DataBox Box;
         readonly DataStream Stream;
 
+        protected bool IsDisposed;
+
         public ContextMapping(Resource resource, int? subresource = default, MapMode? mode = default, MapFlags? flags = default)
         {
             Resource = resource;
@@ -45,10 +47,14 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            Stream.Close();
-            Stream.Dispose();
-            Resource.Device.ImmediateContext.UnmapSubresource(Resource, Subresource);
+            if(!IsDisposed)
+            {
+                Stream.Close();
+                Stream.Dispose();
+                Resource.Device.ImmediateContext.UnmapSubresource(Resource, Subresource);
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
     }

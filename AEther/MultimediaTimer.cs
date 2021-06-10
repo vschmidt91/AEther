@@ -15,12 +15,12 @@ namespace AEther
     /// </summary>
     public class MultimediaTimer : IDisposable
     {
+
+        public event EventHandler? Elapsed;
         private const int EventTypeSingle = 0;
         private const int EventTypePeriodic = 1;
 
-        private static readonly Task TaskDone = Task.FromResult<object>(null);
-
-        private bool disposed = false;
+        private bool IsDisposed;
         private int interval, resolution;
         private volatile uint timerId;
 
@@ -98,18 +98,18 @@ namespace AEther
 
             if (millisecondsDelay == 0)
             {
-                return TaskDone;
+                return Task.CompletedTask;
             }
 
             token.ThrowIfCancellationRequested();
 
             // allocate an object to hold the callback in the async state.
             object[] state = new object[1];
-            var completionSource = new TaskCompletionSource<object>(state);
+            var completionSource = new TaskCompletionSource(state);
             MultimediaTimerCallback callback = (uint id, uint msg, ref uint uCtx, uint rsv1, uint rsv2) =>
             {
                 // Note we don't need to kill the timer for one-off events.
-                completionSource.TrySetResult(null);
+                completionSource.TrySetResult();
             };
 
             state[0] = callback;
@@ -158,10 +158,9 @@ namespace AEther
             timerId = 0;
         }
 
-        public event EventHandler Elapsed;
-
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Dispose(true);
         }
 
@@ -172,26 +171,25 @@ namespace AEther
 
         private void CheckDisposed()
         {
-            if (disposed)
+            if (IsDisposed)
                 throw new ObjectDisposedException("MultimediaTimer");
         }
 
         private void Dispose(bool disposing)
         {
-            if (disposed)
-                return;
-
-            disposed = true;
-            if (IsRunning)
+            if (!IsDisposed)
             {
-                StopInternal();
+                if (disposing)
+                {
+                    Elapsed = null;
+                }
+                if (IsRunning)
+                {
+                    StopInternal();
+                }
+                IsDisposed = true;
             }
 
-            if (disposing)
-            {
-                Elapsed = null;
-                GC.SuppressFinalize(this);
-            }
         }
     }
 

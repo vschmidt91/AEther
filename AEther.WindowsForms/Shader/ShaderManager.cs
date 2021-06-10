@@ -28,6 +28,8 @@ namespace AEther.WindowsForms
         readonly FileSystemWatcher? Watcher;
         readonly string BasePath;
 
+        protected bool IsDisposed;
+
         public ShaderManager(Graphics graphics, string basePath, bool watch = false)
             : base(graphics)
         {
@@ -88,10 +90,13 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-
-            GC.SuppressFinalize(this);
-            Includes.Dispose();
-            Watcher?.Dispose();
+            if(!IsDisposed)
+            {
+                Includes.Dispose();
+                Watcher?.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
     }
 }

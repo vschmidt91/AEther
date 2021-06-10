@@ -17,7 +17,7 @@ using System.Buffers;
 
 namespace AEther.NAudio
 {
-    public abstract class Input : AudioDevice
+    public abstract class Input : SampleSource
     {
 
         public override SampleFormat Format { get; }
@@ -87,8 +87,8 @@ namespace AEther.NAudio
 
         public override void Dispose()
         {
-            GC.SuppressFinalize(this);
             Device.Dispose();
+            GC.SuppressFinalize(this);
         }
 
     }

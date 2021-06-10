@@ -23,6 +23,7 @@ namespace AEther.WindowsForms
         protected readonly Shader Shader;
 
         public float Speed { get; set; } = .1f;
+        protected bool IsDisposed;
 
         public IFSElement(Graphics graphics, string shader)
             : base(graphics)
@@ -49,9 +50,13 @@ namespace AEther.WindowsForms
 
         public virtual void Dispose()
         {
-            GC.SuppressFinalize(this);
-            Shader.Dispose();
-            WeightVariable.Dispose();
+            if(!IsDisposed)
+            {
+                Shader.Dispose();
+                WeightVariable.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
     }

@@ -34,6 +34,8 @@ namespace AEther.WindowsForms
             readonly Texture2D Residual;
             readonly Texture2D ResidualFine;
 
+            bool IsDisposed;
+
             internal CoarseGrid(Graphics graphics, int width, int height, Format format, Vector2 scale)
                 : base(graphics)
             {
@@ -82,14 +84,18 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
-                GC.SuppressFinalize(this);
-                CopyShader.Dispose();
-                ResidualShader.Dispose();
-                AddShader.Dispose();
-                Solver.Dispose();
-                Residual.Dispose();
-                Solution.Dispose();
-                ResidualFine.Dispose();
+                if(!IsDisposed)
+                {
+                    CopyShader.Dispose();
+                    ResidualShader.Dispose();
+                    AddShader.Dispose();
+                    Solver.Dispose();
+                    Residual.Dispose();
+                    Solution.Dispose();
+                    ResidualFine.Dispose();
+                    GC.SuppressFinalize(this);
+                    IsDisposed = true;
+                }
             }
 
         }
@@ -104,6 +110,8 @@ namespace AEther.WindowsForms
 
         readonly SOR Relaxation;
         readonly CoarseGrid? Coarse;
+
+        protected bool IsDisposed;
 
         public Multigrid(Graphics graphics, int width, int height, Format format, Vector2 scale)
             : base(graphics)
@@ -143,8 +151,6 @@ namespace AEther.WindowsForms
         public void Solve(Texture2D target, Texture2D solution, MultigridMode mode)
         {
 
-            Debug.Assert(target.Size == solution.Size);
-
             if (Coarse is null)
             {
                 Relaxation.Solve(target, solution);
@@ -179,9 +185,13 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            Coarse?.Dispose();
-            Relaxation.Dispose();
+            if (!IsDisposed)
+            {
+                Coarse?.Dispose();
+                Relaxation.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
     }

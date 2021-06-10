@@ -18,6 +18,8 @@ namespace AEther.WindowsForms
 
         public readonly Texture2D Texture;
 
+        protected bool IsDisposed;
+
         public Histogram(Texture2D texture)
         {
             Texture = texture;
@@ -31,8 +33,12 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            Texture.Dispose();
+            if(!IsDisposed)
+            {
+                Texture.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
     }

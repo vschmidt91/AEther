@@ -27,11 +27,11 @@ namespace AEther.WindowsForms
         {
         }
 
-        public T? Import<T>(string path)
+        public T Import<T>(string path)
             where T : class
         {
             if (Handler.TryGetValue(typeof(T), out var handler))
-                return handler(path) as T;
+                return handler(path) as T ?? throw new InvalidCastException(typeof(T).Name);
             else
                 throw new KeyNotFoundException(typeof(T).Name);
         }

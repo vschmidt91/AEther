@@ -50,6 +50,7 @@ namespace AEther.WindowsForms
         readonly EffectVectorVariable CoefficientsVariableEven;
         readonly EffectVectorVariable CoefficientsVariableOdd;
 
+        protected bool IsDisposed;
 
         public SOR(Graphics graphics, int width, int height, Format format)
             : base(graphics)
@@ -99,14 +100,18 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            OmegaVariableEven.Dispose();
-            OmegaVariableOdd.Dispose();
-            CoefficientsVariableEven.Dispose();
-            CoefficientsVariableOdd.Dispose();
-            Buffer.Dispose();
-            SolverEven.Dispose();
-            SolverOdd.Dispose();
+            if(!IsDisposed)
+            {
+                OmegaVariableEven.Dispose();
+                OmegaVariableOdd.Dispose();
+                CoefficientsVariableEven.Dispose();
+                CoefficientsVariableOdd.Dispose();
+                Buffer.Dispose();
+                SolverEven.Dispose();
+                SolverOdd.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
 
     }

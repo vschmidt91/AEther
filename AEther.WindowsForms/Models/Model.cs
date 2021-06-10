@@ -21,6 +21,8 @@ namespace AEther.WindowsForms
         public readonly VertexBufferBinding VertexBufferBinding;
         public readonly Buffer IndexBuffer;
 
+        protected bool IsDisposed;
+
         public Model(SharpDX.Direct3D11.Device device, Mesh mesh)
         {
             VertexBuffer = Buffer.Create(device, BindFlags.VertexBuffer, mesh.Vertices);
@@ -30,9 +32,13 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
-            VertexBuffer.Dispose();
-            IndexBuffer.Dispose();
+            if(!IsDisposed)
+            {
+                VertexBuffer.Dispose();
+                IndexBuffer.Dispose();
+                GC.SuppressFinalize(this);
+                IsDisposed = true;
+            }
         }
     }
 }
