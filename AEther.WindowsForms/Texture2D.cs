@@ -26,7 +26,7 @@ namespace AEther.WindowsForms
 
         public void Clear(Color4 color = default)
         {
-            Resource.Device.ImmediateContext.ClearRenderTargetView(RenderTargetView, color);
+            Resource.Device.ImmediateContext.ClearRenderTargetView(RTView, color);
         }
 
     }

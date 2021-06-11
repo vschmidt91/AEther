@@ -62,13 +62,13 @@ namespace AEther.WindowsForms
 
                 // Residual
                 Graphics.SetFullscreenTarget(ResidualFine);
-                ResidualShader.ShaderResources["Solution"].SetResource(solutionFine.ShaderResourceView);
-                ResidualShader.ShaderResources["Target"].SetResource(targetFine.ShaderResourceView);
+                ResidualShader.ShaderResources["Solution"].SetResource(solutionFine.SRView);
+                ResidualShader.ShaderResources["Target"].SetResource(targetFine.SRView);
                 Graphics.Draw(ResidualShader);
 
                 // Projection
                 Graphics.SetFullscreenTarget(Residual);
-                CopyShader.ShaderResources["Source"].SetResource(ResidualFine.ShaderResourceView);
+                CopyShader.ShaderResources["Source"].SetResource(ResidualFine.SRView);
                 Graphics.Draw(CopyShader);
 
                 // Recursion
@@ -77,7 +77,7 @@ namespace AEther.WindowsForms
 
                 // Interpolation
                 Graphics.SetFullscreenTarget(solutionFine);
-                AddShader.ShaderResources["Source"].SetResource(Solution.ShaderResourceView);
+                AddShader.ShaderResources["Source"].SetResource(Solution.SRView);
                 Graphics.Draw(AddShader);
 
             }

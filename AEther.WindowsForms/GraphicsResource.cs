@@ -15,22 +15,22 @@ namespace AEther.WindowsForms
 
         protected readonly T Resource;
 
-        readonly Lazy<RenderTargetView> RTView;
-        readonly Lazy<DepthStencilView> DSView;
-        readonly Lazy<ShaderResourceView> SRView;
+        public RenderTargetView RTView => RTViewLazy.Value;
+        public DepthStencilView DSView => DSViewLazy.Value;
+        public ShaderResourceView SRView => SRViewLazy.Value;
 
-        public DepthStencilView DepthStencilView => DSView.Value;
-        public RenderTargetView RenderTargetView => RTView.Value;
-        public ShaderResourceView ShaderResourceView => SRView.Value;
+        readonly Lazy<RenderTargetView> RTViewLazy;
+        readonly Lazy<DepthStencilView> DSViewLazy;
+        readonly Lazy<ShaderResourceView> SRViewLazy;
 
         protected bool IsDisposed;
 
         public GraphicsResource(T resource)
         {
             Resource = resource;
-            RTView = new Lazy<RenderTargetView>(() => new RenderTargetView(Resource.Device, Resource));
-            DSView = new Lazy<DepthStencilView>(() => new DepthStencilView(Resource.Device, Resource));
-            SRView = new Lazy<ShaderResourceView>(() => new ShaderResourceView(Resource.Device, Resource));
+            RTViewLazy = new Lazy<RenderTargetView>(() => new RenderTargetView(Resource.Device, Resource));
+            DSViewLazy = new Lazy<DepthStencilView>(() => new DepthStencilView(Resource.Device, Resource));
+            SRViewLazy = new Lazy<ShaderResourceView>(() => new ShaderResourceView(Resource.Device, Resource));
         }
 
         public ContextMapping Map(int? subResource = default, MapMode? mode = default, MapFlags? flags = default)
@@ -48,12 +48,12 @@ namespace AEther.WindowsForms
         {
             if(!IsDisposed)
             {
-                if (RTView.IsValueCreated)
-                    RTView.Value.Dispose();
-                if (DSView.IsValueCreated)
-                    DSView.Value.Dispose();
-                if (SRView.IsValueCreated)
-                    SRView.Value.Dispose();
+                if (RTViewLazy.IsValueCreated)
+                    RTViewLazy.Value.Dispose();
+                if (DSViewLazy.IsValueCreated)
+                    DSViewLazy.Value.Dispose();
+                if (SRViewLazy.IsValueCreated)
+                    SRViewLazy.Value.Dispose();
                 GC.SuppressFinalize(this);
                 IsDisposed = true;
             }

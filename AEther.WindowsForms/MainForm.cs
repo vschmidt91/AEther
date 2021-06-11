@@ -103,6 +103,7 @@ namespace AEther.WindowsForms
             State.Items.Clear();
             State.Items.AddRange(new GraphicsState[]
             {
+                new SceneState(Graphics),
                 new ShaderState(Graphics, histogramShader, "Histogramm"),
                 new ShaderState(Graphics, spectrumShader, "Spectrum"),
                 new ShaderState(Graphics, mandelboxShader, "Mandelbox"),
@@ -161,7 +162,7 @@ namespace AEther.WindowsForms
                 foreach (var shader in Shaders)
                 {
                     if (shader.ShaderResources.TryGetValue(key, out var v))
-                        v?.SetResource(value.ShaderResourceView);
+                        v?.SetResource(value.SRView);
                 }
             }
 

@@ -21,9 +21,12 @@ namespace AEther.WindowsForms
 
         public BufferDescription Description => Buffer.Description;
 
+        readonly Lazy<UnorderedAccessView> UAViewLazy;
+        readonly Lazy<ShaderResourceView> SRViewLazy;
+
         readonly Buffer Buffer;
-        UnorderedAccessView? UAView;
-        ShaderResourceView? SRView;
+        public UnorderedAccessView UAView => UAViewLazy.Value;
+        public ShaderResourceView SRView => SRViewLazy.Value;
 
         protected bool IsDisposed;
 
@@ -38,49 +41,35 @@ namespace AEther.WindowsForms
                 StructureByteStride = stride,
                 Usage = cpuWrite ? ResourceUsage.Dynamic : ResourceUsage.Default,
             });
-        }
-
-        public UnorderedAccessView GetUnorderedAccessView(UnorderedAccessViewDescription? description = default)
-        {
-            if(UAView == null)
+            UAViewLazy = new Lazy<UnorderedAccessView>(() => new UnorderedAccessView(Buffer.Device, Buffer, new UnorderedAccessViewDescription
             {
-                UAView = new UnorderedAccessView(Buffer.Device, Buffer, description ?? new UnorderedAccessViewDescription
+                Dimension = UnorderedAccessViewDimension.Buffer,
+                Buffer = new UnorderedAccessViewDescription.BufferResource()
                 {
-                    Dimension = UnorderedAccessViewDimension.Buffer,
-                    Buffer = new UnorderedAccessViewDescription.BufferResource()
-                    {
-                        ElementCount = Size,
-                        FirstElement = 0,
-                        Flags = UnorderedAccessViewBufferFlags.None
-                    },
-                    Format = Format.Unknown,
-                });
-            }
-            return UAView;
-        }
-
-        public ShaderResourceView GetShaderResourceView(ShaderResourceViewDescription? description = default)
-        {
-            if (SRView == null)
+                    ElementCount = Size,
+                    FirstElement = 0,
+                    Flags = UnorderedAccessViewBufferFlags.None
+                },
+                Format = Format.Unknown,
+            }));
+            SRViewLazy = new Lazy<ShaderResourceView>(() => new ShaderResourceView(Buffer.Device, Buffer, new ShaderResourceViewDescription
             {
-                SRView = new ShaderResourceView(Buffer.Device, Buffer, description ?? new ShaderResourceViewDescription
+                Dimension = ShaderResourceViewDimension.ExtendedBuffer,
+                BufferEx = new ShaderResourceViewDescription.ExtendedBufferResource()
                 {
-                    Dimension = ShaderResourceViewDimension.ExtendedBuffer,
-                    BufferEx = new ShaderResourceViewDescription.ExtendedBufferResource()
-                    {
-                        ElementCount = Size,
-                        FirstElement = 0,
-                        Flags = ShaderResourceViewExtendedBufferFlags.None,
-                    },
-                    Format = Format.Unknown,
-                });
-            }
-            return SRView;
+                    ElementCount = Size,
+                    FirstElement = 0,
+                    Flags = ShaderResourceViewExtendedBufferFlags.None,
+                },
+                Format = Format.Unknown,
+            }));
         }
 
-        public void Update<T>(DeviceContext context, ArraySegment<T> values)
+        public void Update<T>(ArraySegment<T> values)
             where T : struct
         {
+
+            var context = Buffer.Device.ImmediateContext;
 
             context.MapSubresource(
                 Buffer,
@@ -98,8 +87,10 @@ namespace AEther.WindowsForms
         {
             if(!IsDisposed)
             {
-                UAView?.Dispose();
-                SRView?.Dispose();
+                if (UAViewLazy.IsValueCreated)
+                    UAViewLazy.Value.Dispose();
+                if (SRViewLazy.IsValueCreated)
+                    SRViewLazy.Value.Dispose();
                 Buffer.Dispose();
                 GC.SuppressFinalize(this);
                 IsDisposed = true;

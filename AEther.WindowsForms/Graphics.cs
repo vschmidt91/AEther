@@ -20,6 +20,8 @@ namespace AEther.WindowsForms
     public class Graphics
     {
 
+        public event EventHandler<ModeDescription>? OnModeChange;
+
         public bool IsFullscreen
         {
             get
@@ -46,9 +48,9 @@ namespace AEther.WindowsForms
         SharpDX.Direct3D11.Texture2D BackBufferResource;
         public Texture2D BackBuffer { get; protected set; }
 
-        DeviceContext Context => Device.ImmediateContext;
+        public DeviceContext Context => Device.ImmediateContext;
 
-        readonly Device Device;
+        public readonly Device Device;
         public readonly ConstantBuffer<FrameConstants> FrameConstants;
         public readonly ShaderManager Shaders;
         readonly DeviceDebug? Debug;
@@ -112,6 +114,8 @@ namespace AEther.WindowsForms
             Shaders = CreateShaderManager();
             Quad = new Model(Device, Mesh.CreateGrid(2, 2));
 
+            var c = new GraphicsCapabilities(Device);
+
         }
 
         public void Resize(int width, int height, Rational? refreshRate = default, DisplayModeScaling? scaling = default, DisplayModeScanlineOrder? scanlineOrdering = default)
@@ -160,6 +164,8 @@ namespace AEther.WindowsForms
 
                 BackBufferResource = Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0);
                 BackBuffer = new Texture2D(BackBufferResource);
+
+                OnModeChange?.Invoke(this, mode);
 
             }
 
@@ -242,9 +248,9 @@ namespace AEther.WindowsForms
             Chain.TryPresent(1, PresentFlags.DoNotWait);
         }
 
-        public Shader CreateShader(string key)
+        public Shader CreateShader(string key, ShaderMacro[]? macros = null)
         {
-            var bytecode = Shaders.LoadShader(key);
+            var bytecode = Shaders.Compile(key, macros);
             var shader = new Shader(Device, bytecode);
             shader.ConstantBuffers[0].SetConstantBuffer(FrameConstants.Buffer);
             return shader;
@@ -267,7 +273,7 @@ namespace AEther.WindowsForms
         {
             SetModel(null);
             Context.Rasterizer.SetViewport(target.ViewPort);
-            Context.OutputMerger.SetRenderTargets(dsv, target.RenderTargetView);
+            Context.OutputMerger.SetRenderTargets(dsv, target.RTView);
         }
 
         public void Compute(Shader shader, (int, int, int)? threadCount = default, int? techniqueIndex = default)
@@ -289,7 +295,7 @@ namespace AEther.WindowsForms
 
         }
 
-        public void Draw(Shader shader, int? numInstances = default, int? techniqueIndex = default, int? indexOffset = default, int? vertexOffset = default, int? instanceOffset = default)
+        public void Draw(Shader shader, int? instanceCount = default, int? techniqueIndex = default, int? indexOffset = default, int? vertexOffset = default, int? instanceOffset = default)
         {
 
             var technique = shader[techniqueIndex ?? 0];
@@ -297,13 +303,11 @@ namespace AEther.WindowsForms
             {
 
                 var pass = technique[passIndex];
-                var inputLayout = pass.GetInputLayout(Device);
-                Context.InputAssembler.InputLayout = inputLayout;
                 pass.Apply(Context);
 
-                if (numInstances.HasValue)
+                if (instanceCount is int n)
                 {
-                    Context.DrawIndexedInstanced(IndexCount, numInstances.Value, indexOffset ?? 0, vertexOffset ?? 0, instanceOffset ?? 0);
+                    Context.DrawIndexedInstanced(IndexCount, n, indexOffset ?? 0, vertexOffset ?? 0, instanceOffset ?? 0);
                 }
                 else
                 {

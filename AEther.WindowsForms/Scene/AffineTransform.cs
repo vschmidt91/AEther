@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
+
+using SharpDX;
 
 namespace AEther.WindowsForms
 {
@@ -24,10 +25,7 @@ namespace AEther.WindowsForms
             Scale = scale ?? 1f;
         }
 
-        public Matrix4x4 ToMatrix()
-        {
-            return Matrix4x4.CreateScale(Scale) * Matrix4x4.CreateFromQuaternion(Rotation) * Matrix4x4.CreateTranslation(Translation);
-        }
+        public Matrix ToMatrix() => Matrix.AffineTransformation(Scale, Rotation, Translation);
 
         public static AffineTransform operator *(AffineTransform a, AffineTransform b)
         {

@@ -106,7 +106,7 @@ namespace AEther.WindowsForms
             }
 
             Graphics.SetFullscreenTarget(Graphics.BackBuffer);
-            OutputShader.ShaderResources["Source"].SetResource(Source.ShaderResourceView);
+            OutputShader.ShaderResources["Source"].SetResource(Source.SRView);
             Graphics.Draw(OutputShader);
 
         }

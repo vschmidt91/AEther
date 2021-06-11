@@ -32,12 +32,12 @@ namespace AEther.WindowsForms
 
             protected bool IsDisposed;
 
-            public ShaderTechnique(EffectTechnique technique)
+            public ShaderTechnique(SharpDX.Direct3D11.Device device, EffectTechnique technique)
             {
                 Technique = technique;
                 Passes = Enumerable.Range(0, Technique.Description.PassCount)
                     .Select(j => Technique.GetPassByIndex(j))
-                    .Select(t => new ShaderPass(t))
+                    .Select(t => new ShaderPass(device, t))
                     .ToArray();
             }
 
@@ -59,19 +59,21 @@ namespace AEther.WindowsForms
         public class ShaderPass : IDisposable
         {
 
-            EffectPass Pass;
-            InputLayout? InputLayout;
+            readonly EffectPass Pass;
+            readonly InputLayout? InputLayout;
 
             protected bool IsDisposed;
 
-            public ShaderPass(EffectPass pass)
+            public ShaderPass(SharpDX.Direct3D11.Device device, EffectPass pass)
             {
                 Pass = pass;
+                InputLayout = new InputLayout(device, Pass.Description.Signature, InputElements);
             }
 
             public void Apply(DeviceContext context, int? flags = default)
             {
-                if(flags.HasValue)
+                context.InputAssembler.InputLayout = InputLayout;
+                if (flags.HasValue)
                 {
                     Pass.Apply(context, flags.Value);
                 }
@@ -90,15 +92,6 @@ namespace AEther.WindowsForms
                     GC.SuppressFinalize(this);
                     IsDisposed = true;
                 }
-            }
-
-            public InputLayout GetInputLayout(SharpDX.Direct3D11.Device device, InputElement[]? inputElements = default)
-            {
-                if(InputLayout == null)
-                {
-                    InputLayout = new InputLayout(device, Pass.Description.Signature, inputElements ?? InputElements);
-                }
-                return InputLayout;
             }
 
         }
@@ -145,7 +138,7 @@ namespace AEther.WindowsForms
                 .ToArray();
 
             Techniques = Enumerable.Range(0, Effect.Description.TechniqueCount)
-                .Select(i => new ShaderTechnique(Effect.GetTechniqueByIndex(i)))
+                .Select(i => new ShaderTechnique(device, Effect.GetTechniqueByIndex(i)))
                 .ToArray();
 
         }

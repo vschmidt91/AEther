@@ -52,7 +52,7 @@ namespace AEther.WindowsForms
 
         }
 
-        public ShaderBytecode LoadShader(string key)
+        public ShaderBytecode Compile(string key, ShaderMacro[]? macros = null)
         {
 
             var path = Path.Join(BasePath, key);
@@ -70,9 +70,8 @@ namespace AEther.WindowsForms
 
             var profile = "fx_5_0";
             var sourceCode = File.ReadAllText(file.FullName);
-            var macros = Array.Empty<ShaderMacro>();
 
-            using var compiled = ShaderBytecode.Compile(sourceCode, profile, shaderFlags, effectFlags, macros, Includes, file.Name);
+            using var compiled = ShaderBytecode.Compile(sourceCode, profile, shaderFlags, effectFlags, macros ?? Array.Empty<ShaderMacro>(), Includes, file.Name);
 
             if (compiled.Bytecode is null)
             {

@@ -44,7 +44,7 @@ namespace AEther.WindowsForms
 
         public virtual void Draw(Texture2D source)
         {
-            Shader.ShaderResources["Source"].SetResource(source.ShaderResourceView);
+            Shader.ShaderResources["Source"].SetResource(source.SRView);
             Graphics.Draw(Shader);
         }
 

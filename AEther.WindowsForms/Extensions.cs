@@ -146,6 +146,9 @@ namespace AEther.WindowsForms
                 Z = random.NextFloat(),
             } * (max - min);
 
+        public static IEnumerable<(T, int)> WithIndex<T>(this IEnumerable<T> items)
+            => items.Select((xi, i) => (xi, i));
+
         public static Vector4 NextVector4(this Random random, Vector4 min, Vector4 max)
             => min + new Vector4
             {

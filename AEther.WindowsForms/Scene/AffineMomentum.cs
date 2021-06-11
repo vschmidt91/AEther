@@ -1,9 +1,11 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+
+using SharpDX;
 
 namespace AEther.WindowsForms
 {
@@ -43,7 +45,7 @@ namespace AEther.WindowsForms
 
         public AffineTransform ToTransform()
         {
-            var rotation = Quaternion.CreateFromYawPitchRoll(Rotation.X, Rotation.Y, Rotation.Z);
+            var rotation = Quaternion.RotationYawPitchRoll(Rotation.X, Rotation.Y, Rotation.Z);
             return new AffineTransform(Translation, rotation, Scale);
         }
 
