@@ -23,14 +23,17 @@ namespace AEther.WindowsForms
         readonly List<Geometry> Scene = new();
         readonly Shader GeometryShader;
         readonly Shader GeometryShaderInstanced;
+        readonly Particles Particles;
         readonly ConstantBuffer<Instance> InstanceConstants;
         readonly ConstantBuffer<CameraConstants> CameraConstants;
-        readonly ComputeBuffer InstanceBuffer;
-        readonly Instance[] Instances = new Instance[1 << 12];
+        readonly ComputeBuffer Instances;
         readonly Model Cube;
         readonly Model Sphere;
         Texture2D DepthBuffer;
         readonly CameraPerspective Camera;
+
+        readonly Shader MandelboxShader;
+        readonly Texture2D MandelboxTexture;
 
         protected bool IsDisposed;
 
@@ -39,35 +42,40 @@ namespace AEther.WindowsForms
         public SceneState(Graphics graphics)
             : base(graphics)
         {
+
+            MandelboxShader = Graphics.CreateShader("mandelbox.fx");
+            MandelboxTexture = Graphics.CreateTexture(1 << 10, 1 << 10, SharpDX.DXGI.Format.R8G8B8A8_UNorm);
+
+            InstanceConstants = new(Graphics.Device);
+            CameraConstants = new(Graphics.Device);
+            Particles = new Particles(Graphics, 1 << 10, CameraConstants);
             Graphics.OnModeChange += Graphics_OnModeChange;
             GeometryShader = Graphics.CreateShader("geometry.fx");
             GeometryShaderInstanced = Graphics.CreateShader("geometry.fx", new[] { new ShaderMacro("INSTANCING", true) });
-            InstanceConstants = new(Graphics.Device);
-            CameraConstants = new(Graphics.Device);
-            InstanceBuffer = new ComputeBuffer(Graphics.Device, Marshal.SizeOf<Instance>(), Instances.Length, true);
+            Instances = new ComputeBuffer(Graphics.Device, Marshal.SizeOf<Instance>(), 1 << 10, true);
             GeometryShader.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
             GeometryShader.ConstantBuffers[2].SetConstantBuffer(InstanceConstants.Buffer);
             GeometryShaderInstanced.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
-            GeometryShaderInstanced.ShaderResources["Instances"].SetResource(InstanceBuffer.SRView);
+            GeometryShaderInstanced.ShaderResources["Instances"].SetResource(Instances.SRView);
             var rng = new Random(0);
             DepthBuffer = CreateDepthBuffer();
-            Cube = new Model(Graphics.Device, Mesh.CreateSphere(3, 3));
+            Cube = new Model(Graphics.Device, Mesh.CreateSphere(3, 3).SplitVertices(true));
             Sphere = new Model(Graphics.Device, Mesh.CreateSphere(15, 15));
             Camera = new CameraPerspective
             {
-                Position = 20 * Vector3.BackwardLH,
+                Position = 30 * Vector3.BackwardLH,
                 Target = Vector3.Zero,
                 AspectRatio = Graphics.BackBuffer.Width / (float)Graphics.BackBuffer.Height,
             };
-            for(var i = 0; i < Instances.Length; ++i)
-            {
-                var color = rng.NextVector3(Vector3.Zero, Vector3.One);
-                var transform = 5f * rng.NextMomentum(1, 1, .1f);
-                var momentum = 5f * rng.NextMomentum(1, 1, 0);
-                var model = rng.NextDouble() < .5 ? Cube : Sphere;
-                var obj = new Geometry(model, color, transform, momentum);
-                Scene.Add(obj);
-            }
+            //for (var i = 0; i < Instances.ElementCount; ++i)
+            //{
+            //    var color = rng.NextVector4(Vector4.Zero, Vector4.One);
+            //    var transform = 5f * rng.NextMomentum(1, 1, .1f);
+            //    var momentum = 5f * rng.NextMomentum(1, 1, 0);
+            //    var model = rng.NextDouble() < .5 ? Cube : Sphere;
+            //    var obj = new Geometry(model, color, transform, momentum);
+            //    Scene.Add(obj);
+            //}
         }
 
         Texture2D CreateDepthBuffer()
@@ -96,13 +104,15 @@ namespace AEther.WindowsForms
         {
             if(!IsDisposed)
             {
+                MandelboxTexture.Dispose();
+                MandelboxShader.Dispose();
                 GeometryShader.Dispose();
                 GeometryShaderInstanced.Dispose();
                 InstanceConstants.Dispose();
                 CameraConstants.Dispose();
                 Cube.Dispose();
                 Sphere.Dispose();
-                InstanceBuffer.Dispose();
+                Instances.Dispose();
                 DepthBuffer.Dispose();
                 GC.SuppressFinalize(this);
                 IsDisposed = true;
@@ -111,6 +121,14 @@ namespace AEther.WindowsForms
 
         void UpdateScene()
         {
+
+            var t = (DateTime.Now - DateTime.Today).TotalSeconds;
+
+            //Camera.Position = Camera.Position.Length() *
+            //(
+            //    (float)Math.Cos(t) * Vector3.Right +
+            //    (float)Math.Sin(t) * Vector3.ForwardLH
+            //);
 
             float dt;
             if (Timer.IsRunning)
@@ -121,7 +139,7 @@ namespace AEther.WindowsForms
             }
             else
             {
-                dt = 0f;
+                dt = 0;
                 Timer.Start();
             }
 
@@ -131,12 +149,18 @@ namespace AEther.WindowsForms
                 g.Update(dt);
             }
 
+            Particles.Simulate();
+
         }
 
         public override void Render()
         {
 
             UpdateScene();
+
+            Graphics.SetModel();
+            Graphics.SetFullscreenTarget(MandelboxTexture);
+            Graphics.Draw(MandelboxShader);
 
             CameraConstants.Value.View = Camera.View;
             CameraConstants.Value.Projection = Camera.Projection;
@@ -146,42 +170,44 @@ namespace AEther.WindowsForms
             Graphics.Context.ClearRenderTargetView(Graphics.BackBuffer.RTView, Color4.Black);
             Graphics.SetFullscreenTarget(Graphics.BackBuffer, DepthBuffer.DSView);
 
+            Instance toInstance(Geometry obj)
+            => new()
+            {
+                Transform = obj.Transform.ToTransform().ToMatrix(),
+                Color = obj.Color,
+            };
+
             foreach (var group in Scene.GroupBy(g => g.Model))
             {
 
+                Graphics.SetModel(group.Key);
+
                 var count = group.Count();
                 var useInstancing = InstancingThreshold < count;
-
-                Graphics.SetModel(group.Key);
-                Array.Clear(Instances, 0, Instances.Length);
-
-                foreach (var (obj, i) in group.WithIndex())
+                if (useInstancing)
                 {
-                    var instance = new Instance()
+                    using (var map = Instances.Map())
                     {
-                        Transform = obj.Transform.ToTransform().ToMatrix(),
-                        Color = obj.Color,
-                    };
-                    if (useInstancing)
-                    {
-                        Instances[i] = instance;
+                        foreach (var obj in group)
+                        {
+                            map.Write(toInstance(obj));
+                        }
                     }
-                    else
+                    Graphics.Draw(GeometryShaderInstanced, count);
+                }
+                else
+                {
+                    foreach (var (obj, i) in group.WithIndex())
                     {
-                        InstanceConstants.Value = instance;
+                        InstanceConstants.Value = toInstance(obj);
                         InstanceConstants.Update(Graphics.Context);
                         Graphics.Draw(GeometryShader);
                     }
                 }
 
-                if (useInstancing)
-                {
-                    InstanceBuffer.Update<Instance>(Instances[0..count]);
-                    Graphics.Draw(GeometryShaderInstanced, count);
-                }
-
-
             }
+
+            Particles.Draw(MandelboxTexture.SRView);
 
         }
 

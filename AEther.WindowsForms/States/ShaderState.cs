@@ -14,8 +14,8 @@ namespace AEther.WindowsForms
     public class ShaderState : GraphicsState
     {
 
-        readonly Shader Shader;
-        readonly string Name;
+        protected readonly Shader Shader;
+        protected readonly string Name;
 
         public ShaderState(Graphics graphics, Shader shader, string name)
             : base(graphics)

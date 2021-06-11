@@ -12,13 +12,13 @@ namespace AEther.WindowsForms
     {
         
         public Model Model;
-        public Vector3 Color;
+        public Vector4 Color;
 
-        public Geometry(Model model, Vector3? color = default, AffineMomentum? transform = default, AffineMomentum? momentum = default, AffineMomentum? acceleration = default)
+        public Geometry(Model model, Vector4? color = default, AffineMomentum? transform = default, AffineMomentum? momentum = default, AffineMomentum? acceleration = default)
             : base(transform, momentum, acceleration)
         {
             Model = model;
-            Color = color ?? Vector3.One;
+            Color = color ?? Vector4.One;
         }
 
     }

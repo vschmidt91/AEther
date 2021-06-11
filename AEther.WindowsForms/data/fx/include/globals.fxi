@@ -60,7 +60,6 @@ cbuffer FrameConstants : register(b0)
 {
 	float T;
 	float DT;
-	float _;
 	float HistogramShift;
 	float AspectRatio;
 };
@@ -68,8 +67,17 @@ cbuffer FrameConstants : register(b0)
 struct Instance
 {
 	float4x4 World;
-	float3 Color;
-	float _;
+	float4 Color;
+};
+
+struct Particle
+{
+	float4 Position;
+	float4 Momentum;
+	float4 Acceleration;
+	float4 Color;
+	float Lifetime;
+	float3 _;
 };
 
 static const float3x3 M_XYZtoRGB = float3x3

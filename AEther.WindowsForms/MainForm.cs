@@ -52,7 +52,6 @@ namespace AEther.WindowsForms
 
         readonly Stopwatch FrameTimer = Stopwatch.StartNew();
         readonly Stopwatch LatencyUpdateTimer = Stopwatch.StartNew();
-        readonly List<Shader> Shaders = new();
         readonly Graphics Graphics;
 
         SpectrumAccumulator[] Spectrum = Array.Empty<SpectrumAccumulator>();
@@ -91,22 +90,12 @@ namespace AEther.WindowsForms
         void InitStates()
         {
 
-            var histogramShader = Graphics.CreateShader("histogram.fx");
-            var spectrumShader = Graphics.CreateShader("spectrum.fx");
-            var mandelboxShader = Graphics.CreateShader("mandelbox.fx");
-
-            Shaders.Clear();
-            Shaders.Add(histogramShader);
-            Shaders.Add(spectrumShader);
-            Shaders.Add(mandelboxShader);
-
             State.Items.Clear();
             State.Items.AddRange(new GraphicsState[]
             {
                 new SceneState(Graphics),
-                new ShaderState(Graphics, histogramShader, "Histogramm"),
-                new ShaderState(Graphics, spectrumShader, "Spectrum"),
-                new ShaderState(Graphics, mandelboxShader, "Mandelbox"),
+                new HistogramState(Graphics, Histogram),
+                new SpectrumState(Graphics, Spectrum),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
             });
@@ -122,11 +111,6 @@ namespace AEther.WindowsForms
 
         void DisposeStates()
         {
-            foreach(var shader in Shaders)
-            {
-                shader.Dispose();
-            }
-            Shaders.Clear();
             foreach (var state in State.Items.OfType<GraphicsState>())
             {
                 state.Dispose();
@@ -148,23 +132,6 @@ namespace AEther.WindowsForms
 
             Spectrum = CreateSpectrum(sampleSource.Format.ChannelCount, options.Domain.Length);
             Histogram = CreateHistogram(sampleSource.Format.ChannelCount, options.Domain.Length, options.TimeResolution);
-
-            var d = new Dictionary<string, Texture2D>()
-            {
-                { "Spectrum0", Spectrum[0].Texture },
-                { "Spectrum1", Spectrum[1].Texture },
-                { "Histogram0", Histogram[0].Texture },
-                { "Histogram1", Histogram[1].Texture },
-            };
-
-            foreach (var (key, value) in d)
-            {
-                foreach (var shader in Shaders)
-                {
-                    if (shader.ShaderResources.TryGetValue(key, out var v))
-                        v?.SetResource(value.SRView);
-                }
-            }
 
             return (sampleSource, options);
 
@@ -266,7 +233,7 @@ namespace AEther.WindowsForms
                 }
 
                 var histogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
-                Graphics.FrameConstants.Value.Time.W = histogramShift;
+                Graphics.FrameConstants.Value.HistogramShift = histogramShift;
 
             }
 

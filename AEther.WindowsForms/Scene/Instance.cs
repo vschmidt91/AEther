@@ -17,7 +17,7 @@ namespace AEther.WindowsForms
         public Matrix Transform;
 
         [FieldOffset(64)]
-        public Vector3 Color;
+        public Vector4 Color;
 
     }
 }

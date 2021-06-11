@@ -22,16 +22,22 @@ namespace AEther.WindowsForms
 
         protected bool IsDisposed;
 
-        public ContextMapping(Resource resource, int? subresource = default, MapMode? mode = default, MapFlags? flags = default)
+        public ContextMapping(Resource resource, int subresource = 0, MapMode mode = MapMode.WriteDiscard, MapFlags flags = MapFlags.None)
         {
             Resource = resource;
-            Subresource = subresource ?? 0;
-            Box = Resource.Device.ImmediateContext.MapSubresource(Resource, Subresource, mode ?? MapMode.WriteDiscard, flags ?? MapFlags.None, out Stream);
+            Subresource = subresource;
+            Box = Resource.Device.ImmediateContext.MapSubresource(Resource, Subresource, mode, flags, out Stream);
         }
 
         public void Write(ReadOnlySpan<byte> buffer)
         {
             ((System.IO.Stream)Stream).Write(buffer);
+        }
+
+        public void Write<T>(T value)
+            where T : struct
+        {
+            Stream.Write(value);
         }
 
         public void Write(byte[] buffer, int offset, int count)

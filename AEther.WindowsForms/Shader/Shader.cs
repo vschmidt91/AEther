@@ -67,7 +67,12 @@ namespace AEther.WindowsForms
             public ShaderPass(SharpDX.Direct3D11.Device device, EffectPass pass)
             {
                 Pass = pass;
-                InputLayout = new InputLayout(device, Pass.Description.Signature, InputElements);
+                try
+                {
+                    InputLayout = new InputLayout(device, Pass.Description.Signature, InputElements);
+                }
+                catch(IndexOutOfRangeException)
+                { }
             }
 
             public void Apply(DeviceContext context, int? flags = default)

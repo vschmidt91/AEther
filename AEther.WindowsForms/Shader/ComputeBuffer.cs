@@ -17,7 +17,7 @@ namespace AEther.WindowsForms
     public class ComputeBuffer : IDisposable
     {
 
-        public int Size => Description.SizeInBytes / Description.StructureByteStride;
+        public int ElementCount => Description.SizeInBytes / Description.StructureByteStride;
 
         public BufferDescription Description => Buffer.Description;
 
@@ -46,7 +46,7 @@ namespace AEther.WindowsForms
                 Dimension = UnorderedAccessViewDimension.Buffer,
                 Buffer = new UnorderedAccessViewDescription.BufferResource()
                 {
-                    ElementCount = Size,
+                    ElementCount = ElementCount,
                     FirstElement = 0,
                     Flags = UnorderedAccessViewBufferFlags.None
                 },
@@ -57,12 +57,17 @@ namespace AEther.WindowsForms
                 Dimension = ShaderResourceViewDimension.ExtendedBuffer,
                 BufferEx = new ShaderResourceViewDescription.ExtendedBufferResource()
                 {
-                    ElementCount = Size,
+                    ElementCount = ElementCount,
                     FirstElement = 0,
                     Flags = ShaderResourceViewExtendedBufferFlags.None,
                 },
                 Format = Format.Unknown,
             }));
+        }
+
+        public ContextMapping Map()
+        {
+            return new ContextMapping(Buffer);
         }
 
         public void Update<T>(ArraySegment<T> values)

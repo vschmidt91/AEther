@@ -8,23 +8,15 @@ cbuffer CameraConstants : register(b1)
 	float4x4 Projection;
 };
 
-#ifdef INSTANCING
-StructuredBuffer<Instance> Instances : register(t0);
-#else
-cbuffer GeometryConstants : register(b2)
-{
-	Instance SingleInstance;
-};
-#endif
+StructuredBuffer<Particle> Particles : register(t0);
+Texture2D<float4> Texture : register(t1);
 
 struct VSin
 {
 	float3 Position : POSITION0;
 	float3 Normal : NORMAL0;
 	float2 UV : TEXCOORDS0;
-#ifdef INSTANCING
 	uint ID : SV_InstanceID;
-#endif
 };
 
 struct PSin
@@ -40,26 +32,17 @@ PSin VS(const VSin IN)
 
 	float4 pos = float4(IN.Position, 1);
 
-#ifdef INSTANCING
-	Instance instance = Instances[IN.ID];
-#else
-	Instance instance = SingleInstance;
-#endif
-	float4x4 world = instance.World;
-	float4 color = instance.Color;
+	Particle p = Particles[IN.ID];
 
-	pos = mul(world, pos);
+	pos.xyz = p.Position.w * pos.xyz + p.Position.xyz;
 	pos = mul(View, pos);
 	pos = mul(Projection, pos);
 
-	float3 normal = IN.Normal;
-	normal = mul((float3x3)world, normal);
-
 	PSin OUT;
 	OUT.Position = pos;
-	OUT.Normal = normal;
+	OUT.Normal = IN.Normal;
 	OUT.UV = IN.UV;
-	OUT.Color = color;
+	OUT.Color = p.Color;
 	return OUT;
 
 }
@@ -67,9 +50,9 @@ PSin VS(const VSin IN)
 float4 PS(const PSin IN) : SV_Target
 {
 
-	float lighting = dot(IN.Normal, float3(0, 1, 0));
+	float4 textureColor = Texture.Sample(Linear, IN.UV);
 
-	return lighting * IN.Color;
+	return IN.Color * textureColor;
 
 }
 
@@ -80,7 +63,7 @@ technique11 t0
 
 		SetRasterizerState(RasterizerBoth);
 		SetDepthStencilState(DepthStencilDefault, 0);
-		SetBlendState(BlendNone, float4(0, 0, 0, 0), 0xFFFFFFFF);
+		SetBlendState(BlendAlpha, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
 		SetVertexShader(CompileShader(vs_4_0, VS()));
 		SetGeometryShader(0);

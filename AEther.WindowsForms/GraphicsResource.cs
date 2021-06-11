@@ -33,9 +33,9 @@ namespace AEther.WindowsForms
             SRViewLazy = new Lazy<ShaderResourceView>(() => new ShaderResourceView(Resource.Device, Resource));
         }
 
-        public ContextMapping Map(int? subResource = default, MapMode? mode = default, MapFlags? flags = default)
+        public ContextMapping Map()
         {
-            return new ContextMapping(Resource, subResource, mode, flags);
+            return new ContextMapping(Resource);
         }
 
         public void Update<S>(S[] data, int subResource = 0, ResourceRegion? region = null)

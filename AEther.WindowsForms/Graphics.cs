@@ -263,8 +263,8 @@ namespace AEther.WindowsForms
             var t = (float)DateTime.Now.TimeOfDay.TotalSeconds;
 
             FrameConstants.Value.AspectRatio = BackBuffer.Width / (float)BackBuffer.Height;
-            FrameConstants.Value.Time.X = t;
-            FrameConstants.Value.Time.Y = dt;
+            FrameConstants.Value.T = t;
+            FrameConstants.Value.DT = dt;
             FrameConstants.Update(Context);
 
         }
@@ -293,6 +293,8 @@ namespace AEther.WindowsForms
                 Context.Dispatch(tx, ty, tz);
             }
 
+            UnsetResources(shader);
+
         }
 
         public void Draw(Shader shader, int? instanceCount = default, int? techniqueIndex = default, int? indexOffset = default, int? vertexOffset = default, int? instanceOffset = default)
@@ -314,14 +316,27 @@ namespace AEther.WindowsForms
                     Context.DrawIndexed(IndexCount, indexOffset ?? 0, vertexOffset ?? 0);
                 }
 
-                for(int i = 0; i < shader.ShaderResources.Count; ++i)
-                {
-                    Context.PixelShader.SetShaderResource(i, null);
-                    Context.VertexShader.SetShaderResource(i, null);
-                }
+                UnsetResources(shader);
 
             }
         }
+
+        void UnsetResources(Shader shader)
+        {
+
+            for (int i = 0; i < shader.ShaderResources.Count; ++i)
+            {
+                Context.ComputeShader.SetShaderResource(i, null);
+                Context.PixelShader.SetShaderResource(i, null);
+                Context.VertexShader.SetShaderResource(i, null);
+            }
+
+            for (int i = 0; i < shader.UnorderedAccesses.Count; ++i)
+            {
+                Context.ComputeShader.SetUnorderedAccessView(i, null);
+            }
+        }
+
 
     }
 }
