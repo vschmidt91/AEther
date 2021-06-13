@@ -15,13 +15,11 @@ namespace AEther.WindowsForms
     {
 
         protected readonly Shader Shader;
-        protected readonly string Name;
 
-        public ShaderState(Graphics graphics, Shader shader, string name)
+        public ShaderState(Graphics graphics, Shader shader)
             : base(graphics)
         {
             Shader = shader;
-            Name = name;
         }
 
         public override void Dispose()
@@ -33,11 +31,6 @@ namespace AEther.WindowsForms
         {
             Graphics.SetFullscreenTarget(Graphics.BackBuffer);
             Graphics.Draw(Shader);
-        }
-
-        public override string ToString()
-        {
-            return $"{ GetType().Name } { Name }";
         }
 
     }

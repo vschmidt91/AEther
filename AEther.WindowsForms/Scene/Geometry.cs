@@ -21,5 +21,12 @@ namespace AEther.WindowsForms
             Color = color ?? Vector4.One;
         }
 
-    }
+        public Instance ToInstance()
+        => new()
+        {
+            Transform = Transform.ToTransform().ToMatrix(),
+            Color = Color,
+        };
+
+}
 }

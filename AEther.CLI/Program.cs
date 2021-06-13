@@ -25,14 +25,14 @@ namespace AEther.CLI
             //path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
             //path = new FileInfo(path).FullName;
 
-            var options = new SessionOptions();
+            var options = new AnalyzerOptions();
 
             using var inputStream = Console.OpenStandardInput();
             using var outputStream = new MemoryStream();
             using var standardOutput = Console.OpenStandardOutput();
             using var sampleSource = new WAVReader(File.OpenRead(path));
 
-            var session = new Session(sampleSource, options);
+            var session = new Analyzer(sampleSource.Format, options);
             var hash = MD5.Create();
             byte[] buffer = Array.Empty<byte>();
             var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);

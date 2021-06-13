@@ -8,16 +8,16 @@ namespace AEther.WindowsForms
     public class ConfigurationPanel : Panel
     {
 
-        public event EventHandler<SessionOptions>? ConfigurationChanged;
+        public event EventHandler<AnalyzerOptions>? ConfigurationChanged;
 
         readonly PropertyGrid ConfigurationGrid;
-        public SessionOptions? Configuration
+        public AnalyzerOptions? Configuration
         {
-            get => ConfigurationGrid.SelectedObject as SessionOptions;
+            get => ConfigurationGrid.SelectedObject as AnalyzerOptions;
             set => ConfigurationGrid.SelectedObject = value;
         }
 
-        public ConfigurationPanel(SessionOptions configuration)
+        public ConfigurationPanel(AnalyzerOptions configuration)
         {
 
             ConfigurationGrid = new PropertyGrid

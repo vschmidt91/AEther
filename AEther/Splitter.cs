@@ -26,7 +26,7 @@ namespace AEther
         readonly double[] Buffer4;
         readonly double[] KeyWeights;
 
-        public Splitter(Domain domain, SessionOptions options)
+        public Splitter(Domain domain, AnalyzerOptions options)
         {
 
             Domain = domain;

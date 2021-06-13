@@ -15,12 +15,12 @@ namespace AEther.Benchmarks
     public class WAVBenchmark
     {
 
-        SessionOptions Options;
+        AnalyzerOptions Options;
 
         [Benchmark]
         public void RunA()
         {
-            Options = new SessionOptions
+            Options = new AnalyzerOptions
             {
             };
             Run();
@@ -29,7 +29,7 @@ namespace AEther.Benchmarks
         [Benchmark]
         public void RunB()
         {
-            Options = new SessionOptions
+            Options = new AnalyzerOptions
             {
                 MaxParallelization = 4
             };
@@ -50,7 +50,7 @@ namespace AEther.Benchmarks
             using var outputStream = new MemoryStream();
             using var sampleSource = new WAVReader(inputStream);
 
-            var session = new Session(sampleSource, Options);
+            var session = new Analyzer(sampleSource.Format, Options);
             var outputDoubles = new double[4 * Options.Domain.Length];
             var outputBytes = new byte[sizeof(double) * outputDoubles.Length];
             var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);

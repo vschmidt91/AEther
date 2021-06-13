@@ -18,8 +18,7 @@ namespace AEther.WindowsForms
     public class SceneState : GraphicsState
     {
 
-        int InstancingThreshold = 64;
-
+        readonly int InstancingThreshold = 64;
         readonly List<Geometry> Scene = new();
         readonly Shader GeometryShader;
         readonly Shader GeometryShaderInstanced;
@@ -122,7 +121,7 @@ namespace AEther.WindowsForms
         void UpdateScene()
         {
 
-            var t = (DateTime.Now - DateTime.Today).TotalSeconds;
+            //var t = (DateTime.Now - DateTime.Today).TotalSeconds;
 
             //Camera.Position = Camera.Position.Length() *
             //(
@@ -170,13 +169,6 @@ namespace AEther.WindowsForms
             Graphics.Context.ClearRenderTargetView(Graphics.BackBuffer.RTView, Color4.Black);
             Graphics.SetFullscreenTarget(Graphics.BackBuffer, DepthBuffer.DSView);
 
-            Instance toInstance(Geometry obj)
-            => new()
-            {
-                Transform = obj.Transform.ToTransform().ToMatrix(),
-                Color = obj.Color,
-            };
-
             foreach (var group in Scene.GroupBy(g => g.Model))
             {
 
@@ -190,16 +182,16 @@ namespace AEther.WindowsForms
                     {
                         foreach (var obj in group)
                         {
-                            map.Write(toInstance(obj));
+                            map.Write(obj.ToInstance());
                         }
                     }
                     Graphics.Draw(GeometryShaderInstanced, count);
                 }
                 else
                 {
-                    foreach (var (obj, i) in group.WithIndex())
+                    foreach (var obj in group)
                     {
-                        InstanceConstants.Value = toInstance(obj);
+                        InstanceConstants.Value = obj.ToInstance();
                         InstanceConstants.Update(Graphics.Context);
                         Graphics.Draw(GeometryShader);
                     }

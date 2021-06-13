@@ -10,7 +10,7 @@ namespace AEther.WindowsForms
     {
 
         public HistogramState(Graphics graphics, Histogram[] histogram)
-            : base(graphics, graphics.CreateShader("histogram.fx"), "Histogram")
+            : base(graphics, graphics.CreateShader("histogram.fx"))
         {
             for(var i = 0; i < histogram.Length; ++i)
             {
@@ -20,6 +20,7 @@ namespace AEther.WindowsForms
 
         public override void Dispose()
         {
+            GC.SuppressFinalize(this);
             Shader.Dispose();
             base.Dispose();
         }

@@ -8,13 +8,13 @@ using AEther;
 
 namespace AEther.DMX
 {
-    public class DMXController : IAsyncDisposable
+    public class DMXModule : ISessionModule
     {
 
         const int Baudrate = 250000;
 
         readonly SerialPort Serial;
-        readonly Task WriterTask;
+        readonly Thread WriterThread;
         readonly CancellationTokenSource Cancel;
         readonly byte[] Frame;
         readonly DMXChannel[] Channels;
@@ -29,8 +29,13 @@ namespace AEther.DMX
         public double SinuoidThreshold;
         public double TransientThreshold;
 
-        public DMXController(string comPort, Domain domain)
+        public DMXModule(Domain domain, DMXOptions options)
         {
+
+            var comPort = $"COM{options.COMPort}";
+            SinuoidThreshold = options.SinuoidThreshold;
+            TransientThreshold = options.TransientThreshold;
+
             Channels = EuroliteLEDMultiFXBar.Create();
             Domain = domain;
 
@@ -45,10 +50,19 @@ namespace AEther.DMX
                 StopBits = StopBits.Two,
                 Parity = Parity.None,
             };
-            Serial.Open();
             Frame = new byte[1 + Channels.Length];
             Cancel = new();
-            WriterTask = Task.Run(() => Write(Cancel.Token), Cancel.Token);
+            WriterThread = new Thread(() => Write(Cancel.Token));
+
+            if (options.Enabled)
+            {
+                Serial.Open();
+                WriterThread.Start();
+            }
+            else
+            {
+                Cancel.Cancel();
+            }
         }
 
         void Write(CancellationToken cancel)
@@ -118,18 +132,20 @@ namespace AEther.DMX
 
         }
 
-        public async ValueTask DisposeAsync()
+        public void Dispose()
         {
             GC.SuppressFinalize(this);
-            try
+            if(!Cancel.IsCancellationRequested)
             {
                 Cancel.Cancel();
-                await WriterTask;
+                WriterThread.Join();
+                Serial.Close();
+                Serial.Dispose();
             }
-            catch(OperationCanceledException)
-            { }
-            Serial.Close();
-            Serial.Dispose();
         }
+
+        public void Render()
+        { }
+
     }
 }

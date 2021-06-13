@@ -11,8 +11,7 @@ using System.Xml.Serialization;
 
 namespace AEther
 {
-    [Serializable]
-    public class SessionOptions
+    public class AnalyzerOptions
     {
 
         public Domain Domain => Domain.FromRange(MinFrequency, MaxFrequency, FrequencyResolution);
@@ -21,7 +20,7 @@ namespace AEther
         public int BufferCapacity { get; set; } = -1;
 
         [Category("Pipeline")]
-        public double MicroTimingAmount { get; set; } = .9;
+        public double MicroTimingAmount { get; set; } = .99;
 
         [Category("Domain")]
         public double MinFrequency { get; set; } = 27.5;
@@ -53,23 +52,14 @@ namespace AEther
         [Category("Splitter")]
         public double TransientLength { get; set; } = .05;
 
-        [Category("DMX")]
-        public int DMXPort { get; set; } = 0;
-
-        [Category("DMX")]
-        public double SinuoidThreshold { get; set; } = 0.1;
-
-        [Category("DMX")]
-        public double TransientThreshold { get; set; } = 0.1;
-
-        public static SessionOptions ReadFromFile(string path)
+        public static AnalyzerOptions ReadFromFile(string path)
         {
 
             var file = new FileInfo(path);
-            var serializer = new XmlSerializer(typeof(SessionOptions));
+            var serializer = new XmlSerializer(typeof(AnalyzerOptions));
             using var stream = file.Open(FileMode.Open, FileAccess.Read);
             var result = serializer.Deserialize(stream);
-            if (result is not SessionOptions options)
+            if (result is not AnalyzerOptions options)
                 throw new InvalidCastException();
             return options;
 
@@ -79,7 +69,7 @@ namespace AEther
         {
 
             var file = new FileInfo(path);
-            var serializer = new XmlSerializer(typeof(SessionOptions));
+            var serializer = new XmlSerializer(typeof(AnalyzerOptions));
             using var stream = file.Open(FileMode.OpenOrCreate, FileAccess.Write);
             serializer.Serialize(stream, this);
 

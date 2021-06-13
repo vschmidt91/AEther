@@ -21,7 +21,7 @@ using CSCore.Streams;
 
 namespace AEther.CSCore
 {
-    public abstract class Input : AudioDevice
+    public abstract class Input : SampleSource
     {
 
         public override SampleFormat Format { get; }
@@ -36,11 +36,11 @@ namespace AEther.CSCore
             Device.Stopped += Device_Stopped;
             Device.Initialize();
 
-            var type = (Device.WaveFormat.WaveFormatTag, Device.WaveFormat.BitsPerSample) switch
+            SampleType type = (Device.WaveFormat.WaveFormatTag, Device.WaveFormat.BitsPerSample) switch
             {
-                (AudioEncoding.Pcm, 16) => SampleType.UInt16,
-                (AudioEncoding.IeeeFloat, 32) => SampleType.Float32,
-                (AudioEncoding.Extensible, 32) => SampleType.Float32,
+                (AudioEncoding.Pcm, 16) => SampleType.UInt16.Instance,
+                (AudioEncoding.IeeeFloat, 32) => SampleType.Float32.Instance,
+                (AudioEncoding.Extensible, 32) => SampleType.Float32.Instance,
                 _ => throw new Exception(),
             };
             Format = new SampleFormat(type, Device.WaveFormat.SampleRate, Device.WaveFormat.Channels);
