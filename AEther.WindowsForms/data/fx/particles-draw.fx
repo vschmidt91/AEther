@@ -30,19 +30,25 @@ struct PSin
 PSin VS(const VSin IN)
 {
 
-	float4 pos = float4(IN.Position, 1);
 
 	Particle p = Particles[IN.ID];
 
-	pos.xyz = p.Position.w * pos.xyz + p.Position.xyz;
+	float4 pos = float4(p.Position.xyz, 1);
+	// float4 pos = float4(IN.Position, 1);
+	// pos.xyz = p.Position.w * pos.xyz + p.Position.xyz;
 	pos = mul(View, pos);
+	pos.xyz += p.Position.w * IN.Position;
 	pos = mul(Projection, pos);
+
+	float4 color = p.Color;
+	color.a *= saturate(1 - length(IN.Position));
+	color.a *= 1 - exp(-p.Lifetime);
 
 	PSin OUT;
 	OUT.Position = pos;
 	OUT.Normal = IN.Normal;
 	OUT.UV = IN.UV;
-	OUT.Color = p.Color;
+	OUT.Color = color;
 	return OUT;
 
 }
@@ -51,8 +57,9 @@ float4 PS(const PSin IN) : SV_Target
 {
 
 	float4 textureColor = Texture.Sample(Linear, IN.UV);
+	float4 color = IN.Color * textureColor;
 
-	return IN.Color * textureColor;
+	return color;
 
 }
 
@@ -62,7 +69,7 @@ technique11 t0
 	{
 
 		SetRasterizerState(RasterizerBoth);
-		SetDepthStencilState(DepthStencilDefault, 0);
+		SetDepthStencilState(DepthStencilDefaultReadOnly, 0);
 		SetBlendState(BlendAlpha, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
 		SetVertexShader(CompileShader(vs_4_0, VS()));

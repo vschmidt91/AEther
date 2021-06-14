@@ -23,7 +23,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 		{
 			float f = dx * dx + dy * dy;
 			f = exp(-.5 * f / Variance);
-			v += f * Velocity.Sample(Point, IN.UV, int2(dx, dy));
+			//v += f * Velocity.Sample(Point, IN.UV, int2(dx, dy));
 			w += f;
 		}
 	}

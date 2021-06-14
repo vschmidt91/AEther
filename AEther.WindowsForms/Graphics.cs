@@ -248,7 +248,24 @@ namespace AEther.WindowsForms
             Chain.TryPresent(1, PresentFlags.DoNotWait);
         }
 
-        public Shader CreateShader(string key, ShaderMacro[]? macros = null)
+        public MetaShader CreateMetaShader(string key, params string[] defines)
+        {
+            List<List<string>> combinations = new();
+            combinations.Add(new());
+            foreach(var define in defines)
+            {
+                var macro = new[] { define };
+                var newCombinations = combinations.Select(l => l.Concat(macro).ToList()).ToArray();
+                combinations.AddRange(newCombinations);
+            }
+            var c = combinations.Select(d => d.ToArray());
+            ShaderMacro[] toMacros(string[] defines)
+                => defines.Select(d => new ShaderMacro(d, true)).ToArray();
+            var shaders = c.Select(d => (d.ToHashSet(), CreateShader(key, toMacros(d)))).ToArray();
+            return new MetaShader(shaders);
+        }
+
+        public Shader CreateShader(string key, params ShaderMacro[] macros)
         {
             var bytecode = Shaders.Compile(key, macros);
             var shader = new Shader(Device, bytecode);
@@ -265,7 +282,7 @@ namespace AEther.WindowsForms
             FrameConstants.Value.AspectRatio = BackBuffer.Width / (float)BackBuffer.Height;
             FrameConstants.Value.T = t;
             FrameConstants.Value.DT = dt;
-            FrameConstants.Update(Context);
+            FrameConstants.Update();
 
         }
 
@@ -274,6 +291,12 @@ namespace AEther.WindowsForms
             SetModel(null);
             Context.Rasterizer.SetViewport(target.ViewPort);
             Context.OutputMerger.SetRenderTargets(dsv, target.RTView);
+        }
+
+        public void SetRenderTargets(Texture2D? depthBuffer, params Texture2D[] renderTargets)
+        {
+            Context.Rasterizer.SetViewport(renderTargets[0].ViewPort);
+            Context.OutputMerger.SetRenderTargets(depthBuffer?.DSView, renderTargets.Select(t => t.RTView).ToArray());
         }
 
         public void Compute(Shader shader, (int, int, int)? threadCount = default, int? techniqueIndex = default)
@@ -329,6 +352,7 @@ namespace AEther.WindowsForms
                 Context.ComputeShader.SetShaderResource(i, null);
                 Context.PixelShader.SetShaderResource(i, null);
                 Context.VertexShader.SetShaderResource(i, null);
+                Context.GeometryShader.SetShaderResource(i, null);
             }
 
             for (int i = 0; i < shader.UnorderedAccesses.Count; ++i)

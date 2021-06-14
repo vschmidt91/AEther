@@ -37,8 +37,9 @@ namespace AEther.WindowsForms
 
         }
 
-        public void Update(DeviceContext context)
+        public void Update()
         {
+            var context = Buffer.Device.ImmediateContext;
             if (UseResourceMapping)
             {
                 context.MapSubresource(Buffer, MapMode.WriteDiscard, MapFlags.None, out DataStream stream);

@@ -29,5 +29,10 @@ namespace AEther.WindowsForms
             Resource.Device.ImmediateContext.ClearRenderTargetView(RTView, color);
         }
 
+        public void ClearDepth(float depth = 1f)
+        {
+            Resource.Device.ImmediateContext.ClearDepthStencilView(DSView, DepthStencilClearFlags.Depth, depth, 0);
+        }
+
     }
 }

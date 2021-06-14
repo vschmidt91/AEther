@@ -27,7 +27,8 @@ namespace AEther.WindowsForms
             ParticleSimulationShader = Graphics.CreateShader("particles-simulate.fx");
             ParticleDrawShader = Graphics.CreateShader("particles-draw.fx");
             ParticleDrawShader.ConstantBuffers[1].SetConstantBuffer(cameraConstants.Buffer);
-            Model = new Model(Graphics.Device, Mesh.CreateSphere(3, 3).SplitVertices(true));
+            //Model = new Model(Graphics.Device, Mesh.CreateSphere(3, 3).SplitVertices(true));
+            Model = new Model(Graphics.Device, Mesh.CreateGrid(3, 3));
 
         }
 

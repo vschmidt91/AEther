@@ -38,11 +38,11 @@ namespace AEther.WindowsForms
             states.Items.Clear();
             states.Items.AddRange(new GraphicsState[]
             {
-                new SpectrumState(Graphics, Spectrum),
-                new HistogramState(Graphics, Histogram),
                 new SceneState(Graphics),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
+                new SpectrumState(Graphics, Spectrum),
+                new HistogramState(Graphics, Histogram),
             });
             states.SelectedIndex = 0;
             States = states;
@@ -62,6 +62,14 @@ namespace AEther.WindowsForms
             foreach (var histogram in Histogram)
             {
                 histogram.Dispose();
+            }
+        }
+
+        public void ProcessKeyPress(KeyPressEventArgs evt)
+        {
+            foreach (var state in States.Items.OfType<GraphicsState>())
+            {
+                state.ProcessKeyPress(evt);
             }
         }
 

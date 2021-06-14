@@ -57,11 +57,22 @@ BlendState BlendAdditive
 
 BlendState BlendAlpha
 {
+	SrcBlend = SRC_ALPHA;
+	DestBlend = ONE;
+	BlendOp = ADD;
+	SrcBlendAlpha = SRC_ALPHA;
+	DestBlendAlpha = ONE;
+	BlendOpAlpha = ADD;
+	ForAll8(BlendEnable, true)
+};
+
+BlendState BlendAlphaInv
+{
 	SrcBlend = ONE;
-	DestBlend = SRC_ALPHA;
+	DestBlend = INV_SRC_ALPHA;
 	BlendOp = ADD;
 	SrcBlendAlpha = ONE;
-	DestBlendAlpha = SRC_ALPHA;
+	DestBlendAlpha = INV_SRC_ALPHA;
 	BlendOpAlpha = ADD;
 	ForAll8(BlendEnable, true)
 };

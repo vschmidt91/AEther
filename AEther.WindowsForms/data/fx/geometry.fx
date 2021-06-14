@@ -1,75 +1,78 @@
 ﻿
 #include "states.fxi"
 #include "globals.fxi"
+#include "camera.fxi"
 
-cbuffer CameraConstants : register(b1)
-{
-	float4x4 View;
-	float4x4 Projection;
-};
-
-#ifdef INSTANCING
 StructuredBuffer<Instance> Instances : register(t0);
-#else
 cbuffer GeometryConstants : register(b2)
 {
 	Instance SingleInstance;
 };
-#endif
+
+Texture2D<float4> ColorMap : register(t1);
 
 struct VSin
 {
 	float3 Position : POSITION0;
 	float3 Normal : NORMAL0;
 	float2 UV : TEXCOORDS0;
-#ifdef INSTANCING
 	uint ID : SV_InstanceID;
-#endif
 };
 
 struct PSin
 {
 	float4 Position : SV_POSITION;
-	float3 Normal : NORMAL0;
+	float4 Normal : NORMAL0;
 	float2 UV : TEXCOORDS0;
 	float4 Color : COLOR0;
+	float3 WorldPosition : POSITION0;
+};
+
+struct PSout
+{
+	float Depth : SV_Target0;
+	float4 Normal : SV_Target1;
+	float4 Color : SV_Target2;
 };
 
 PSin VS(const VSin IN)
 {
-
-	float4 pos = float4(IN.Position, 1);
 
 #ifdef INSTANCING
 	Instance instance = Instances[IN.ID];
 #else
 	Instance instance = SingleInstance;
 #endif
-	float4x4 world = instance.World;
-	float4 color = instance.Color;
 
-	pos = mul(world, pos);
-	pos = mul(View, pos);
-	pos = mul(Projection, pos);
+	float4 pos = float4(IN.Position, 1);
+	float4 worldPos = mul(instance.World, pos);
+	float4 viewPos = mul(View, worldPos);
+	float4 clipPos = mul(Projection, viewPos);
 
-	float3 normal = IN.Normal;
-	normal = mul((float3x3)world, normal);
+	float3 normal = mul((float3x3)instance.World, IN.Normal);
 
 	PSin OUT;
-	OUT.Position = pos;
-	OUT.Normal = normal;
+	OUT.Position = clipPos;
+	OUT.Normal.xyz = normal;
+	OUT.Normal.w = 0;
 	OUT.UV = IN.UV;
-	OUT.Color = color;
+	OUT.Color = instance.Color;
+	OUT.WorldPosition = worldPos.xyz;
 	return OUT;
 
 }
 
-float4 PS(const PSin IN) : SV_Target
+PSout PS(const PSin IN)
 {
 
-	float lighting = dot(IN.Normal, float3(0, 1, 0));
+	float4 color = ColorMap.Sample(Linear, IN.UV);
 
-	return lighting * IN.Color;
+	PSout OUT;
+	OUT.Depth = distance(IN.WorldPosition, ViewPosition) / FarPlane;
+	OUT.Normal.xyz = normalize(IN.Normal.xyz);
+	OUT.Normal.w = IN.Normal.w;
+	OUT.Color = IN.Color * color;
+	return OUT;
 
 }
 

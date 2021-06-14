@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {
@@ -21,6 +22,9 @@ namespace AEther.WindowsForms
         {
             return GetType().Name;
         }
+
+        public virtual void ProcessKeyPress(KeyPressEventArgs evt)
+        { }
 
     }
 }

@@ -78,6 +78,11 @@ namespace AEther.WindowsForms
                 throw new CompilationException(compiled.Message);
             }
 
+            if(!compiled.Message.Equals("warning X4717: Effects deprecated for D3DCompiler_47\n"))
+            {
+                Debug.WriteLine(compiled.Message);
+            }
+
             //#if DEBUG
             //            Debug.WriteLine(file.Name);
             //            Debug.Write(compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering));

@@ -27,13 +27,19 @@
     <None Remove="data\fx\fluid-output.fx" />
     <None Remove="data\fx\fluid-project.fx" />
     <None Remove="data\fx\geometry.fx" />
+    <None Remove="data\fx\include\brdf.fxi" />
+    <None Remove="data\fx\include\camera.fxi" />
     <None Remove="data\fx\include\complex.fxi" />
     <None Remove="data\fx\include\fluid-boundary.fxi" />
+    <None Remove="data\fx\include\light.fxi" />
+    <None Remove="data\fx\light.fx" />
     <None Remove="data\fx\mg-residual.fx" />
     <None Remove="data\fx\newton.fx" />
     <None Remove="data\fx\particles-draw.fx" />
     <None Remove="data\fx\particles-simulate.fx" />
     <None Remove="data\fx\poisson-sor.fx" />
+    <None Remove="data\fx\present.fx" />
+    <None Remove="data\fx\shadow.fx" />
     <None Remove="sharpdx_direct3d11_1_effects_arm.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x64.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x86.dll" />
@@ -46,6 +52,24 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\fluid-project.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\shadow.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\include\light.fxi">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\light.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\present.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\include\brdf.fxi">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\include\camera.fxi">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\particles-draw.fx">

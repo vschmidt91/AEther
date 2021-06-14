@@ -129,6 +129,18 @@ namespace AEther.WindowsForms
             base.OnKeyDown(e);
         }
 
+        protected override void OnKeyPress(KeyPressEventArgs e)
+        {
+            if (Session is Session session)
+            {
+                foreach (var module in session.Modules.OfType<GraphicsModule>())
+                {
+                    module.ProcessKeyPress(e);
+                }
+            }
+            base.OnKeyPress(e);
+        }
+
         private async void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
         {
             await StopAsync();

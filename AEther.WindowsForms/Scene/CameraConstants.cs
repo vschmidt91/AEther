@@ -9,7 +9,7 @@ using SharpDX;
 
 namespace AEther.WindowsForms
 {
-    [StructLayout(LayoutKind.Explicit, Size = 128)]
+    [StructLayout(LayoutKind.Explicit, Size = 192)]
     public struct CameraConstants
     {
 
@@ -18,6 +18,21 @@ namespace AEther.WindowsForms
 
         [FieldOffset(64)]
         public Matrix Projection;
+
+        [FieldOffset(128)]
+        public Vector3 ViewPosition;
+
+        [FieldOffset(140)]
+        public float FarPlane;
+
+        [FieldOffset(144)]
+        public Vector3 TopLeft;
+
+        [FieldOffset(160)]
+        public Vector3 HStep;
+
+        [FieldOffset(176)]
+        public Vector3 VStep;
 
     }
 }
