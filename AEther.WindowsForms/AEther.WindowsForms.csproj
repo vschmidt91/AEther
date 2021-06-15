@@ -39,6 +39,7 @@
     <None Remove="data\fx\particles-simulate.fx" />
     <None Remove="data\fx\poisson-sor.fx" />
     <None Remove="data\fx\present.fx" />
+    <None Remove="data\fx\shadow-rectify.fx" />
     <None Remove="data\fx\shadow.fx" />
     <None Remove="sharpdx_direct3d11_1_effects_arm.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x64.dll" />
@@ -46,6 +47,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="data\fx\add.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\shadow-rectify.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\fluid-advect.fx">

@@ -215,6 +215,24 @@ namespace AEther.WindowsForms
         public Texture2D CreateTexture(Texture2DDescription description)
             => new(new SharpDX.Direct3D11.Texture2D(Device, description));
 
+        public DepthBuffer CreateDepthBuffer(int width, int height, Format format)
+        {
+            var texture = new SharpDX.Direct3D11.Texture2D(Device, new Texture2DDescription
+            {
+                ArraySize = 1,
+                BindFlags = BindFlags.DepthStencil | BindFlags.ShaderResource,
+                CpuAccessFlags = CpuAccessFlags.None,
+                Format = format,
+                Width = width,
+                Height = height,
+                MipLevels = 1,
+                OptionFlags = ResourceOptionFlags.None,
+                SampleDescription = new SampleDescription(1, 0),
+                Usage = ResourceUsage.Default,
+            });
+            return new DepthBuffer(texture);
+        }
+
         ShaderManager CreateShaderManager()
         {
 
@@ -248,6 +266,9 @@ namespace AEther.WindowsForms
             Chain.TryPresent(1, PresentFlags.DoNotWait);
         }
 
+        static ShaderMacro[] ToMacros(string[] defines)
+            => defines.Select(d => new ShaderMacro(d, true)).ToArray();
+
         public MetaShader CreateMetaShader(string key, params string[] defines)
         {
             List<List<string>> combinations = new();
@@ -259,10 +280,8 @@ namespace AEther.WindowsForms
                 combinations.AddRange(newCombinations);
             }
             var c = combinations.Select(d => d.ToArray());
-            ShaderMacro[] toMacros(string[] defines)
-                => defines.Select(d => new ShaderMacro(d, true)).ToArray();
-            var shaders = c.Select(d => (d.ToHashSet(), CreateShader(key, toMacros(d)))).ToArray();
-            return new MetaShader(shaders);
+            var shaders = c.Select(d => (d.ToHashSet(), CreateShader(key, ToMacros(d)))).ToArray();
+            return new MetaShader(defines, shaders);
         }
 
         public Shader CreateShader(string key, params ShaderMacro[] macros)
@@ -293,10 +312,15 @@ namespace AEther.WindowsForms
             Context.OutputMerger.SetRenderTargets(dsv, target.RTView);
         }
 
-        public void SetRenderTargets(Texture2D? depthBuffer, params Texture2D[] renderTargets)
+        public void SetViewport(Viewport viewPort)
         {
-            Context.Rasterizer.SetViewport(renderTargets[0].ViewPort);
-            Context.OutputMerger.SetRenderTargets(depthBuffer?.DSView, renderTargets.Select(t => t.RTView).ToArray());
+            Context.Rasterizer.SetViewport(viewPort);
+        }
+
+        public void SetRenderTargets(DepthStencilView? depthBuffer, params Texture2D[] renderTargets)
+        {
+            SetViewport(renderTargets.FirstOrDefault()?.ViewPort ?? default);
+            Context.OutputMerger.SetRenderTargets(depthBuffer, renderTargets.Select(t => t.RTView).ToArray());
         }
 
         public void Compute(Shader shader, (int, int, int)? threadCount = default, int? techniqueIndex = default)

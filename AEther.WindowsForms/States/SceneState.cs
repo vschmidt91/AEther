@@ -13,6 +13,7 @@ using Assimp.Unmanaged;
 using SharpDX;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using SharpDX.DXGI;
 using SharpDX.Mathematics.Interop;
 
 namespace AEther.WindowsForms
@@ -20,10 +21,15 @@ namespace AEther.WindowsForms
     public class SceneState : GraphicsState
     {
 
+        const int ShadowBufferSize = 1 << 10;
         readonly int InstancingThreshold = 0;
+
+        readonly Shader MandelboxShader;
         readonly Shader PresentShader;
         readonly MetaShader ShadowShader;
         readonly MetaShader GeometryShader;
+        readonly MetaShader LightShader;
+
         readonly Particles Particles;
         readonly ConstantBuffer<Instance> InstanceConstants;
         readonly ConstantBuffer<CameraConstants> CameraConstants;
@@ -31,57 +37,26 @@ namespace AEther.WindowsForms
         readonly ComputeBuffer Instances;
         readonly Model Cube;
         readonly Model Sphere;
-        Texture2D DepthBuffer;
-        readonly CameraPerspective Camera;
 
-        readonly Shader MandelboxShader;
+        DepthBuffer DepthBuffer;
+        Texture2D NormalBuffer;
+        Texture2D ColorBuffer;
+        Texture2D LightBuffer;
+
+        readonly CameraPerspective Camera;
+        readonly TextureCube ShadowBuffer;
         readonly Texture2D MandelboxTexture;
 
         protected bool IsDisposed;
-
         readonly Stopwatch Timer = new();
-
-        Texture2D LightBuffer;
-        Texture2D ShadowBuffer;
-        Texture2D ShadowDepthBuffer;
-        Texture2D[] GeometryBuffer;
-        readonly MetaShader LightShader;
-
         readonly List<Geometry> Scene = new();
-        readonly List<PointLight> PointLights = new();
-        readonly List<DirectionalLight> DirectionalLights = new();
+        readonly List<Light> Lights = new();
 
         public SceneState(Graphics graphics)
             : base(graphics)
         {
 
-            ShadowBuffer = Graphics.CreateTexture(new Texture2DDescription
-            {
-                Width = 1 << 9,
-                Height = 1 << 10,
-                Format = SharpDX.DXGI.Format.R16_UNorm,
-                BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                ArraySize = 1,
-                CpuAccessFlags = CpuAccessFlags.None,
-                MipLevels = 1,
-                OptionFlags = ResourceOptionFlags.None,
-                Usage = ResourceUsage.Default,
-            });
-
-            ShadowDepthBuffer = Graphics.CreateTexture(new Texture2DDescription
-            {
-                Width = ShadowBuffer.Width,
-                Height = ShadowBuffer.Height,
-                Format = SharpDX.DXGI.Format.D32_Float,
-                BindFlags = BindFlags.DepthStencil,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                ArraySize = 1,
-                CpuAccessFlags = CpuAccessFlags.None,
-                MipLevels = 1,
-                OptionFlags = ResourceOptionFlags.None,
-                Usage = ResourceUsage.Default,
-            });
+            ShadowBuffer = new TextureCube(Graphics, ShadowBufferSize, ShadowBufferSize, Format.R32_Typeless);
 
             MandelboxShader = Graphics.CreateShader("mandelbox.fx");
             MandelboxTexture = Graphics.CreateTexture(1 << 10, 1 << 10, SharpDX.DXGI.Format.R8G8B8A8_UNorm);
@@ -89,13 +64,11 @@ namespace AEther.WindowsForms
             InstanceConstants = new(Graphics.Device);
             CameraConstants = new(Graphics.Device);
             LightConstants = new(Graphics.Device);
+            Instances = new ComputeBuffer(Graphics.Device, Marshal.SizeOf<Instance>(), 1 << 10, true);
             Particles = new Particles(Graphics, 1 << 10, CameraConstants);
             Graphics.OnModeChange += Graphics_OnModeChange;
 
-            LightShader = Graphics.CreateMetaShader("light.fx", "DIRECTIONAL_LIGHT", "VOLUMETRIC");
-
-            Instances = new ComputeBuffer(Graphics.Device, Marshal.SizeOf<Instance>(), 1 << 10, true);
-            ShadowShader = Graphics.CreateMetaShader("shadow.fx", "DIRECTIONAL_LIGHT", "INSTANCING");
+            ShadowShader = Graphics.CreateMetaShader("shadow.fx", "INSTANCING");
             foreach (var shader in ShadowShader.Shaders)
             {
                 shader.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
@@ -112,10 +85,10 @@ namespace AEther.WindowsForms
                 shader.ShaderResources["Instances"].SetResource(Instances.SRView);
                 shader.ShaderResources["ColorMap"].SetResource(MandelboxTexture.SRView);
             }
+
             PresentShader = Graphics.CreateShader("present.fx");
-            PresentShader.ShaderResources["Shadow"].SetResource(ShadowBuffer.SRView);
 
-
+            LightShader = Graphics.CreateMetaShader("light.fx", "DIRECTIONAL", "VOLUMETRIC");
             foreach (var shader in LightShader.Shaders)
             {
                 shader.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
@@ -129,113 +102,47 @@ namespace AEther.WindowsForms
             var floor = new Model(Graphics.Device, Mesh.CreateGrid(32, 32));
             Camera = new CameraPerspective
             {
-                Position = 2 * Vector3.BackwardLH + 8 * Vector3.Left,
-                Direction = Vector3.Right,
+                Position = 15 * Vector3.BackwardLH + 15 * Vector3.Left,
                 AspectRatio = Graphics.BackBuffer.Width / (float)Graphics.BackBuffer.Height,
             };
-            for (var i = 0; i < 50; ++i)
+            Camera.Direction = Vector3.Normalize(Vector3.Zero - Camera.Position);
+            for (var i = 0; i < 256; ++i)
             {
                 var color = rng.NextVector4(Vector4.Zero, Vector4.One);
-                var transform = 5f * rng.NextMomentum(1, 1, .2f);
-                var momentum = 5f * rng.NextMomentum(1, 1, 0);
+                var transform = 10f * rng.NextMomentum(1, 1, 0);
+                var momentum = 250f * rng.NextMomentum(1, 1, 0);
                 var model = rng.NextDouble() < .5 ? Cube : Sphere;
                 var obj = new Geometry(model, color, transform);
                 Scene.Add(obj);
             }
 
-            Scene.Add(new Geometry(floor, Vector4.One, new AffineMomentum(null, null, 3)));
+            //Scene.Add(new Geometry(floor, Vector4.One, new AffineMomentum(null, null, 3)));
 
+            LightConstants.Value.Projection = TextureCube.Projection;
             LightConstants.Value.Anisotropy = .2f;
             LightConstants.Value.Emission = 0f * Vector3.One;
-            LightConstants.Value.Scattering = 0.04f * new Vector3(1, 1, 1);
+            LightConstants.Value.Scattering = 0.02f * new Vector3(1, 1, 1);
             LightConstants.Value.Absorption = 0f * Vector3.One;
 
             CreateTextures();
+
+            Lights = Enumerable.Range(0, 3).Select(i => new Light()).ToList();
 
         }
 
         void CreateTextures()
         {
 
-            DepthBuffer = Graphics.CreateTexture(new Texture2DDescription
-            {
-                Width = Graphics.BackBuffer.Width,
-                Height = Graphics.BackBuffer.Height,
-                Format = SharpDX.DXGI.Format.D32_Float,
-                BindFlags = BindFlags.DepthStencil,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                ArraySize = 1,
-                CpuAccessFlags = CpuAccessFlags.None,
-                MipLevels = 1,
-                OptionFlags = ResourceOptionFlags.None,
-                Usage = ResourceUsage.Default,
-            });
-
-            GeometryBuffer = new[]
-            {
-                Graphics.CreateTexture(new Texture2DDescription
-                {
-                    Width = Graphics.BackBuffer.Width,
-                    Height = Graphics.BackBuffer.Height,
-                    Format = SharpDX.DXGI.Format.R16_UNorm,
-                    BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
-                    SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                    ArraySize = 1,
-                    CpuAccessFlags = CpuAccessFlags.None,
-                    MipLevels = 1,
-                    OptionFlags = ResourceOptionFlags.None,
-                    Usage = ResourceUsage.Default,
-                }),
-                Graphics.CreateTexture(new Texture2DDescription
-                {
-                    Width = Graphics.BackBuffer.Width,
-                    Height = Graphics.BackBuffer.Height,
-                    Format = SharpDX.DXGI.Format.R8G8B8A8_SNorm,
-                    BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
-                    SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                    ArraySize = 1,
-                    CpuAccessFlags = CpuAccessFlags.None,
-                    MipLevels = 1,
-                    OptionFlags = ResourceOptionFlags.None,
-                    Usage = ResourceUsage.Default,
-                }),
-                Graphics.CreateTexture(new Texture2DDescription
-                {
-                    Width = Graphics.BackBuffer.Width,
-                    Height = Graphics.BackBuffer.Height,
-                    Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm,
-                    BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
-                    SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                    ArraySize = 1,
-                    CpuAccessFlags = CpuAccessFlags.None,
-                    MipLevels = 1,
-                    OptionFlags = ResourceOptionFlags.None,
-                    Usage = ResourceUsage.Default,
-                }),
-            };
-
-            LightBuffer = Graphics.CreateTexture(new Texture2DDescription
-            {
-                Width = Graphics.BackBuffer.Width,
-                Height = Graphics.BackBuffer.Height,
-                Format = SharpDX.DXGI.Format.R11G11B10_Float,
-                BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-                ArraySize = 1,
-                CpuAccessFlags = CpuAccessFlags.None,
-                MipLevels = 1,
-                OptionFlags = ResourceOptionFlags.None,
-                Usage = ResourceUsage.Default,
-            });
+            DepthBuffer = Graphics.CreateDepthBuffer(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height, Format.R16_Typeless);
+            NormalBuffer = Graphics.CreateTexture(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height, Format.R8G8B8A8_SNorm);
+            ColorBuffer = Graphics.CreateTexture(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height, Format.R8G8B8A8_UNorm);
+            LightBuffer = Graphics.CreateTexture(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height, Format.R11G11B10_Float);
 
             foreach (var shader in LightShader.Shaders)
             {
-                shader.ShaderResources["Depth"].SetResource(GeometryBuffer[0].SRView);
-                shader.ShaderResources["Normal"].SetResource(GeometryBuffer[1].SRView);
-                shader.ShaderResources["Color"].SetResource(GeometryBuffer[2].SRView);
-                shader.ShaderResources["Depth"].SetResource(GeometryBuffer[0].SRView);
-                shader.ShaderResources["Normal"].SetResource(GeometryBuffer[1].SRView);
-                shader.ShaderResources["Color"].SetResource(GeometryBuffer[2].SRView);
+                shader.ShaderResources["Depth"].SetResource(DepthBuffer.SRView);
+                shader.ShaderResources["Normal"].SetResource(NormalBuffer.SRView);
+                shader.ShaderResources["Color"].SetResource(ColorBuffer.SRView);
             }
             PresentShader.ShaderResources["Light"].SetResource(LightBuffer.SRView);
 
@@ -244,10 +151,8 @@ namespace AEther.WindowsForms
         private void Graphics_OnModeChange(object? sender, SharpDX.DXGI.ModeDescription mode)
         {
             DepthBuffer.Dispose();
-            foreach(var b in GeometryBuffer)
-            {
-                b.Dispose();
-            }
+            NormalBuffer.Dispose();
+            ColorBuffer.Dispose();
             LightBuffer.Dispose();
             CreateTextures();
             Camera.AspectRatio = mode.Width / (float)mode.Height;
@@ -297,69 +202,39 @@ namespace AEther.WindowsForms
 
             foreach (var g in Scene)
             {
-                //g.Acceleration = -0.1f * (float)(1 + Math.Cos(t)) * g.Transform;
+                g.Acceleration = -0.1f * g.Transform;
                 g.Update(dt);
             }
 
-            DirectionalLights.Clear();
-            //DirectionalLights.Add(new()
-            //{
-            //    Direction =
-            //    (
-            //        (float)Math.Cos(.2 * t) * Vector3.Right +
-            //        (float)Math.Sin(.2 * t) * Vector3.Up
-            //    ),
-            //    Intensity = 10 * Vector3.UnitX
-            //});
-            //DirectionalLights.Add(new()
-            //{
-            //    Direction =
-            //    (
-            //        (float)Math.Cos(.2 * t) * Vector3.ForwardLH +
-            //        (float)Math.Sin(.2 * t) * Vector3.Up
-            //    ),
-            //    Intensity = 10 * Vector3.UnitY
-            //});
-            //DirectionalLights.Add(new()
-            //{
-            //    Direction =
-            //    (
-            //        (float)Math.Cos(.2 * t) * Vector3.ForwardLH +
-            //        (float)Math.Sin(.2 * t) * Vector3.Right
-            //    ),
-            //    Intensity = 10 * Vector3.UnitZ
-            //});
+            Lights[0].Position =
+            10 * (
+                (float)Math.Cos(t) * Vector3.BackwardLH +
+                (float)Math.Sin(t) * Vector3.Right
+            );
+            Lights[1].Position =
+            10 * (
+                (float)Math.Cos(t) * Vector3.ForwardLH +
+                (float)Math.Sin(t) * Vector3.Up
+            );
+            Lights[2].Position =
+            10 * (
+                (float)Math.Cos(t) * Vector3.ForwardLH +
+                (float)Math.Sin(t) * Vector3.Right
+            );
 
-            PointLights.Clear();
-            PointLights.Add(new()
-            {
-                Position =
-                10 * (
-                    (float)Math.Abs(Math.Cos(t)) * Vector3.BackwardLH +
-                    (float)Math.Sin(t) * Vector3.Right
-                ),
-                Intensity = 1000 * Vector3.One
-            });
-            //PointLights.Add(new()
-            //{
-            //    Position =
-            //    10 * (
-            //        (float)Math.Cos(t) * Vector3.ForwardLH +
-            //        (float)Math.Sin(t) * Vector3.Up
-            //    ),
-            //    Intensity = 10000 * Vector3.UnitY
-            //});
-            //PointLights.Add(new()
-            //{
-            //    Position =
-            //    10 * (
-            //        (float)Math.Cos(t) * Vector3.ForwardLH +
-            //        (float)Math.Sin(t) * Vector3.Right
-            //    ),
-            //    Intensity = 10000 * Vector3.UnitZ
-            //});
+            Lights[0].Intensity = 500 * Vector3.UnitX;
+            Lights[1].Intensity = 500 * Vector3.UnitY;
+            Lights[2].Intensity = 500 * Vector3.UnitZ;
 
-            //Particles.Simulate();
+            Lights[0].CastsShadows = true;
+            Lights[1].CastsShadows = true;
+            Lights[2].CastsShadows = true;
+
+            Lights[0].IsVolumetric = true;
+            Lights[1].IsVolumetric = true;
+            Lights[2].IsVolumetric = true;
+
+            Particles.Simulate();
 
         }
 
@@ -392,6 +267,9 @@ namespace AEther.WindowsForms
         }
 
         void RenderScene(MetaShader metaShader, params string[] defines)
+            => RenderScene(metaShader, (IEnumerable<string>)defines);
+
+        void RenderScene(MetaShader metaShader, IEnumerable<string> defines)
         {
             foreach (var group in Scene.GroupBy(g => g.Model))
             {
@@ -400,7 +278,7 @@ namespace AEther.WindowsForms
                 var useInstancing = InstancingThreshold < count;
                 if(useInstancing)
                 {
-                    defines = defines.Concat(new[] { "INSTANCING" }).ToArray();
+                    defines = defines.Concat(Enumerable.Repeat("INSTANCING", 1));
                 }
                 var shader = metaShader[defines];
                 if (useInstancing)
@@ -436,7 +314,6 @@ namespace AEther.WindowsForms
             Graphics.SetFullscreenTarget(MandelboxTexture);
             Graphics.Draw(MandelboxShader);
 
-            var x = Vector3.ForwardLH;
             var bounds = Camera.GetBounds();
             CameraConstants.Value.View = Camera.View;
             CameraConstants.Value.Projection = Camera.Projection;
@@ -448,50 +325,42 @@ namespace AEther.WindowsForms
             CameraConstants.Update();
 
             DepthBuffer.ClearDepth();
-            GeometryBuffer[0].Clear(new Color4(Camera.FarPlane));
-            GeometryBuffer[1].Clear();
-            GeometryBuffer[2].Clear();
-            Graphics.SetRenderTargets(DepthBuffer, GeometryBuffer);
+            NormalBuffer.Clear();
+            ColorBuffer.Clear();
+            Graphics.SetRenderTargets(DepthBuffer.DSView, NormalBuffer, ColorBuffer);
             RenderScene(GeometryShader);
 
             LightBuffer.Clear();
 
-            foreach (var light in DirectionalLights)
+            foreach (var light in Lights)
             {
 
-                LightConstants.Value.Transform = light.GetTransform();
                 LightConstants.Value.Intensity = light.Intensity;
-                LightConstants.Value.PositionOrDirection = light.Direction;
-                LightConstants.Update();
-
-                ShadowDepthBuffer.ClearDepth();
-                ShadowBuffer.Clear(Color4.White);
-                Graphics.SetRenderTargets(ShadowDepthBuffer, ShadowBuffer);
-                RenderScene(ShadowShader, "DIRECTIONAL_LIGHT");
-
-                var shader = LightShader["VOLUMETRIC", "DIRECTIONAL_LIGHT"];
-                Graphics.SetModel(null);
-                Graphics.SetRenderTargets(null, LightBuffer);
-                Graphics.Draw(shader);
-
-            }
-
-
-            foreach (var light in PointLights)
-            {
-
-                LightConstants.Value.Transform = light.GetTransform(Camera.Position);
-                LightConstants.Value.Intensity = light.Intensity;
-                LightConstants.Value.PositionOrDirection = light.Position;
+                LightConstants.Value.Position = light.Position;
                 LightConstants.Value.Distance = Vector3.Distance(Camera.Position, light.Position);
+                LightConstants.Value.ShadowFarPlane = TextureCube.FarPlane;
                 LightConstants.Update();
 
-                ShadowDepthBuffer.ClearDepth();
-                ShadowBuffer.Clear(Color4.White);
-                Graphics.SetRenderTargets(ShadowDepthBuffer, ShadowBuffer);
-                RenderScene(ShadowShader);
+                for (var i = 0; i < 6; ++i)
+                {
+                    Graphics.Context.ClearDepthStencilView(ShadowBuffer.DSViews[i], DepthStencilClearFlags.Depth, 1, 0);
+                }
 
-                var shader = LightShader["VOLUMETRIC"];
+                if(light.CastsShadows)
+                {
+                    Graphics.SetViewport(new Viewport(0, 0, ShadowBuffer.Width, ShadowBuffer.Height, 0, 1));
+                    var views = TextureCube.CreateViews(light.Position);
+
+                    for (var i = 0; i < 6; ++i)
+                    {
+                        LightConstants.Value.View = views[i];
+                        LightConstants.Update();
+                        Graphics.Context.OutputMerger.SetRenderTargets(ShadowBuffer.DSViews[i]);
+                        RenderScene(ShadowShader, light.GetDefines());
+                    }
+                }
+
+                var shader = LightShader[light.GetDefines()];
                 Graphics.SetModel(null);
                 Graphics.SetRenderTargets(null, LightBuffer);
                 Graphics.Draw(shader);

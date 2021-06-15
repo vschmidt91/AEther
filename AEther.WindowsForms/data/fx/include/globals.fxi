@@ -181,16 +181,14 @@ struct PSDefaultin
 
 float Dither2(float2 v)
 {
-	return frac(sin(dot(v, float2(12.9898,78.233))) * 43758.5453);
+	float2 k = float2(1, PHI);
+	return frac(cos(dot(v, k)) * 12345.6789);
+	//return frac(sin(dot(v, float2(12.9898,78.233))) * 43758.5453);
 }
 
-float4 Dither4(float4 v)
+float Dither4(float4 v)
 {
-	return float4(
-		Dither2(v.xy),
-		Dither2(v.yz),
-		Dither2(v.zw),
-		Dither2(v.wx));
+	return Dither2(float2(Dither2(v.xy), Dither2(v.zw)));
 }
 
 PSDefaultin VSDefault(const VSDefaultin IN)

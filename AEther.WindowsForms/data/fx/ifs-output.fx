@@ -13,9 +13,9 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	float4 v = Source.Sample(Linear, Squash(q));
 	//v = Source.Sample(Linear, IN.UV);
 
-	float4 dither = Dither4(float4(IN.UV, IN.UV + 1) + frac(T));
+	float dither = Dither4(float4(IN.UV, IN.UV + 1) + frac(T));
 
-	float3 rgb = .1 * v.xyz * log(1 + v.w) + dither.rgb / 256;
+	float3 rgb = .1 * v.xyz * log(1 + v.w) + dither / 256;
 
 	return float4(rgb, 1);
 

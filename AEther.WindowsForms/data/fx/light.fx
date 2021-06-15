@@ -5,13 +5,14 @@
 #include "light.fxi"
 #include "brdf.fxi"
 
-#define NumSamples 32
+#define NumSamples 4
 #define Dithering 1
+#define ShadowBias 1e-2
 
 Texture2D<float> Depth : register(t0);
 Texture2D<float4> Normal : register(t1);
 Texture2D<float4> Color : register(t2);
-Texture2D<float> Shadow : register(t3);
+TextureCube<float> Shadow : register(t3);
 
 float3 PS(const PSDefaultin IN) : SV_TARGET
 {
@@ -27,72 +28,77 @@ float3 PS(const PSDefaultin IN) : SV_TARGET
 	float3 N = normalize(normal.xyz);
 	float3 pos = ViewPosition + depth * V;
 
-#ifdef DIRECTIONAL_LIGHT
-	float3 rectPos = RectifyDirectionalLight(V, depth, FarPlane);
-	float3 L = -LightPositionOrDirection;
+#ifdef DIRECTIONAL
+	float3 L = -LightPosition;
 #else
-	float3 rectPos = RectifyPointLight(V, depth);
-	float3 lightVector = LightPositionOrDirection - pos;
+	float3 lightVector = LightPosition - pos;
 	float lightDistance = length(lightVector);
 	float lightDistanceInv = rcp(lightDistance);
 	float3 L = normalize(lightVector);
+	float shadow = ShadowFarPlane * Shadow.Sample(Linear, -lightVector);
 #endif
-
-	float2 shadowUV = .5 + .5 * rectPos.xy;
-	float shadow = Shadow.Sample(Linear, shadowUV);
-
-	float3 diffuse = color.rgb;
 
 	float3 Ls = 1;
-#ifdef DIRECTIONAL_LIGHT
+#ifdef DIRECTIONAL
 #else
 	Ls *= lightDistanceInv * lightDistanceInv;
+	Ls *= (lightDistance < shadow + ShadowBias);
 #endif
-	Ls *= PSM(shadow, rectPos.z);
-	//Ls *= saturate(dot(N, L));
-	Ls *= diffuse / PI;
+	Ls *= saturate(dot(N, L));
+	Ls *= color.rgb / PI;
 	Ls *= exp(-depth * Extinction);
 
 	float3 Lv = 0;
 
+#ifdef VOLUMETRIC
 
-#ifdef DIRECTIONAL_LIGHT
+#ifdef DIRECTIONAL
 	float phaseConst = PhaseHG(dot(L, V), Anisotropy);
 #else
-	float tm = dot(LightPositionOrDirection - ViewPosition, V);
+	float tm = dot(LightPosition - ViewPosition, V);
 	float D = sqrt(LightDistance * LightDistance - tm * tm);
 	float2 theta = ParameterToAngle(D, float2(0, depth) - tm);
 #endif
 
+	float4 seed = float4(T, T, 12345 * IN.UV);
+	float4 offset = (float4(0, 1, 2, 3) + Dithering * Dither4(seed)) / 4;
 	for (int i = 0; i < NumSamples; ++i)
 	{
 
-		float4 seed = float4(T, i, IN.UV);
-		float offset = Dithering * Dither4(seed).x;
-		float p = (i + offset) / NumSamples;
+		float4 p = (i + offset) / NumSamples;
 
-#ifdef DIRECTIONAL_LIGHT
-		float tj = DistanceSample(depth, p);
-		float phase = phaseConst;
-		float depthj = tj;
+#ifdef DIRECTIONAL
+		float4 ts = DistanceSample(depth, p);
+		float4 phases = phaseConst;
+		float4 depths = ts;
 #else
-		float thetaj = lerp(theta[0], theta[1], p);
-		float tj = AngleToParameter(D, thetaj);
-		float phase = PhaseHG(sin(thetaj), Anisotropy);
-		float depthj = sqrt(D * D + tj * tj) + (tm + tj);
+		float4 thetas = lerp(theta[0], theta[1], p);
+		float4 ts = AngleToParameter(D, thetas);
+		float4 phases = PhaseHG4(sin(thetas), Anisotropy);
+		float4 depths = sqrt(D * D + ts * ts) + (tm + ts);
 #endif
 
-		float2 shadowUVj = shadowUV * float2(p, 1);
-		float shadowj = Shadow.Sample(Point, shadowUVj);
+		[unroll(4)]
+		for (int j = 0; j < 4; ++j)
+		{
+			float3 Lvj = 1;
+			Lvj *= phases;
+			Lvj *= exp(-depths * Extinction);
 
-		float3 Lvj = 1;
-		Lvj *= phase;
-		Lvj *= exp(-max(0, depthj) * Extinction);
-		Lvj *= PSM(shadowj, rectPos.z);
-		Lv += Lvj;
+#ifdef DIRECTIONAL
+#else
+			float3 pj = ViewPosition + (tm + ts[j]) * V;
+			float3 lj = LightPosition - pj;
+			float shadowj = ShadowFarPlane * Shadow.Sample(Linear, -lj);
+			Lvj *= (length(lj) < shadowj + ShadowBias);
+#endif
+
+			Lv += Lvj;
+		}
+
 	}
 
-#ifdef DIRECTIONAL_LIGHT
+#ifdef DIRECTIONAL
 	//Lv *= depth;
 #else
 	Lv /= D;
@@ -100,6 +106,8 @@ float3 PS(const PSDefaultin IN) : SV_TARGET
 
 	Lv *= Scattering;
 	Lv /= NumSamples;
+
+#endif
 
 	float3 Li = Ls + Lv;
 	Li *= LightIntensity;

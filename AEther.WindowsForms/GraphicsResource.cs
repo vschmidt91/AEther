@@ -28,10 +28,14 @@ namespace AEther.WindowsForms
         public GraphicsResource(T resource)
         {
             Resource = resource;
-            RTViewLazy = new Lazy<RenderTargetView>(() => new RenderTargetView(Resource.Device, Resource));
-            DSViewLazy = new Lazy<DepthStencilView>(() => new DepthStencilView(Resource.Device, Resource));
-            SRViewLazy = new Lazy<ShaderResourceView>(() => new ShaderResourceView(Resource.Device, Resource));
+            RTViewLazy = new Lazy<RenderTargetView>(CreateRTView);
+            DSViewLazy = new Lazy<DepthStencilView>(CreateDSView);
+            SRViewLazy = new Lazy<ShaderResourceView>(CreateSRView);
         }
+
+        protected virtual RenderTargetView CreateRTView() => new(Resource.Device, Resource);
+        protected virtual DepthStencilView CreateDSView() => new(Resource.Device, Resource);
+        protected virtual ShaderResourceView CreateSRView() => new(Resource.Device, Resource);
 
         public ContextMapping Map()
         {

@@ -180,7 +180,7 @@ namespace AEther
             return output;
         }
 
-        public async Task<SampleEvent<double>> RunSplitter(SampleEvent<double> input)
+        public SampleEvent<double> RunSplitter(SampleEvent<double> input)
         {
             var output = RentEvent(4 * Domain.Length, Format.ChannelCount, input.Time);
             for (var c = 0; c < Format.ChannelCount; ++c)
@@ -188,10 +188,10 @@ namespace AEther
                 Splitter[c].Process(input.GetChannel(c), output.GetChannel(c));
             }
             ReturnEvent(input);
-            while (SplitterTimer.Elapsed < SplitterInterval)
-            {
-                Thread.SpinWait(100);
-            }
+            //while (SplitterTimer.Elapsed < SplitterInterval)
+            //{
+            //    Thread.SpinWait(100);
+            //}
             //var remainingInterval = (SplitterInterval - SplitterTimer.Elapsed).TotalMilliseconds;
             //if(0 < remainingInterval)
             //{

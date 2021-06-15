@@ -3,12 +3,14 @@
 
 cbuffer LightConstants : register(b2)
 {
-	float4x4 LightTransform;
+	float4x4 LightView;
+	float4x4 LightProjection;
     float3 LightIntensity;
 	float Anisotropy;
-    float3 LightPositionOrDirection;
+    float3 LightPosition;
 	float LightDistance;
     float3 Emission;
+	float ShadowFarPlane;
     float3 Scattering;
     float3 Absorption;
 };
@@ -92,47 +94,3 @@ float LineDistance(float3 p, float3 d, float3 x)
 {
 	return length(cross(d, x - p));
 }
-
-
-float3 RectifyPointLight(float3 v, float depth)
-{
-
-	float3 lightPos = mul((float3x3)LightTransform, v);
-	float3 lightPosShifted = depth * lightPos + float3(0, 0, LightDistance);
-
-	float3 rect = 0;	
-
-	rect.x = -1 + 2 * acos(normalize(lightPosShifted).z) / PI;
-	rect.y = atan2(lightPos.y, lightPos.x) / PI;
-	rect.z = acos(-lightPos.z) / PI;
-
-	return rect;
-
-}
-
-float3 RectifyDirectionalLight(float3 v, float depth, float farPlane)
-{
-
-	float3 lightPos = mul((float3x3)LightTransform, v);
-
-	float3 rect = 0;
-	rect.x = -1 + 2 * length(lightPos.xy) * depth / farPlane;
-	rect.y = atan2(lightPos.y, lightPos.x) / PI;
-	rect.z = acos(-lightPos.z) / PI;
-	return rect;
-
-}
-
-float PSM(float b, float depth)
-{
-	return depth - 1e-3 < b;
-} 
-
-float VSM(float2 b, float z)
-{
-	b = lerp(b, 0, 1e-5);
-	z -= 1e-5;
-	float variance = b[1] - b[0] * b[0];
-	float d = b[0] - z;
-	return saturate(max(variance / (variance + d * d), z <= b[0]));
-} 

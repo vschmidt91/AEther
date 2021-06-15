@@ -14,16 +14,21 @@ namespace AEther.WindowsForms
         public IEnumerable<Shader> Shaders => Values.Select(d => d.Item2);
 
         readonly (HashSet<string>, Shader)[] Values;
+        readonly HashSet<string> Defines;
 
-        public MetaShader(params (HashSet<string>, Shader)[] values)
+        public MetaShader(string[] defines, params (HashSet<string>, Shader)[] values)
         {
+            Defines = defines.ToHashSet();
             Values = values;
         }
 
-        public Shader this[params string[] switches]
+        public Shader this[params string[] switches] => this[(IEnumerable<string>)switches];
+
+        public Shader this[IEnumerable<string> switches]
         {
             get
             {
+                switches = switches.Where(Defines.Contains);
                 var v = Values.FirstOrDefault(v => v.Item1.SetEquals(switches));
                 return v == default ? throw new KeyNotFoundException() : v.Item2;
             }
@@ -31,7 +36,8 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            foreach(var shader in Shaders)
+            GC.SuppressFinalize(this);
+            foreach (var shader in Shaders)
             {
                 shader.Dispose();
             }

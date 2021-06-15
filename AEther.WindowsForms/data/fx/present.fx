@@ -3,7 +3,13 @@
 #include "globals.fxi"
 
 Texture2D<float3> Light : register(t0);
-Texture2D<float> Shadow : register(t1);
+
+float3 MapOctahedron(float2 uv)
+{
+	float d = dot(abs(uv), 1);
+	float2 p = lerp(uv, sign(uv) * (1 - abs(uv)), d > 1);
+	return float3(p, 1 - d);
+}
 
 float3 ToneMap(float3 rgb)
 {
@@ -13,14 +19,12 @@ float3 ToneMap(float3 rgb)
 float4 PS(const PSDefaultin IN) : SV_Target
 {
 
+	float4 seed = float4(T, T, IN.UV);
+
 	float3 light = Light.Sample(Point, IN.UV);
-	float shadow = Shadow.Sample(Point, IN.UV);
 
-	//return shadow;
-
-	float4 seed = float4(T, DT, IN.UV);
-	float3 dither = Dither4(seed).rgb;
-	float3 rgb = ToneMap(light) + dither / 256;
+	float dither = Dither4(seed);
+	float3 rgb = ToneMap(light) + 0 * dither / 256;
 
 	return float4(rgb, 1);
 

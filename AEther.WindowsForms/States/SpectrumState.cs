@@ -20,6 +20,7 @@ namespace AEther.WindowsForms
 
         public override void Dispose()
         {
+            GC.SuppressFinalize(this);
             Shader.Dispose();
             base.Dispose();
         }

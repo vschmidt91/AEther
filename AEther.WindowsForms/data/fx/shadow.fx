@@ -13,14 +13,7 @@ cbuffer GeometryConstants : register(b3)
 struct VSin
 {
 	float3 Position : POSITION;
-#ifdef INSTANCING
 	uint ID : SV_InstanceID;
-#endif
-};
-
-struct GSin
-{
-	float3 Position : POSITION0;
 };
 
 struct PSin
@@ -29,7 +22,7 @@ struct PSin
 	float Depth : DEPTH;
 };
 
-GSin VS(const VSin IN)
+PSin VS(const VSin IN)
 {
 
 #ifdef INSTANCING
@@ -39,73 +32,18 @@ GSin VS(const VSin IN)
 #endif
 
 	float4 pos = float4(IN.Position, 1);
-	float3 worldPos = mul(instance.World, pos).xyz;
-	float3 eye = worldPos - ViewPosition;
-#ifdef DIRECTIONAL_LIGHT
-	float3 rectPos = RectifyDirectionalLight(normalize(eye), length(eye), FarPlane);
-#else
-	float3 rectPos = RectifyPointLight(normalize(eye), length(eye));
-#endif
+	float4 worldPos = mul(instance.World, pos);
+	float4 viewPos = mul(LightView, worldPos);
+	float4 clipPos = mul(LightProjection, viewPos);
 
-	GSin OUT;
-	OUT.Position = rectPos;
+	PSin OUT;
+	OUT.Position = clipPos;
+	OUT.Depth = distance(LightPosition, worldPos.xyz) / ShadowFarPlane;
 	return OUT;
 
 }
 
-[maxvertexcount(6)]
-void GS(triangle GSin IN[3], inout TriangleStream<PSin> OUT)
-{
-
-	PSin vertex = (PSin)0;
-
-	float3 sy = float3(IN[0].Position.y, IN[1].Position.y, IN[2].Position.y);
-
-	if (any(sy < -.8) && any(sy > +.8))
-	{
-
-		int i;
-		for (i = 0; i < 3; ++i)
-		{
-			float4 pos = float4(IN[i].Position, 1);
-			pos.y = pos.y - sign(pos.y) + 1;
-			vertex.Position = float4(pos.x, -pos.y, pos.zw);
-			vertex.Depth = pos.z;
-			OUT.Append(vertex);
-		}
-
-		OUT.RestartStrip();
-
-		for (i = 0; i < 3; ++i)
-		{
-			float4 pos = float4(IN[i].Position, 1);
-			pos.y = pos.y - sign(pos.y) - 1;
-			vertex.Position = float4(pos.x, -pos.y, pos.zw);
-			vertex.Depth = pos.z;
-			OUT.Append(vertex);
-		}
-
-		OUT.RestartStrip();
-
-	}
-	else
-	{
-
-		for (int i = 0; i < 3; ++i)
-		{
-			float4 pos = float4(IN[i].Position, 1);
-			vertex.Position = float4(pos.x, -pos.y, pos.zw);
-			vertex.Depth = pos.z;
-			OUT.Append(vertex);
-		}
-
-		OUT.RestartStrip();
-
-	}
-
-}
-
-float PS(const PSin IN) : SV_Target0
+float PS(const PSin IN) : SV_DEPTH
 {
 
 	return IN.Depth;
@@ -117,12 +55,12 @@ technique11 t0
 	pass p0
 	{
 
-		SetRasterizerState(RasterizerBoth);
+		SetRasterizerState(RasterizerDefault);
 		SetDepthStencilState(DepthStencilDefault, 0);
 		SetBlendState(BlendNone, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
 		SetVertexShader(CompileShader(vs_4_0, VS()));
-		SetGeometryShader(CompileShader(gs_4_0, GS()));
+		SetGeometryShader(0);
 		SetPixelShader(CompileShader(ps_4_0, PS()));
 
 	}
