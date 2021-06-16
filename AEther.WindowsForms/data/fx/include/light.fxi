@@ -23,13 +23,16 @@ cbuffer LightConstants : register(b2)
 #define fatan2(y, x) (x * y / (x * x + .28125 * y * y))
 #define fatan3(y, x) lerp(sign(y) * PI / 2 - fatan2(y, x), fatan2(x, y), abs(y) >)
 
-#define AngleToParameter(D, theta) (D * tan(theta))
+#define AngleToParameter(D, theta) ((D) * tan(theta))
 #define ParameterToAngle(D, t) atan2(t, D)
 
-#define LightSamplePDF(theta0, theta1, D, t) (D / ((theta1 - theta0) * (D * D  + t * t)))
+#define LightSamplePDF(theta0, theta1, D, t) ((D) / ((theta1 - theta0) * ((D) * (D)  + (t) * (t))))
 #define LightSampleCDFinv(theta0, theta1, D, p) (AngleToParameter(D, lerp(theta0, theta1, p)))
 
-#define DistanceSample(t, p) (-log(lerp(1, exp(-Extinction.r * t), p)) / Extinction.r)
+#define ExtinctionSamplePDF(T, t) (Extinction.r * exp(-Extinction.r * (t)) / (1 - exp(-Extinction.r * (T))))
+#define ExtinctionSampleCDF(T, t) ((1 - exp(-Extinction.r * (t))) / (1 - exp(-Extinction.r * (T))))
+#define ExtinctionSampleCDFinv(T, p) (-log(lerp(1, exp(-Extinction.r * (T)), (p))) / Extinction.r)
+//#define DistanceSample(T, p) (-log(lerp(1, exp(-Extinction.r * (T)), (p))) / Extinction.r)
 
 #define ThetaMax (PI / 2)
 #define SampleOffset float4(0, .25, .5, .75)

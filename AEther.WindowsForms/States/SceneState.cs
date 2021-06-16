@@ -23,6 +23,7 @@ namespace AEther.WindowsForms
 
         const int ShadowBufferSize = 1 << 10;
         readonly int InstancingThreshold = 0;
+        bool EquiangularSamplingEnabled = true;
 
         readonly Shader MandelboxShader;
         readonly Shader PresentShader;
@@ -88,7 +89,7 @@ namespace AEther.WindowsForms
 
             PresentShader = Graphics.CreateShader("present.fx");
 
-            LightShader = Graphics.CreateMetaShader("light.fx", "DIRECTIONAL", "VOLUMETRIC");
+            LightShader = Graphics.CreateMetaShader("light.fx", "EQUIANGULAR");
             foreach (var shader in LightShader.Shaders)
             {
                 shader.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
@@ -119,7 +120,7 @@ namespace AEther.WindowsForms
             //Scene.Add(new Geometry(floor, Vector4.One, new AffineMomentum(null, null, 3)));
 
             LightConstants.Value.Projection = TextureCube.Projection;
-            LightConstants.Value.Anisotropy = .2f;
+            LightConstants.Value.Anisotropy = .0f;
             LightConstants.Value.Emission = 0f * Vector3.One;
             LightConstants.Value.Scattering = 0.02f * new Vector3(1, 1, 1);
             LightConstants.Value.Absorption = 0f * Vector3.One;
@@ -262,6 +263,9 @@ namespace AEther.WindowsForms
                 case 'd':
                     Camera.Direction = Vector3.Transform(Camera.Direction, Quaternion.RotationYawPitchRoll(+rotationSpeed, 0, 0));
                     break;
+                case 'x':
+                    EquiangularSamplingEnabled ^= true;
+                    break;
             }
             base.ProcessKeyPress(evt);
         }
@@ -360,7 +364,10 @@ namespace AEther.WindowsForms
                     }
                 }
 
-                var shader = LightShader[light.GetDefines()];
+                var defines = light.GetDefines();
+                if (EquiangularSamplingEnabled)
+                    defines = defines.Concat(Enumerable.Repeat("EQUIANGULAR", 1));
+                var shader = LightShader[defines];
                 Graphics.SetModel(null);
                 Graphics.SetRenderTargets(null, LightBuffer);
                 Graphics.Draw(shader);
