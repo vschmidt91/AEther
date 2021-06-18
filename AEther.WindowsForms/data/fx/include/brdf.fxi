@@ -30,9 +30,9 @@ float3 BRDFref(float3 l, float3 v, float3 n, float3 f0, float a2)
 
 	float d = BRDF_D(dot(h, n), a2);
 	float3 f = BRDF_F(dot(l, h), f0);
-	float g = rcp(BRDF_G(dot(l, n), a2) * BRDF_G(dot(v, n), a2));
+	float g = BRDF_G(dot(l, n), a2) * BRDF_G(dot(v, n), a2);
 
-	return d * f * g;
+	return d * f / g;
 
 }
 

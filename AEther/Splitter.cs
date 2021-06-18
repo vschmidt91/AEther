@@ -76,7 +76,12 @@ namespace AEther
             FrequencySinuoids.FilterSpan(Buffer2, Buffer4, combine);
 
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
-            var noiseFloor = Enumerable.Range(0, input.Length).Sum(k => input.Span[k]) / input.Length;
+            var noiseFloor = 0.0;
+            for(var i = 0; i < input.Length; ++i)
+            {
+                noiseFloor += input.Span[i];
+            }
+            noiseFloor /= input.Length;
 
             for (int k = 0; k < Domain.Length; ++k)
             {

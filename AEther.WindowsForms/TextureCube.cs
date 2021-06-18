@@ -17,24 +17,21 @@ namespace AEther.WindowsForms
         public const float FarPlane = 100f;
         public static readonly Matrix Projection = Matrix.PerspectiveFovLH(FOV, 1, NearPlane, FarPlane);
 
-        public static Matrix[] CreateViews(Vector3 position)
-            => Enumerable.Range(0, 6)
-            .Select(i =>
+        public static Matrix CreateView(int i, Vector3 position)
+        {
+            var direction = Vector3.Zero;
+            var up = Vector3.Up;
+            switch (i)
             {
-                var direction = Vector3.Zero;
-                var up = Vector3.Up;
-                switch (i)
-                {
-                    case 0: direction = Vector3.Right; break;
-                    case 1: direction = Vector3.Left; break;
-                    case 2: direction = Vector3.Up; up = Vector3.BackwardLH; break;
-                    case 3: direction = Vector3.Down; up = Vector3.ForwardLH; break;
-                    case 4: direction = Vector3.ForwardLH; break;
-                    case 5: direction = Vector3.BackwardLH; break;
-                }
-                return Matrix.LookAtLH(position, position + direction, up);
-            })
-            .ToArray();
+                case 0: direction = Vector3.Right; break;
+                case 1: direction = Vector3.Left; break;
+                case 2: direction = Vector3.Up; up = Vector3.BackwardLH; break;
+                case 3: direction = Vector3.Down; up = Vector3.ForwardLH; break;
+                case 4: direction = Vector3.ForwardLH; break;
+                case 5: direction = Vector3.BackwardLH; break;
+            }
+            return Matrix.LookAtLH(position, position + direction, up);
+        }
 
         public readonly DepthStencilView[] DSViews;
 

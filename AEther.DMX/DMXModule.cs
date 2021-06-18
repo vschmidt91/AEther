@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.IO.Ports;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -89,21 +90,28 @@ namespace AEther.DMX
                 Key = newKey;
             }
 
-            var sum = new double[4];
-            var scale = sum.Length / (double)evt.SampleCount;
-            for (var i = 0; i < evt.SampleCount; ++i)
+            var sum = Vector4.Zero;
+            for (var i = 0; i < evt.SampleCount; i += 4)
             {
-                sum[i % sum.Length] += scale * evt.Samples[i];
+                sum += new Vector4
+                {
+                    X = (float)evt.Samples[i+0],
+                    Y = (float)evt.Samples[i+1],
+                    Z = (float)evt.Samples[i+2],
+                    W = (float)evt.Samples[i+3],
+                };
+                //sum[i % sum.Length] += scale * evt.Samples[i];
             }
+            sum /= evt.SampleCount / 4;
 
             //var sinuoid = sum[0] / SinuoidThreshold;
             //var transients = sum[1] / TransientThreshold;
 
-            SinuoidFilter.Filter(sum[0]);
-            TransientFilter.Filter(sum[1]);
+            SinuoidFilter.Filter(sum.X);
+            TransientFilter.Filter(sum.X);
 
-            var sinuoid = sum[0] / SinuoidFilter.State;
-            var transients = sum[1] / TransientFilter.State;
+            var sinuoid = sum.X / SinuoidFilter.State;
+            var transients = sum.X / TransientFilter.State;
 
             Array.Clear(Frame, 0, Frame.Length);
             for (var i = 0; i < Channels.Length; ++i)

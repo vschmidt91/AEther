@@ -12,9 +12,9 @@ namespace AEther.WindowsForms
 
         public Vector3 Direction => Vector3.Normalize(Position);
 
-        public override IEnumerable<string> GetDefines()
+        public override IEnumerable<string> GetSwitches()
         {
-            foreach(var define in base.GetDefines())
+            foreach(var define in base.GetSwitches())
             {
                 yield return define;
             }

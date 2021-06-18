@@ -12,10 +12,10 @@ namespace AEther.Benchmarks
         static void Main()
         {
 #if DEBUG
-            new WAVBenchmark().RunA();
+            new MatrixBenchmark().SystemNumericsBenchmark();
 #else
             //BenchmarkRunner.Run<WAVBenchmark>();
-            BenchmarkRunner.Run<MedianBenchmark>();
+            BenchmarkRunner.Run<MatrixBenchmark>();
             //BenchmarkRunner.Run<TimerBenchmark>();
 #endif
         }

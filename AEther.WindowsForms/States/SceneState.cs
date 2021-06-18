@@ -203,7 +203,7 @@ namespace AEther.WindowsForms
 
             foreach (var g in Scene)
             {
-                g.Acceleration = -0.1f * g.Transform;
+                //g.Acceleration = -0.1f * g.Transform;
                 g.Update(dt);
             }
 
@@ -270,21 +270,23 @@ namespace AEther.WindowsForms
             base.ProcessKeyPress(evt);
         }
 
-        void RenderScene(MetaShader metaShader, params string[] defines)
-            => RenderScene(metaShader, (IEnumerable<string>)defines);
+        void RenderScene(MetaShader metaShader, params string[] switches)
+            => RenderScene(metaShader, (IEnumerable<string>)switches);
 
-        void RenderScene(MetaShader metaShader, IEnumerable<string> defines)
+        void RenderScene(MetaShader metaShader, IEnumerable<string> switches)
         {
-            foreach (var group in Scene.GroupBy(g => g.Model))
+            var models = Scene.Select(g => g.Model).ToHashSet();
+            foreach (var model in models)
             {
-                Graphics.SetModel(group.Key);
+                Graphics.SetModel(model);
+                var group = Scene.Where(g => g.Model == model);
                 var count = group.Count();
                 var useInstancing = InstancingThreshold < count;
                 if(useInstancing)
                 {
-                    defines = defines.Concat(Enumerable.Repeat("INSTANCING", 1));
+                    switches = switches.Concat(Enumerable.Repeat("INSTANCING", 1));
                 }
-                var shader = metaShader[defines];
+                var shader = metaShader[switches];
                 if (useInstancing)
                 {
                     using (var map = Instances.Map())
@@ -353,18 +355,18 @@ namespace AEther.WindowsForms
                 if(light.CastsShadows)
                 {
                     Graphics.SetViewport(new Viewport(0, 0, ShadowBuffer.Width, ShadowBuffer.Height, 0, 1));
-                    var views = TextureCube.CreateViews(light.Position);
+                    //var views = TextureCube.CreateViews(light.Position);
 
                     for (var i = 0; i < 6; ++i)
                     {
-                        LightConstants.Value.View = views[i];
+                        LightConstants.Value.View = TextureCube.CreateView(i, light.Position);
                         LightConstants.Update();
                         Graphics.Context.OutputMerger.SetRenderTargets(ShadowBuffer.DSViews[i]);
-                        RenderScene(ShadowShader, light.GetDefines());
+                        RenderScene(ShadowShader, light.GetSwitches());
                     }
                 }
 
-                var defines = light.GetDefines();
+                var defines = light.GetSwitches();
                 if (EquiangularSamplingEnabled)
                     defines = defines.Concat(Enumerable.Repeat("EQUIANGULAR", 1));
                 var shader = LightShader[defines];

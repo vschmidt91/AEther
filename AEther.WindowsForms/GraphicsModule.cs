@@ -23,6 +23,10 @@ namespace AEther.WindowsForms
 
         public GraphicsModule(Graphics graphics, ListBox states, int channelCount, int noteCount, int historyCount)
         {
+
+            var A1 = SharpDX.Matrix.LookAtLH(SharpDX.Vector3.Zero, SharpDX.Vector3.ForwardLH, SharpDX.Vector3.Up);
+            var A2 = System.Numerics.Matrix4x4.CreateLookAt(System.Numerics.Vector3.Zero, -System.Numerics.Vector3.UnitZ, System.Numerics.Vector3.UnitY);
+
             Graphics = graphics;
             Spectrum = Enumerable.Range(0, channelCount)
                 .Select<int, SpectrumAccumulator>(i => UseFloatTextures

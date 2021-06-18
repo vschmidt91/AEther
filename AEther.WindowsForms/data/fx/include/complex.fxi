@@ -23,7 +23,7 @@ float2 cpow(float2 a, float2 b)
 float2 crcp(float2 z)
 {
 	float a = dot(z * z, 1);
-	return rcp(a) * float2(z.x, -z.y);
+	return float2(z.x, -z.y) / a;
 }
 
 float2 cdiv(float2 a, float2 b)

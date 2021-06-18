@@ -17,7 +17,7 @@ namespace AEther.WindowsForms
         public bool CastsShadows;
         public bool IsVolumetric;
 
-        public virtual IEnumerable<string> GetDefines()
+        public virtual IEnumerable<string> GetSwitches()
         {
             if(IsVolumetric)
             {

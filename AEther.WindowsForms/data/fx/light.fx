@@ -30,12 +30,11 @@ float3 PS(const PSDefaultin IN) : SV_TARGET
 
 	float3 lightVector = LightPosition - pos;
 	float lightDistance = length(lightVector);
-	float lightDistanceInv = rcp(lightDistance);
 	float3 L = normalize(lightVector);
 	float shadow = ShadowFarPlane * Shadow.Sample(Linear, -lightVector);
 
 	float3 Ls = 1;
-	Ls *= lightDistanceInv * lightDistanceInv;
+	Ls /= lightDistance * lightDistance;
 	Ls *= (lightDistance < shadow + ShadowBias);
 	Ls *= saturate(dot(N, L));
 	Ls *= color.rgb / PI;

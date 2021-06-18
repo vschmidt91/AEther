@@ -28,9 +28,15 @@ namespace AEther.WindowsForms
         {
             get
             {
-                switches = switches.Where(Defines.Contains);
-                var v = Values.FirstOrDefault(v => v.Item1.SetEquals(switches));
-                return v == default ? throw new KeyNotFoundException() : v.Item2;
+                var switchesFiltered = switches.Where(Defines.Contains);
+                foreach(var (switches2, shader) in Values)
+                {
+                    if(switches2.SetEquals(switchesFiltered))
+                    {
+                        return shader;
+                    }
+                }
+                throw new KeyNotFoundException();
             }
         }
 
