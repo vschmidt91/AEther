@@ -10,15 +10,19 @@ cbuffer GeometryConstants : register(b3)
 	Instance SingleInstance;
 };
 
+Texture2D<float4> ColorMap : register(t1);
+
 struct VSin
 {
 	float3 Position : POSITION;
+	float2 UV : TEXCOORDS;
 	uint ID : SV_InstanceID;
 };
 
 struct PSin
 {
 	float4 Position : SV_POSITION;
+	float2 UV : TEXCOORDS;
 	float Depth : DEPTH;
 };
 
@@ -38,6 +42,7 @@ PSin VS(const VSin IN)
 
 	PSin OUT;
 	OUT.Position = clipPos;
+	OUT.UV = IN.UV;
 	OUT.Depth = distance(LightPosition, worldPos.xyz) / ShadowFarPlane;
 	return OUT;
 
@@ -45,6 +50,10 @@ PSin VS(const VSin IN)
 
 float PS(const PSin IN) : SV_DEPTH
 {
+
+	float4 color = ColorMap.Sample(Linear, IN.UV);
+
+	if (color.a == 0) discard;
 
 	return IN.Depth;
 

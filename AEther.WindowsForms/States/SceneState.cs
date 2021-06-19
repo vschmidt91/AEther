@@ -76,6 +76,7 @@ namespace AEther.WindowsForms
                 shader.ConstantBuffers[2].SetConstantBuffer(LightConstants.Buffer);
                 shader.ConstantBuffers[3].SetConstantBuffer(InstanceConstants.Buffer);
                 shader.ShaderResources["Instances"].SetResource(Instances.SRView);
+                shader.ShaderResources["ColorMap"].SetResource(MandelboxTexture.SRView);
             }
 
             GeometryShader = Graphics.CreateMetaShader("geometry.fx", "INSTANCING");
@@ -103,17 +104,21 @@ namespace AEther.WindowsForms
             var floor = new Model(Graphics.Device, Mesh.CreateGrid(32, 32));
             Camera = new CameraPerspective
             {
-                Position = 15 * Vector3.BackwardLH + 15 * Vector3.Left,
+                Position = 20 * Vector3.BackwardLH + 20 * Vector3.Left,
                 AspectRatio = Graphics.BackBuffer.Width / (float)Graphics.BackBuffer.Height,
             };
             Camera.Direction = Vector3.Normalize(Vector3.Zero - Camera.Position);
-            for (var i = 0; i < 256; ++i)
+            for (var i = 0; i < 1 << 8; ++i)
             {
-                var color = rng.NextVector4(Vector4.Zero, Vector4.One);
-                var transform = 10f * rng.NextMomentum(1, 1, 0);
+                var transform = 10f * rng.NextMomentum(1, 1, .1f);
                 var momentum = 250f * rng.NextMomentum(1, 1, 0);
                 var model = rng.NextDouble() < .5 ? Cube : Sphere;
-                var obj = new Geometry(model, color, transform);
+                var obj = new Geometry(model)
+                {
+                    Color = new Vector4(rng.NextVector3(Vector3.Zero, Vector3.One), rng.NextDouble() < .5 ? rng.NextFloat(0, 1) : 1),
+                    Transform = transform,
+                    Roughness = rng.NextFloat(0, 1),
+                };
                 Scene.Add(obj);
             }
 
@@ -212,27 +217,26 @@ namespace AEther.WindowsForms
                 (float)Math.Cos(t) * Vector3.BackwardLH +
                 (float)Math.Sin(t) * Vector3.Right
             );
+            Lights[0].Intensity = 1000 * Vector3.UnitX;
+            Lights[0].CastsShadows = true;
+            Lights[0].IsVolumetric = true;
+
             Lights[1].Position =
             10 * (
-                (float)Math.Cos(t) * Vector3.ForwardLH +
+                (float)Math.Cos(t) * Vector3.BackwardLH +
                 (float)Math.Sin(t) * Vector3.Up
             );
+            Lights[1].Intensity = 1000 * Vector3.UnitY;
+            Lights[1].CastsShadows = true;
+            Lights[1].IsVolumetric = true;
+
             Lights[2].Position =
             10 * (
-                (float)Math.Cos(t) * Vector3.ForwardLH +
-                (float)Math.Sin(t) * Vector3.Right
+                (float)Math.Cos(t) * Vector3.Right +
+                (float)Math.Sin(t) * Vector3.Up
             );
-
-            Lights[0].Intensity = 500 * Vector3.UnitX;
-            Lights[1].Intensity = 500 * Vector3.UnitY;
-            Lights[2].Intensity = 500 * Vector3.UnitZ;
-
-            Lights[0].CastsShadows = true;
-            Lights[1].CastsShadows = true;
+            Lights[2].Intensity = 1000 * Vector3.UnitZ;
             Lights[2].CastsShadows = true;
-
-            Lights[0].IsVolumetric = true;
-            Lights[1].IsVolumetric = true;
             Lights[2].IsVolumetric = true;
 
             Particles.Simulate();
@@ -320,18 +324,15 @@ namespace AEther.WindowsForms
             Graphics.SetFullscreenTarget(MandelboxTexture);
             Graphics.Draw(MandelboxShader);
 
-            var bounds = Camera.GetBounds();
             CameraConstants.Value.View = Camera.View;
             CameraConstants.Value.Projection = Camera.Projection;
             CameraConstants.Value.ViewPosition = Camera.Position;
             CameraConstants.Value.FarPlane = Camera.FarPlane;
-            CameraConstants.Value.TopLeft = bounds[0, 1, 1];
-            CameraConstants.Value.HStep = bounds[1, 1, 1] - bounds[0, 1, 1];
-            CameraConstants.Value.VStep = bounds[0, 0, 1] - bounds[0, 1, 1];
+            CameraConstants.Value.FarPosMatrix = Camera.GetFarPosMatrix();
             CameraConstants.Update();
 
             DepthBuffer.ClearDepth();
-            NormalBuffer.Clear();
+            NormalBuffer.Clear(new Color4(0, 0, 1, 0));
             ColorBuffer.Clear();
             Graphics.SetRenderTargets(DepthBuffer.DSView, NormalBuffer, ColorBuffer);
             RenderScene(GeometryShader);
@@ -355,8 +356,6 @@ namespace AEther.WindowsForms
                 if(light.CastsShadows)
                 {
                     Graphics.SetViewport(new Viewport(0, 0, ShadowBuffer.Width, ShadowBuffer.Height, 0, 1));
-                    //var views = TextureCube.CreateViews(light.Position);
-
                     for (var i = 0; i < 6; ++i)
                     {
                         LightConstants.Value.View = TextureCube.CreateView(i, light.Position);

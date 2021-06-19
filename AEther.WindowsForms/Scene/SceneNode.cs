@@ -12,16 +12,9 @@ namespace AEther.WindowsForms
     public class SceneNode
     {
 
-        public AffineMomentum Transform;
-        public AffineMomentum Momentum;
-        public AffineMomentum Acceleration;
-
-        public SceneNode(AffineMomentum? transform = default, AffineMomentum? momentum = default, AffineMomentum? acceleration = default)
-        {
-            Transform = transform ?? AffineMomentum.Identity;
-            Momentum = momentum ?? AffineMomentum.Identity;
-            Acceleration = acceleration ?? AffineMomentum.Identity;
-        }
+        public AffineMomentum Transform = AffineMomentum.Identity;
+        public AffineMomentum Momentum = AffineMomentum.Identity;
+        public AffineMomentum Acceleration = AffineMomentum.Identity;
 
         public virtual void Update(float dt)
         {

@@ -3,10 +3,11 @@
 #define PI 3.14159
 #endif
 
-float BRDF_D(float nh, float a2)
+/*
+float BRDF_D(float NoH, float a2)
 {
 	// GGX (Trowbridge-Reitz)
-	float d = lerp(1, a2, nh * nh);
+	float d = lerp(1, a2, NoH * NoH);
 	return a2 / (PI * d * d);
 }
 
@@ -14,13 +15,27 @@ float BRDF_G(float VoN, float a2)
 {
 	return VoN + sqrt(a2 + (1 - a2) * VoN * VoN);
 }
+*/
 
-float3 BRDF_F(float VoH, float3 f0)
+float BRDF_D(float NoH, float a2)
+{
+	// GGX (Trowbridge-Reitz)
+	float d = lerp(1, a2, NoH * NoH);
+	return step(0, NoH)  * a2 / (PI * d * d);
+}
+
+float BRDF_G(float XoH, float XoN, float a2)
+{
+	XoH = saturate(XoH);
+	float XoH2 = XoH * XoH;
+	float tan2 = (1 - XoH2) / XoH2;
+	return 2 * step(0,  XoH) / (1 + sqrt(1 + a2 * tan2));
+}
+
+float3 BRDF_F(float LoH, float3 f0)
 {
 	// Schlick
-	float q = 1 - VoH;
-	float q2 = q * q;
-	return lerp(f0, 1, q2 * q2 * q);
+	return lerp(f0, 1, pow(1 - LoH, 5));
 }
 
 float3 BRDFref(float3 l, float3 v, float3 n, float3 f0, float a2)
@@ -28,11 +43,17 @@ float3 BRDFref(float3 l, float3 v, float3 n, float3 f0, float a2)
 
 	float3 h = normalize(l + v);
 
-	float d = BRDF_D(dot(h, n), a2);
-	float3 f = BRDF_F(dot(l, h), f0);
-	float g = BRDF_G(dot(l, n), a2) * BRDF_G(dot(v, n), a2);
+	float3 x = 1;
 
-	return d * f / g;
+	float LoH = dot(l, h);
+	x *= BRDF_D(dot(h, n), a2);
+	x *= BRDF_F(LoH, f0);
+	x *= BRDF_G(dot(v, h), dot(v, n), a2);
+	x *= BRDF_G(LoH, dot(l, n), a2);
+
+	//x /= max(1e-3, 4 * dot(h, n) * dot(v, n));
+
+	return x;
 
 }
 

@@ -9,7 +9,7 @@ using SharpDX;
 
 namespace AEther.WindowsForms
 {
-    [StructLayout(LayoutKind.Explicit, Size = 80)]
+    [StructLayout(LayoutKind.Explicit, Size = 96)]
     public struct Instance
     {
 
@@ -18,6 +18,9 @@ namespace AEther.WindowsForms
 
         [FieldOffset(64)]
         public Vector4 Color;
+
+        [FieldOffset(80)]
+        public float Roughness;
 
     }
 }

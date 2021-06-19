@@ -46,5 +46,16 @@ namespace AEther.WindowsForms
             return bounds;
         }
 
+        public Matrix GetFarPosMatrix()
+        {
+            var bounds = GetBounds();
+            var topLeft = bounds[0, 1, 1];
+            var farPosMatrix = Matrix.Identity;
+            farPosMatrix.Column1 = new Vector4(bounds[1, 1, 1] - topLeft, 0);
+            farPosMatrix.Column2 = new Vector4(bounds[0, 0, 1] - topLeft, 0);
+            farPosMatrix.Column3 = new Vector4(topLeft, 0);
+            return farPosMatrix;
+        }
+
     }
 }

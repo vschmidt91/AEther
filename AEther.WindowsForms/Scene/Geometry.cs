@@ -12,13 +12,12 @@ namespace AEther.WindowsForms
     {
         
         public Model Model;
-        public Vector4 Color;
+        public Vector4 Color = Vector4.One;
+        public float Roughness = 0f;
 
-        public Geometry(Model model, Vector4? color = default, AffineMomentum? transform = default, AffineMomentum? momentum = default, AffineMomentum? acceleration = default)
-            : base(transform, momentum, acceleration)
+        public Geometry(Model model)
         {
             Model = model;
-            Color = color ?? Vector4.One;
         }
 
         public Instance ToInstance()
@@ -26,6 +25,7 @@ namespace AEther.WindowsForms
         {
             Transform = Transform.ToTransform().ToMatrix(),
             Color = Color,
+            Roughness = Roughness,
         };
 
 }

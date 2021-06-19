@@ -20,12 +20,8 @@ float4 PS(const PSDefaultin IN) : SV_Target
 {
 
 	float4 seed = float4(T, T, IN.UV);
-
 	float3 light = Light.Sample(Point, IN.UV);
-
-	float dither = Dither4(seed);
-	float3 rgb = ToneMap(light) + 1 * dither / 256;
-
+	float3 rgb = ToneMap(light) + Dither4(seed) / 256;
 	return float4(rgb, 1);
 
 }

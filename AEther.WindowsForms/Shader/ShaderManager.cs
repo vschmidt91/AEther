@@ -16,6 +16,7 @@ using SharpDX.DXGI;
 using Device = SharpDX.Direct3D11.Device;
 using System.Windows.Forms;
 using System.Drawing;
+using System.Threading.Tasks;
 
 namespace AEther.WindowsForms
 {
@@ -83,10 +84,16 @@ namespace AEther.WindowsForms
                 Debug.WriteLine(compiled.Message);
             }
 
-            //#if DEBUG
-            //            Debug.WriteLine(file.Name);
-            //            Debug.Write(compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering));
-            //#endif
+
+#if DEBUG
+            var disassembly = compiled.Bytecode.Disassemble(DisassemblyFlags.EnableInstructionNumbering);
+            var disassemblyFile = new FileInfo(Path.Join(BasePath, "disassembly", key));
+            Task.Run(() =>
+            {
+                using var disassemblyWriter = File.CreateText(disassemblyFile.FullName);
+                disassemblyWriter.Write(disassembly);
+            });
+#endif
 
             return compiled.Bytecode;
 

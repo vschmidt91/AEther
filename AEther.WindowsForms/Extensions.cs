@@ -103,11 +103,12 @@ namespace AEther.WindowsForms
             return size.X * size.Y * size.Z;
         }
         
-        public static float NearPlane(this Matrix4x4 p)
+        public static float NearPlane(this SharpDX.Matrix p)
             => -p.M43 / p.M33;
-        
-        public static float FarPlane(this Matrix4x4 p)
-            => p.NearPlane() / (1 - 1 / p.M33);
+
+        public static float FarPlane(this SharpDX.Matrix p)
+            //=> p.NearPlane() / (1 - 1 / p.M33);
+            => p.NearPlane() * p.M33 / (p.M33 - 1);
 
         public static Quaternion ToQuaternion(this Vector3 v)
             => Quaternion.CreateFromYawPitchRoll(v.X, v.Y, v.Z);

@@ -39,10 +39,6 @@ namespace AEther
         {
             if(!IsDisposed)
             {
-                foreach (var module in Modules)
-                {
-                    module.Dispose();
-                }
                 GC.SuppressFinalize(this);
                 IsDisposed = true;
             }
@@ -61,6 +57,10 @@ namespace AEther
 
         public void Render()
         {
+            if(IsDisposed)
+            {
+                return;
+            }
             foreach (var module in Modules)
             {
                 module.Render();
@@ -69,7 +69,11 @@ namespace AEther
 
         void Analyzer_OnSamplesAvailable(object? sender, SampleEvent<double> evt)
         {
-            foreach(var module in Modules)
+            if (IsDisposed)
+            {
+                return;
+            }
+            foreach (var module in Modules)
             {
                 module.Process(evt);
             }

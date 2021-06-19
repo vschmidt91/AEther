@@ -13,9 +13,9 @@ Texture2D<float4> ColorMap : register(t1);
 
 struct VSin
 {
-	float3 Position : POSITION0;
-	float3 Normal : NORMAL0;
-	float2 UV : TEXCOORDS0;
+	float3 Position : POSITION;
+	float3 Normal : NORMAL;
+	float2 UV : TEXCOORDS;
 	uint ID : SV_InstanceID;
 };
 
@@ -54,7 +54,7 @@ PSin VS(const VSin IN)
 	PSin OUT;
 	OUT.Position = clipPos;
 	OUT.Normal.xyz = normal;
-	OUT.Normal.w = 0;
+	OUT.Normal.w = instance.Roughness;
 	OUT.UV = IN.UV;
 	OUT.Color = instance.Color;
 	OUT.WorldPosition = worldPos.xyz;
@@ -66,6 +66,9 @@ PSout PS(const PSin IN)
 {
 
 	float4 color = ColorMap.Sample(Linear, IN.UV);
+
+	if (color.a == 0) discard;
+	color.a = 1;
 
 	PSout OUT;
 	OUT.Depth = distance(IN.WorldPosition, ViewPosition) / FarPlane;

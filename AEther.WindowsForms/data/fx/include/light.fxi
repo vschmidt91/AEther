@@ -19,12 +19,12 @@ cbuffer LightConstants : register(b2)
 #define PI 3.14159
 #endif
 
-#define fatan(x)  x / (1 + .28125 * x * x)
-#define fatan2(y, x) (x * y / (x * x + .28125 * y * y))
+#define fatan(x)  ((x) / (1 + .28125 * (x) * (x)))
+#define fatan2(y, x) ((x) * (y) / ((x) * (x) + .28125 * (y) * (y)))
 #define fatan3(y, x) lerp(sign(y) * PI / 2 - fatan2(y, x), fatan2(x, y), abs(y) >)
 
 #define AngleToParameter(D, theta) ((D) * tan(theta))
-#define ParameterToAngle(D, t) atan2(t, D)
+#define ParameterToAngle(D, t) atan2((t), (D))
 
 #define LightSamplePDF(theta0, theta1, D, t) ((D) / ((theta1 - theta0) * ((D) * (D)  + (t) * (t))))
 #define LightSampleCDFinv(theta0, theta1, D, p) (AngleToParameter(D, lerp(theta0, theta1, p)))

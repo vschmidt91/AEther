@@ -68,6 +68,8 @@ struct Instance
 {
 	float4x4 World;
 	float4 Color;
+	float Roughness;
+	float3 _;
 };
 
 struct Particle

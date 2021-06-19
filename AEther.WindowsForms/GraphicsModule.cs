@@ -55,10 +55,6 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            foreach(var state in States.Items.OfType<GraphicsState>())
-            {
-                state.Dispose();
-            }
             foreach (var spectrum in Spectrum)
             {
                 spectrum.Dispose();

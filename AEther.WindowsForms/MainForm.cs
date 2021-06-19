@@ -21,6 +21,7 @@ namespace AEther.WindowsForms
         readonly Graphics Graphics;
 
         Session? Session = null;
+        AutoResetEvent RenderEvent = new(false);
 
         public MainForm()
         {
@@ -60,19 +61,26 @@ namespace AEther.WindowsForms
         {
             if (Session is Session session)
             {
+                Session = null;
+                RenderEvent.WaitOne();
+                await session.StopAsync();
+                session.Dispose();
                 foreach (var module in session.Modules)
                 {
                     module.Dispose();
                 }
-                await session.StopAsync();
-                session.Dispose();
+                foreach (var state in States.Items.OfType<GraphicsState>())
+                {
+                    state.Dispose();
+                }
             }
-            Session = null;
         }
 
         public void Render()
         {
+            RenderEvent.Reset();
             Session?.Render();
+            RenderEvent.Set();
         }
 
         void ToggleFullscreen()
@@ -143,6 +151,10 @@ namespace AEther.WindowsForms
 
         private async void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
         {
+            if (!Created)
+            {
+                return;
+            }
             await StopAsync();
             Start();
         }

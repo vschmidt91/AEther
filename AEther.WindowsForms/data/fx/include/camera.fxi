@@ -5,7 +5,5 @@ cbuffer CameraConstants : register(b1)
 	float4x4 Projection;
 	float3 ViewPosition;
 	float FarPlane;
-	float3 TopLeft;
-	float3 HStep;
-	float3 VStep;
+	float4x4 FarPosMatrix;
 };

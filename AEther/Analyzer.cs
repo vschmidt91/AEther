@@ -140,8 +140,8 @@ namespace AEther
                         Thread.SpinWait(1);
                         continue;
                     }
-                    await SamplePipe.Writer.WriteAsync(input.Samples[0..input.SampleCount]);
-                    await SamplePipe.Writer.FlushAsync();
+                    await SamplePipe.Writer.WriteAsync(input.Samples.AsMemory(0, input.SampleCount), cancel);
+                    await SamplePipe.Writer.FlushAsync(cancel);
                     ReturnEvent(input);
                 }
             }

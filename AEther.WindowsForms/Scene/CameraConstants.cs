@@ -26,13 +26,7 @@ namespace AEther.WindowsForms
         public float FarPlane;
 
         [FieldOffset(144)]
-        public Vector3 TopLeft;
-
-        [FieldOffset(160)]
-        public Vector3 HStep;
-
-        [FieldOffset(176)]
-        public Vector3 VStep;
+        public Matrix FarPosMatrix;
 
     }
 }
