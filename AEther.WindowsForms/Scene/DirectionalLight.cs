@@ -10,7 +10,7 @@ namespace AEther.WindowsForms
     public class DirectionalLight : Light
     {
 
-        public Vector3 Direction => Vector3.Normalize(Position);
+        public Vector3 Direction => Vector3.Normalize(Transform.Translation);
 
         public override IEnumerable<string> GetSwitches()
         {

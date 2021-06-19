@@ -74,7 +74,7 @@ PSout PS(const PSin IN)
 	OUT.Depth = distance(IN.WorldPosition, ViewPosition) / FarPlane;
 	OUT.Normal.xyz = normalize(IN.Normal.xyz);
 	OUT.Normal.w = IN.Normal.w;
-	OUT.Color = IN.Color * color;
+	OUT.Color = IN.Color;
 	return OUT;
 
 }

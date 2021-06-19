@@ -8,12 +8,10 @@ using SharpDX;
 
 namespace AEther.WindowsForms
 {
-    public class Light
+    public class Light : SceneNode
     {
 
         public Vector3 Intensity;
-        public Vector3 Position;
-
         public bool CastsShadows;
         public bool IsVolumetric;
 

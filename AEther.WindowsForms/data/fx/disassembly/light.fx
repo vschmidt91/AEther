@@ -457,70 +457,70 @@ fxgroup
                 ftoi r0.xy, v0.xyxx  // r0.x <- index.x; r0.y <- index.y
                 mov r0.zw, l(0,0,0,0)  // r0.w <- index.z
                 
-                #line 22
+                #line 21
                 ld r1.xyzw, r0.xyww, t0.xyzw
                 mul r1.y, r1.x, cb1[8].w  // r1.y <- depth
                 
-                #line 23
+                #line 22
                 ld r2.xyzw, r0.xyww, t1.xyzw  // r2.x <- normal.x; r2.y <- normal.y; r2.z <- normal.z; r2.w <- normal.w
                 
-                #line 24
+                #line 23
                 ld r0.xyzw, r0.xyzw, t2.xyzw  // r0.x <- color.x; r0.y <- color.y; r0.z <- color.z; r0.w <- color.w
                 
-                #line 26
+                #line 24
                 mov r3.xy, v1.xyxx
                 mov r3.z, l(1.000000)
                 dp3 r4.x, r3.xyzx, cb1[9].xyzx  // r4.x <- farPos.x
                 dp3 r4.y, r3.xyzx, cb1[10].xyzx  // r4.y <- farPos.y
                 dp3 r4.z, r3.xyzx, cb1[11].xyzx  // r4.z <- farPos.z
                 
-                #line 27
+                #line 25
                 add r3.xyz, r4.xyzx, -cb1[8].xyzx
                 dp3 r1.z, r3.xyzx, r3.xyzx
                 rsq r1.z, r1.z
                 mul r3.xyz, r1.zzzz, r3.xyzx  // r3.x <- V.x; r3.y <- V.y; r3.z <- V.z
                 
-                #line 28
+                #line 26
                 dp3 r1.z, r2.xyzx, r2.xyzx
                 rsq r1.z, r1.z
                 mul r2.xyz, r1.zzzz, r2.xyzx  // r2.x <- N.x; r2.y <- N.y; r2.z <- N.z
                 
-                #line 29
+                #line 27
                 mad r4.xyz, r1.yyyy, r3.xyzx, cb1[8].xyzx  // r4.x <- pos.x; r4.y <- pos.y; r4.z <- pos.z
                 
-                #line 31
+                #line 28
                 add r4.xyz, -r4.xyzx, cb2[9].xyzx  // r4.x <- lightVector.x; r4.y <- lightVector.y; r4.z <- lightVector.z
                 
-                #line 32
+                #line 29
                 dp3 r1.z, r4.xyzx, r4.xyzx
                 sqrt r1.z, r1.z  // r1.z <- lightDistance
                 
-                #line 33
+                #line 30
                 div r1.w, l(1.000000, 1.000000, 1.000000, 1.000000), r1.z  // r1.w <- lightDistanceInv
                 
-                #line 34
+                #line 31
                 mul r5.xyz, r4.xyzx, r1.wwww  // r5.x <- L.x; r5.y <- L.y; r5.z <- L.z
                 
-                #line 35
+                #line 32
                 mov r6.xyz, -r4.xyzx
                 sample r6.xyzw, r6.xyzx, t3.xyzw, s0
                 
-                #line 37
+                #line 33
                 eq r3.w, r0.w, l(1.000000)  // r3.w <- isMetal
                 
-                #line 38
+                #line 34
                 and r3.w, r3.w, l(0x3f800000)
                 mad r6.yzw, r3.wwww, -r0.xxyz, r0.xxyz  // r6.y <- diffuse.x; r6.z <- diffuse.y; r6.w <- diffuse.z
                 
-                #line 39
+                #line 35
                 add r0.xyz, r0.xyzx, l(-1.000000, -1.000000, -1.000000, 0.000000)
                 mad r0.xyz, r3.wwww, r0.xyzx, l(1.000000, 1.000000, 1.000000, 0.000000)  // r0.x <- specular.x; r0.y <- specular.y; r0.z <- specular.z
                 
-                #line 40
+                #line 36
                 mul r2.w, r2.w, r2.w
                 mul r3.w, r2.w, r2.w  // r3.w <- roughness
                 
-                #line 42
+                #line 37
                 mul r6.yzw, r6.yyzw, l(0.000000, 0.318319, 0.318319, 0.318319)  // r6.y <- brdfDiffuse.x; r6.z <- brdfDiffuse.y; r6.w <- brdfDiffuse.z
                 
                 #line 44 "brdf.fxi"
@@ -594,40 +594,40 @@ fxgroup
                 add r2.w, r2.w, l(1.000000)
                 div r2.w, l(2.000000), r2.w  // r2.w <- <BRDF_G return value>
                 
-                #line 46 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 42 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
                 mul r1.w, r1.w, r1.w  // r1.w <- Ls.x
                 
-                #line 47
+                #line 43
                 mad r3.w, cb2[10].w, r6.x, l(0.001000)
                 ge r1.z, r3.w, r1.z
                 and r1.z, r1.z, l(0x3f800000)
                 mul r1.z, r1.z, r1.w  // r1.z <- Ls.x
                 
-                #line 48
+                #line 44
                 dp3_sat r1.w, r2.xyzx, r5.xyzx
                 mul r1.z, r1.w, r1.z
                 
-                #line 49
+                #line 45
                 mad r0.xyz, r0.xyzx, r2.wwww, -r6.yzwy
                 mad r0.xyz, r0.wwww, r0.xyzx, r6.yzwy
                 mul r0.xyz, r0.xyzx, r1.zzzz  // r0.x <- Ls.x; r0.y <- Ls.y; r0.z <- Ls.z
                 
-                #line 50
+                #line 46
                 add r2.xyz, cb2[11].xyzx, cb2[12].xyzx
                 mul r4.xyz, -r1.yyyy, r2.xyzx
                 mul r4.xyz, r4.xyzx, l(1.442695, 1.442695, 1.442695, 0.000000)
                 exp r4.xyz, r4.xyzx
                 
-                #line 54
+                #line 48
                 add r5.xyz, -cb1[8].xyzx, cb2[9].xyzx
                 dp3 r0.w, r5.xyzx, r3.xyzx  // r0.w <- tm
                 
-                #line 55
+                #line 49
                 mul r1.z, r0.w, r0.w
                 mad r1.z, cb2[9].w, cb2[9].w, -r1.z
                 sqrt r1.z, r1.z  // r1.z <- D
                 
-                #line 56
+                #line 50
                 mov r1.x, l(0)
                 add r1.xy, -r0.wwww, r1.xyxx
                 min r5.xy, r1.zzzz, |r1.xyxx|
@@ -657,7 +657,7 @@ fxgroup
                 mul r1.w, r1.w, l(12345.678711)
                 frc r5.y, r1.w  // r5.y <- <Dither2 return value>
                 
-                #line 65 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 60 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
                 add r1.y, -r1.x, r1.y
                 
                 #line 48 "light.fxi"
@@ -670,14 +670,14 @@ fxgroup
                 #line 187 "globals.fxi"
                 mov r6.x, cb0[0].x
                 
-                #line 58 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 54 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
                 mov r7.xyz, l(0,0,0,0)  // r7.x <- Lv.x; r7.y <- Lv.y; r7.z <- Lv.z
                 mov r4.w, l(0)  // r4.w <- i
                 loop 
                   ige r5.z, r4.w, l(16)
                   breakc_nz r5.z
                 
-                #line 61
+                #line 57
                   itof r6.y, r4.w  // r6.y <- v.y
                 
                 #line 187 "globals.fxi"
@@ -690,31 +690,31 @@ fxgroup
                   mul r5.x, r5.x, l(12345.678711)
                   frc r5.x, r5.x  // r5.x <- <Dither2 return value>
                 
-                #line 62 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 58 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
                   add r5.x, r5.x, r6.y
                   mul r5.x, r1.y, r5.x
                 
-                #line 65
+                #line 60
                   mad r5.x, r5.x, l(0.062500), r1.x  // r5.x <- thetai
                 
-                #line 66
+                #line 61
                   sincos r5.x, r8.x, r5.x
                   div r5.z, r5.x, r8.x
                   mad r5.z, r1.z, r5.z, r0.w  // r5.z <- ti
                 
-                #line 72
+                #line 66
                   mad r6.yzw, r5.zzzz, r3.xxyz, cb1[8].xxyz  // r6.y <- pi.x; r6.z <- pi.y; r6.w <- pi.z
                 
-                #line 73
+                #line 67
                   add r6.yzw, -r6.yyzw, cb2[9].xxyz  // r6.y <- li.x; r6.z <- li.y; r6.w <- li.z
                 
-                #line 74
+                #line 68
                   dp3 r5.w, r6.yzwy, r6.yzwy  // r5.w <- ri2
                 
-                #line 75
+                #line 69
                   sqrt r7.w, r5.w  // r7.w <- ri
                 
-                #line 76
+                #line 70
                   mov r6.yzw, -r6.yyzw
                   sample r8.xyzw, r6.yzwy, t3.xyzw, s0
                   mul r6.y, r8.x, cb2[10].w  // r6.y <- si
@@ -729,38 +729,38 @@ fxgroup
                   mul r5.x, r3.w, r5.x
                   mul r5.x, r5.x, l(0.079580)  // r5.x <- <PhaseHG return value>
                 
-                #line 80 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 74 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
                   mul r6.y, r6.y, r6.y
                   ge r5.w, r6.y, r5.w
                   and r5.w, r5.w, l(0x3f800000)
                   mul r5.x, r5.w, r5.x  // r5.x <- Lvj.x
                 
-                #line 95
+                #line 92
                   add r5.z, r5.z, r7.w
                   mul r6.yzw, r2.xxyz, -r5.zzzz
                   mul r6.yzw, r6.yyzw, l(0.000000, 1.442695, 1.442695, 1.442695)
                   exp r6.yzw, r6.yyzw
                 
-                #line 101
+                #line 98
                   mad r7.xyz, r5.xxxx, r6.yzwy, r7.xyzx
                 
-                #line 103
+                #line 100
                   iadd r4.w, r4.w, l(1)
                 endloop 
                 
-                #line 106
+                #line 103
                 mul r1.xyw, r1.yyyy, r7.xyxz  // r1.x <- Lv.x; r1.y <- Lv.y; r1.w <- Lv.z
                 
-                #line 107
+                #line 104
                 div r1.xyz, r1.xywx, r1.zzzz  // r1.z <- Lv.z
                 
-                #line 113
+                #line 110
                 mul r1.xyz, r1.xyzx, cb2[11].xyzx
                 
-                #line 114
+                #line 111
                 mul r1.xyz, r1.xyzx, l(0.062500, 0.062500, 0.062500, 0.000000)
                 
-                #line 116
+                #line 113
                 mad r0.xyz, r0.xyzx, r4.xyzx, r1.xyzx
                 mul o0.xyz, r0.xyzx, cb2[8].xyzx
                 ret 

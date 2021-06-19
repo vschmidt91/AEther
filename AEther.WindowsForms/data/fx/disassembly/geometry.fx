@@ -539,7 +539,7 @@ fxgroup
                 dcl_output o0.xyzw
                 dcl_output o1.xyzw
                 dcl_output oDepth
-                dcl_temps 2
+                dcl_temps 1
                 //
                 // Initial variable locations:
                 //   v0.x <- IN.Position.x; v0.y <- IN.Position.y; v0.z <- IN.Position.z; v0.w <- IN.Position.w; 
@@ -552,31 +552,28 @@ fxgroup
                 //   oDepth <- <PS return value>.Depth
                 //
                 #line 68 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\geometry.fx"
-                sample r0.xyzw, v2.xyxx, t1.xyzw, s0  // r0.x <- color.x; r0.y <- color.y; r0.z <- color.z; r0.w <- color.w
+                sample r0.xyzw, v2.xyxx, t1.xyzw, s0  // r0.w <- color.w
                 
                 #line 70
-                eq r1.x, r0.w, l(0.000000)
-                discard_nz r1.x
+                eq r0.x, r0.w, l(0.000000)
+                discard_nz r0.x
                 
                 #line 74
-                add r1.xyz, v4.xyzx, -cb1[8].xyzx
-                dp3 r1.x, r1.xyzx, r1.xyzx
-                sqrt r1.x, r1.x
-                div oDepth, r1.x, cb1[8].w
+                add r0.xyz, v4.xyzx, -cb1[8].xyzx
+                dp3 r0.x, r0.xyzx, r0.xyzx
+                sqrt r0.x, r0.x
+                div oDepth, r0.x, cb1[8].w
                 
                 #line 75
-                dp3 r1.x, v1.xyzx, v1.xyzx
-                rsq r1.x, r1.x
-                mul o0.xyz, r1.xxxx, v1.xyzx
-                
-                #line 77
-                mov r0.w, l(1.000000)
-                mul o1.xyzw, r0.xyzw, v3.xyzw
+                dp3 r0.x, v1.xyzx, v1.xyzx
+                rsq r0.x, r0.x
+                mul o0.xyz, r0.xxxx, v1.xyzx
                 
                 #line 78
                 mov o0.w, v1.w
+                mov o1.xyzw, v3.xyzw
                 ret 
-                // Approximately 14 instruction slots used
+                // Approximately 13 instruction slots used
                             
             };
         }

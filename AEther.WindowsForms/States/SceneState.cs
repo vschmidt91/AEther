@@ -21,8 +21,43 @@ namespace AEther.WindowsForms
     public class SceneState : GraphicsState
     {
 
+        internal class MyLight : Light
+        {
+
+            public MyLight()
+            {
+                Intensity = 1000 * Vector3.One;
+                IsVolumetric = true;
+                CastsShadows = true;
+                Transform.Translation =  10 * Vector3.BackwardLH;
+            }
+
+            public override void Update(float dt)
+            {
+                Vector3 d1 = Vector3.Normalize(Vector3.Cross(Transform.Translation, Vector3.Up));
+                Vector3 d2 = Vector3.Normalize(Vector3.Cross(Transform.Translation, d1));
+                Momentum.Translation = 3f * d2;
+                base.Update(dt);
+            }
+        }
+
+        internal class MyGeometry : Geometry
+        {
+
+            public MyGeometry(Model model)
+                : base(model)
+            { }
+
+            public override void Update(float dt)
+            {
+                Acceleration = -.1f * Transform;
+                base.Update(dt);
+            }
+
+        }
+
         const int ShadowBufferSize = 1 << 10;
-        readonly int InstancingThreshold = 0;
+        readonly int InstancingThreshold = 1 << 6;
         bool EquiangularSamplingEnabled = true;
 
         readonly Shader MandelboxShader;
@@ -50,8 +85,7 @@ namespace AEther.WindowsForms
 
         protected bool IsDisposed;
         readonly Stopwatch Timer = new();
-        readonly List<Geometry> Scene = new();
-        readonly List<Light> Lights = new();
+        readonly List<SceneNode> Scene = new();
 
         public SceneState(Graphics graphics)
             : base(graphics)
@@ -67,7 +101,6 @@ namespace AEther.WindowsForms
             LightConstants = new(Graphics.Device);
             Instances = new ComputeBuffer(Graphics.Device, Marshal.SizeOf<Instance>(), 1 << 10, true);
             Particles = new Particles(Graphics, 1 << 10, CameraConstants);
-            Graphics.OnModeChange += Graphics_OnModeChange;
 
             ShadowShader = Graphics.CreateMetaShader("shadow.fx", "INSTANCING");
             foreach (var shader in ShadowShader.Shaders)
@@ -110,19 +143,26 @@ namespace AEther.WindowsForms
             Camera.Direction = Vector3.Normalize(Vector3.Zero - Camera.Position);
             for (var i = 0; i < 1 << 8; ++i)
             {
-                var transform = 10f * rng.NextMomentum(1, 1, .1f);
-                var momentum = 250f * rng.NextMomentum(1, 1, 0);
                 var model = rng.NextDouble() < .5 ? Cube : Sphere;
-                var obj = new Geometry(model)
+                var obj = new MyGeometry(model)
                 {
                     Color = new Vector4(rng.NextVector3(Vector3.Zero, Vector3.One), rng.NextDouble() < .5 ? rng.NextFloat(0, 1) : 1),
-                    Transform = transform,
+                    Transform = 10f * rng.NextMomentum(1, 1, .1f),
+                    Momentum = 5f * rng.NextMomentum(1, 1, 0),
                     Roughness = rng.NextFloat(0, 1),
                 };
                 Scene.Add(obj);
             }
+            Scene.Add(new MyLight());
 
-            //Scene.Add(new Geometry(floor, Vector4.One, new AffineMomentum(null, null, 3)));
+            Scene.Add(new Geometry(floor)
+            {
+                Color = Vector4.One,
+                Transform = new()
+                {
+                    ScaleLog = 3,
+                },
+            });
 
             LightConstants.Value.Projection = TextureCube.Projection;
             LightConstants.Value.Anisotropy = .0f;
@@ -132,7 +172,7 @@ namespace AEther.WindowsForms
 
             CreateTextures();
 
-            Lights = Enumerable.Range(0, 3).Select(i => new Light()).ToList();
+            Graphics.OnModeChange += Graphics_OnModeChange;
 
         }
 
@@ -154,7 +194,7 @@ namespace AEther.WindowsForms
 
         }
 
-        private void Graphics_OnModeChange(object? sender, SharpDX.DXGI.ModeDescription mode)
+        private void Graphics_OnModeChange(object? sender, ModeDescription mode)
         {
             DepthBuffer.Dispose();
             NormalBuffer.Dispose();
@@ -185,14 +225,6 @@ namespace AEther.WindowsForms
         void UpdateScene()
         {
 
-            var t = .3 * (DateTime.Now - DateTime.Today).TotalSeconds;
-
-            //Camera.Position = 20 *
-            //(
-            //    (float)Math.Cos(t) * Vector3.Right +
-            //    (float)Math.Sin(t) * Vector3.ForwardLH
-            //);
-
             float dt;
             if (Timer.IsRunning)
             {
@@ -208,36 +240,8 @@ namespace AEther.WindowsForms
 
             foreach (var g in Scene)
             {
-                //g.Acceleration = -0.1f * g.Transform;
                 g.Update(dt);
             }
-
-            Lights[0].Position =
-            10 * (
-                (float)Math.Cos(t) * Vector3.BackwardLH +
-                (float)Math.Sin(t) * Vector3.Right
-            );
-            Lights[0].Intensity = 1000 * Vector3.UnitX;
-            Lights[0].CastsShadows = true;
-            Lights[0].IsVolumetric = true;
-
-            Lights[1].Position =
-            10 * (
-                (float)Math.Cos(t) * Vector3.BackwardLH +
-                (float)Math.Sin(t) * Vector3.Up
-            );
-            Lights[1].Intensity = 1000 * Vector3.UnitY;
-            Lights[1].CastsShadows = true;
-            Lights[1].IsVolumetric = true;
-
-            Lights[2].Position =
-            10 * (
-                (float)Math.Cos(t) * Vector3.Right +
-                (float)Math.Sin(t) * Vector3.Up
-            );
-            Lights[2].Intensity = 1000 * Vector3.UnitZ;
-            Lights[2].CastsShadows = true;
-            Lights[2].IsVolumetric = true;
 
             Particles.Simulate();
 
@@ -274,16 +278,16 @@ namespace AEther.WindowsForms
             base.ProcessKeyPress(evt);
         }
 
-        void RenderScene(MetaShader metaShader, params string[] switches)
-            => RenderScene(metaShader, (IEnumerable<string>)switches);
+        void RenderScene(IEnumerable<Geometry> geometry, MetaShader metaShader, params string[] switches)
+            => RenderScene(geometry, metaShader, (IEnumerable<string>)switches);
 
-        void RenderScene(MetaShader metaShader, IEnumerable<string> switches)
+        void RenderScene(IEnumerable<Geometry> geometry, MetaShader metaShader, IEnumerable<string> switches)
         {
-            var models = Scene.Select(g => g.Model).ToHashSet();
+            var models = geometry.Select(g => g.Model).ToHashSet();
             foreach (var model in models)
             {
                 Graphics.SetModel(model);
-                var group = Scene.Where(g => g.Model == model);
+                var group = geometry.Where(g => g.Model == model);
                 var count = group.Count();
                 var useInstancing = InstancingThreshold < count;
                 if(useInstancing)
@@ -335,16 +339,16 @@ namespace AEther.WindowsForms
             NormalBuffer.Clear(new Color4(0, 0, 1, 0));
             ColorBuffer.Clear();
             Graphics.SetRenderTargets(DepthBuffer.DSView, NormalBuffer, ColorBuffer);
-            RenderScene(GeometryShader);
+            RenderScene(Scene.OfType<Geometry>(), GeometryShader);
 
             LightBuffer.Clear();
 
-            foreach (var light in Lights)
+            foreach (var light in Scene.OfType<Light>())
             {
 
                 LightConstants.Value.Intensity = light.Intensity;
-                LightConstants.Value.Position = light.Position;
-                LightConstants.Value.Distance = Vector3.Distance(Camera.Position, light.Position);
+                LightConstants.Value.Position = light.Transform.Translation;
+                LightConstants.Value.Distance = Vector3.Distance(Camera.Position, light.Transform.Translation);
                 LightConstants.Value.ShadowFarPlane = TextureCube.FarPlane;
                 LightConstants.Update();
 
@@ -358,10 +362,10 @@ namespace AEther.WindowsForms
                     Graphics.SetViewport(new Viewport(0, 0, ShadowBuffer.Width, ShadowBuffer.Height, 0, 1));
                     for (var i = 0; i < 6; ++i)
                     {
-                        LightConstants.Value.View = TextureCube.CreateView(i, light.Position);
+                        LightConstants.Value.View = TextureCube.CreateView(i, light.Transform.Translation);
                         LightConstants.Update();
                         Graphics.Context.OutputMerger.SetRenderTargets(ShadowBuffer.DSViews[i]);
-                        RenderScene(ShadowShader, light.GetSwitches());
+                        RenderScene(Scene.OfType<Geometry>(), ShadowShader, light.GetSwitches());
                     }
                 }
 

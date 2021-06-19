@@ -36,6 +36,7 @@ float3 PS(const PSDefaultin IN) : SV_TARGET
 	float roughness = pow(normal.a, 4);
 	float3 brdfDiffuse = diffuse / PI;
 	float3 brdfSpecular = BRDFref(L, -V, N, specular, roughness);
+	//float3 brdfSpecular = diffuse / PI;
 
 	float3 Ls = 1;
 	Ls *= lightDistanceInv * lightDistanceInv;

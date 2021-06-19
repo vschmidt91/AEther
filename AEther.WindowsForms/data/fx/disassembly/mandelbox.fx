@@ -432,7 +432,7 @@ fxgroup
                 div r0.x, r0.x, r0.z  // r0.x <- d
                 
                 #line 36
-                add r0.y, r0.x, l(0.200000)
+                add r0.y, r0.x, l(0.220000)
                 div r0.x, r0.x, r0.y  // r0.x <- l
                 
                 #line 110 "globals.fxi"

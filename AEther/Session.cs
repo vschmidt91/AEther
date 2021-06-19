@@ -8,14 +8,12 @@ using System.Threading.Tasks;
 
 namespace AEther
 {
-    public class Session : IDisposable
+    public class Session
     {
 
         public readonly SampleSource Source;
         public readonly Analyzer Analyzer;
         public readonly List<ISessionModule> Modules = new();
-
-        bool IsDisposed;
 
         public Session(SampleSource source, AnalyzerOptions options)
         {
@@ -35,15 +33,6 @@ namespace AEther
             Analyzer.PostSamples(evt);
         }
 
-        public void Dispose()
-        {
-            if(!IsDisposed)
-            {
-                GC.SuppressFinalize(this);
-                IsDisposed = true;
-            }
-        }
-
         public async Task StopAsync()
         {
             try
@@ -57,10 +46,6 @@ namespace AEther
 
         public void Render()
         {
-            if(IsDisposed)
-            {
-                return;
-            }
             foreach (var module in Modules)
             {
                 module.Render();
@@ -69,10 +54,6 @@ namespace AEther
 
         void Analyzer_OnSamplesAvailable(object? sender, SampleEvent<double> evt)
         {
-            if (IsDisposed)
-            {
-                return;
-            }
             foreach (var module in Modules)
             {
                 module.Process(evt);

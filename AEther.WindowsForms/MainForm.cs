@@ -59,19 +59,13 @@ namespace AEther.WindowsForms
 
         public async Task StopAsync()
         {
-            if (Session is Session session)
+            if (Interlocked.Exchange(ref Session, null) is Session session)
             {
-                Session = null;
                 RenderEvent.WaitOne();
                 await session.StopAsync();
-                session.Dispose();
                 foreach (var module in session.Modules)
                 {
                     module.Dispose();
-                }
-                foreach (var state in States.Items.OfType<GraphicsState>())
-                {
-                    state.Dispose();
                 }
             }
         }

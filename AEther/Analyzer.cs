@@ -76,7 +76,7 @@ namespace AEther
 
             var linkOptions = new DataflowLinkOptions
             {
-                //PropagateCompletion = true,
+                PropagateCompletion = true,
             };
 
             DFTBlock.LinkTo(SplitterBlock, linkOptions);
@@ -104,8 +104,6 @@ namespace AEther
             var evt = RentEvent<byte>(data.Length, 1, DateTime.Now);
             data.CopyTo(evt.Samples);
             InputQueue.Enqueue(evt);
-            //SampleStream.Write(data.Span);
-            //SampleStream.Flush();
         }
 
         public async Task StopAsync()
@@ -126,15 +124,12 @@ namespace AEther
 
         public async Task RunInputAsync(CancellationToken cancel)
         {
+            Exception? error = null;
             try
             {
                 while (true)
                 {
                     cancel.ThrowIfCancellationRequested();
-                    //while(0 < Options.BufferCapacity && Options.BufferCapacity < InputQueue.Count)
-                    //{
-                    //    InputQueue.TryDequeue(out var _);
-                    //}
                     if (!InputQueue.TryDequeue(out var input))
                     {
                         Thread.SpinWait(1);
@@ -145,9 +140,13 @@ namespace AEther
                     ReturnEvent(input);
                 }
             }
+            catch(Exception exc)
+            {
+                error = exc;
+            }
             finally
             {
-                await SamplePipe.Writer.CompleteAsync();
+                await SamplePipe.Writer.CompleteAsync(error);
             }
         }
 
@@ -182,7 +181,10 @@ namespace AEther
                     SamplePipe.Reader.AdvanceTo(input.GetPosition(offset), input.End);
                 }
             }
-            finally { }
+            finally
+            {
+                DFTBlock.Complete();
+            }
         }
 
         private double GetSample(ReadOnlySpan<byte> source, int sampleIndex, int channel)

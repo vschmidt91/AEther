@@ -50,6 +50,7 @@ namespace AEther.WindowsForms
             });
             states.SelectedIndex = 0;
             States = states;
+
         }
 
         public void Dispose()
@@ -62,6 +63,10 @@ namespace AEther.WindowsForms
             foreach (var histogram in Histogram)
             {
                 histogram.Dispose();
+            }
+            foreach(var state in States.Items.OfType<GraphicsState>())
+            {
+                state.Dispose();
             }
         }
 

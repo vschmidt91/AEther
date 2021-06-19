@@ -33,7 +33,7 @@ float4 PS(const PSDefaultin IN) : SV_Target
 	}
 
 	float d = length(z) / abs(dz);
-	float l = d / (.2 + d);
+	float l = d / (.22 + d);
 	float3 lab = float3(l, 0, 0);
 	float3 xyz = LABtoXYZ(lab);
 	float3 rgb = XYZtoRGB(xyz);
