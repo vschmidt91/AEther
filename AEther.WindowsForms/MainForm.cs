@@ -63,7 +63,9 @@ namespace AEther.WindowsForms
             {
                 RenderEvent.WaitOne();
                 await session.StopAsync();
-                foreach (var module in session.Modules)
+                var modules = session.Modules.ToArray();
+                session.Modules.Clear();
+                foreach (var module in modules)
                 {
                     module.Dispose();
                 }

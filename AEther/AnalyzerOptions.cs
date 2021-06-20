@@ -20,7 +20,7 @@ namespace AEther
         public int BufferCapacity { get; set; } = -1;
 
         [Category("Pipeline")]
-        public double MicroTimingAmount { get; set; } = .99;
+        public double MicroTimingAmount { get; set; } = .95;
 
         [Category("Domain")]
         public double MinFrequency { get; set; } = 27.5;
@@ -41,7 +41,7 @@ namespace AEther
         public bool SIMDEnabled { get; set; } = true;
 
         [Category("Splitter")]
-        public double SinuoidWidth { get; set; } = .5;
+        public double SinuoidWidth { get; set; } = 1;
 
         [Category("Splitter")]
         public double SinuoidLength { get; set; } = 0.2;

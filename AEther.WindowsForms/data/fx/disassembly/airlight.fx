@@ -1,7 +1,7 @@
 Macros: //
 // FX Version: fx_5_0
 //
-// 1 local buffer(s)
+// 3 local buffer(s)
 //
 cbuffer FrameConstants : register(b0)
 {
@@ -9,6 +9,29 @@ cbuffer FrameConstants : register(b0)
     float   DT;                         // Offset:    4, size:    4
     float   HistogramShift;             // Offset:    8, size:    4
     float   AspectRatio;                // Offset:   12, size:    4
+}
+
+cbuffer CameraConstants : register(b1)
+{
+    float4x4 View;                      // Offset:    0, size:   64
+    float4x4 Projection;                // Offset:   64, size:   64
+    float3  ViewPosition;               // Offset:  128, size:   12
+    float   FarPlane;                   // Offset:  140, size:    4
+    float4x4 ViewDirectionMatrix;       // Offset:  144, size:   64
+}
+
+cbuffer LightConstants : register(b2)
+{
+    float4x4 LightView;                 // Offset:    0, size:   64
+    float4x4 LightProjection;           // Offset:   64, size:   64
+    float3  LightIntensity;             // Offset:  128, size:   12
+    float   Anisotropy;                 // Offset:  140, size:    4
+    float3  LightPosition;              // Offset:  144, size:   12
+    float   LightDistance;              // Offset:  156, size:    4
+    float3  Emission;                   // Offset:  160, size:   12
+    float   ShadowFarPlane;             // Offset:  172, size:    4
+    float3  Scattering;                 // Offset:  176, size:   12
+    float3  Absorption;                 // Offset:  192, size:   12
 }
 
 //
@@ -266,7 +289,10 @@ SamplerState Anisotropic
     AddressU = uint(WRAP /* 1 */);
     AddressV = uint(WRAP /* 1 */);
 };
-Texture2D Source;
+SamplerState Airlight_LookupSampler
+{
+    Filter   = uint(MIN_MAG_MIP_LINEAR /* 21 */);
+};
 
 //
 // 1 groups(s)
@@ -337,13 +363,19 @@ fxgroup
                 //
                 // Buffer Definitions: 
                 //
-                // cbuffer FrameConstants
+                // cbuffer LightConstants
                 // {
                 //
-                //   float T;                           // Offset:    0 Size:     4
-                //   float DT;                          // Offset:    4 Size:     4 [unused]
-                //   float HistogramShift;              // Offset:    8 Size:     4 [unused]
-                //   float AspectRatio;                 // Offset:   12 Size:     4
+                //   float4x4 LightView;                // Offset:    0 Size:    64 [unused]
+                //   float4x4 LightProjection;          // Offset:   64 Size:    64 [unused]
+                //   float3 LightIntensity;             // Offset:  128 Size:    12 [unused]
+                //   float Anisotropy;                  // Offset:  140 Size:     4
+                //   float3 LightPosition;              // Offset:  144 Size:    12 [unused]
+                //   float LightDistance;               // Offset:  156 Size:     4 [unused]
+                //   float3 Emission;                   // Offset:  160 Size:    12 [unused]
+                //   float ShadowFarPlane;              // Offset:  172 Size:     4 [unused]
+                //   float3 Scattering;                 // Offset:  176 Size:    12
+                //   float3 Absorption;                 // Offset:  192 Size:    12
                 //
                 // }
                 //
@@ -352,9 +384,7 @@ fxgroup
                 //
                 // Name                                 Type  Format         Dim      HLSL Bind  Count
                 // ------------------------------ ---------- ------- ----------- -------------- ------
-                // Linear                            sampler      NA          NA             s0      1 
-                // Source                            texture  float4          2d             t0      1 
-                // FrameConstants                    cbuffer      NA          NA            cb0      1 
+                // LightConstants                    cbuffer      NA          NA            cb2      1 
                 //
                 //
                 //
@@ -370,66 +400,101 @@ fxgroup
                 //
                 // Name                 Index   Mask Register SysValue  Format   Used
                 // -------------------- ----- ------ -------- -------- ------- ------
-                // SV_Target                0   xyzw        0   TARGET   float   xyzw
+                // SV_Target                0   xyz         0   TARGET   float   xyz 
                 //
                 ps_4_0
-                dcl_constantbuffer CB0[1], immediateIndexed
-                dcl_sampler s0, mode_default
-                dcl_resource_texture2d (float,float,float,float) t0
+                dcl_constantbuffer CB2[13], immediateIndexed
                 dcl_input_ps linear v1.xy
-                dcl_output o0.xyzw
-                dcl_temps 2
+                dcl_output o0.xyz
+                dcl_temps 6
                 //
                 // Initial variable locations:
                 //   v0.x <- IN.Position.x; v0.y <- IN.Position.y; v0.z <- IN.Position.z; v0.w <- IN.Position.w; 
                 //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
-                //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z; o0.w <- <PS return value>.w
+                //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z
                 //
-                #line 16 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\ifs-output.fx"
-                frc r0.x, cb0[0].x
-                add r1.xyzw, v1.xyxy, l(0.000000, 0.000000, 1.000000, 1.000000)
-                add r0.xyzw, r0.xxxx, r1.xyzw
+                #line 10 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\airlight.fx"
+                mul r0.x, v1.y, v1.y
+                div r0.x, l(1.000000, 1.000000, 1.000000, 1.000000), r0.x
+                add r0.x, r0.x, l(-1.000000)  // r0.x <- D
                 
-                #line 187 "globals.fxi"
-                dp2 r0.x, r0.xyxx, l(1.000000, 1.618034, 0.000000, 0.000000)
-                dp2 r0.y, r0.zwzz, l(1.000000, 1.618034, 0.000000, 0.000000)
-                sincos null, r0.xy, r0.xyxx
-                mul r0.xy, r0.xyxx, l(12345.678711, 12345.678711, 0.000000, 0.000000)
-                frc r1.xy, r0.xyxx  // r1.y <- <Dither2 return value>
-                dp2 r0.x, r1.xyxx, l(1.000000, 1.618034, 0.000000, 0.000000)
-                sincos null, r0.x, r0.x
-                mul r0.x, r0.x, l(12345.678711)
-                frc r0.x, r0.x  // r0.x <- <Dither2 return value>
+                #line 14
+                add r0.y, v1.x, l(-0.500000)
+                mul r0.z, r0.y, l(3.141500)  // r0.z <- theta.x
                 
-                #line 10 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\ifs-output.fx"
-                mad r0.y, v1.y, l(2.000000), l(-1.000000)  // r0.y <- p.y
+                #line 69 "light.fxi"
+                mad r0.y, -r0.y, l(3.141500), l(1.570750)
                 
-                #line 18
-                mul r0.xy, r0.xyxx, l(0.003906, 3.000000, 0.000000, 0.000000)
+                #line 49
+                mad r0.w, cb2[8].w, cb2[8].w, l(1.000000)
+                add r1.x, cb2[8].w, cb2[8].w
                 
-                #line 11
-                div r0.z, l(1.000000, 1.000000, 1.000000, 1.000000), cb0[0].w
-                mul r1.y, r0.z, r0.y  // r1.y <- q.y
+                #line 50
+                mad r1.y, -cb2[8].w, cb2[8].w, l(1.000000)
                 
-                #line 13
-                mad r1.x, v1.x, l(2.000000), l(-1.000000)
-                mul r0.yz, r1.xxyx, l(0.000000, -4.328085, -1.442695, 0.000000)
-                exp r0.yz, r0.yyzy
-                add r0.yz, r0.yyzy, l(0.000000, 1.000000, 1.000000, 0.000000)
-                div r0.yz, l(1.000000, 1.000000, 1.000000, 1.000000), r0.yyzy
-                sample r1.xyzw, r0.yzyy, t0.xyzw, s0  // r1.x <- v.x; r1.y <- v.y; r1.z <- v.z; r1.w <- v.w
+                #line 75
+                add r2.xyz, cb2[11].xyzx, cb2[12].xyzx
                 
-                #line 18
-                add r0.y, r1.w, l(1.000000)
-                mul r1.xyz, r1.xyzx, l(0.100000, 0.100000, 0.100000, 0.000000)
-                log r0.y, r0.y
-                mul r0.y, r0.y, l(0.693147)
-                mad o0.xyz, r1.xyzx, r0.yyyy, r0.xxxx
+                #line 65
+                mov r3.xyz, l(0,0,0,0)  // r3.x <- Lv.x; r3.y <- Lv.y; r3.z <- Lv.z
+                mov r1.z, l(0)  // r1.z <- i
+                loop 
+                  ige r1.w, r1.z, l(256)
+                  breakc_nz r1.w
                 
-                #line 20
-                mov o0.w, l(1.000000)
+                #line 68
+                  itof r1.w, r1.z
+                  add r1.w, r1.w, l(0.500000)
+                  mul r1.w, r0.y, r1.w
+                
+                #line 69
+                  mad r1.w, r1.w, l(0.003906), r0.z  // r1.w <- thetai
+                
+                #line 70
+                  sincos r4.x, r5.x, r1.w
+                  div r1.w, r4.x, r5.x
+                  mul r2.w, r0.x, r1.w  // r2.w <- ti
+                
+                #line 71
+                  mul r2.w, r2.w, r2.w
+                  mad r2.w, r0.x, r0.x, r2.w
+                  sqrt r2.w, r2.w  // r2.w <- ri
+                
+                #line 49
+                  mad r3.w, -r1.x, r4.x, r0.w  // r3.w <- d
+                
+                #line 50
+                  mul r4.x, r3.w, r3.w
+                  mul r3.w, r3.w, r4.x
+                  rsq r3.w, r3.w
+                  mul r3.w, r1.y, r3.w
+                  mul r3.w, r3.w, l(0.079580)  // r3.w <- <PhaseHG return value>
+                
+                #line 75
+                  mad r1.w, r0.x, r1.w, r2.w
+                  mul r4.xyz, r2.xyzx, -r1.wwww
+                  mul r4.xyz, r4.xyzx, l(1.442695, 1.442695, 1.442695, 0.000000)
+                  exp r4.xyz, r4.xyzx
+                
+                #line 77
+                  mad r3.xyz, r3.wwww, r4.xyzx, r3.xyzx
+                
+                #line 79
+                  iadd r1.z, r1.z, l(1)
+                endloop 
+                
+                #line 81
+                mul r0.xzw, r3.xxyz, cb2[11].xxyz  // r0.x <- Lv.x; r0.z <- Lv.y; r0.w <- Lv.z
+                
+                #line 82
+                mul r0.xyz, r0.yyyy, r0.xzwx
+                
+                #line 16 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\airlight.fx"
+                mul o0.xyz, r0.xyzx, l(0.156250, 0.156250, 0.156250, 0.000000)
+                
+                #line 17
                 ret 
-                // Approximately 29 instruction slots used
+                // Approximately 42 instruction slots used
                             
             };
         }

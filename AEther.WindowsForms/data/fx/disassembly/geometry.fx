@@ -1,4 +1,4 @@
-//
+Macros: (ENABLE_INSTANCING,True)//
 // FX Version: fx_5_0
 //
 // 3 local buffer(s)
@@ -17,7 +17,7 @@ cbuffer CameraConstants : register(b1)
     float4x4 Projection;                // Offset:   64, size:   64
     float3  ViewPosition;               // Offset:  128, size:   12
     float   FarPlane;                   // Offset:  140, size:    4
-    float4x4 FarPosMatrix;              // Offset:  144, size:   64
+    float4x4 ViewDirectionMatrix;       // Offset:  144, size:   64
 }
 
 cbuffer GeometryConstants : register(b2)
@@ -253,8 +253,8 @@ BlendState BlendNone
 SamplerState Linear
 {
     Filter   = uint(MIN_MAG_MIP_LINEAR /* 21 */);
-    AddressU = uint(WRAP /* 1 */);
-    AddressV = uint(WRAP /* 1 */);
+    AddressU = uint(CLAMP /* 3 */);
+    AddressV = uint(CLAMP /* 3 */);
 };
 SamplerState Point
 {
@@ -315,7 +315,7 @@ fxgroup
                 //   float4x4 Projection;               // Offset:   64 Size:    64
                 //   float3 ViewPosition;               // Offset:  128 Size:    12 [unused]
                 //   float FarPlane;                    // Offset:  140 Size:     4 [unused]
-                //   float4x4 FarPosMatrix;             // Offset:  144 Size:    64 [unused]
+                //   float4x4 ViewDirectionMatrix;      // Offset:  144 Size:    64 [unused]
                 //
                 // }
                 //
@@ -494,7 +494,7 @@ fxgroup
                 //   float4x4 Projection;               // Offset:   64 Size:    64 [unused]
                 //   float3 ViewPosition;               // Offset:  128 Size:    12
                 //   float FarPlane;                    // Offset:  140 Size:     4
-                //   float4x4 FarPosMatrix;             // Offset:  144 Size:    64 [unused]
+                //   float4x4 ViewDirectionMatrix;      // Offset:  144 Size:    64 [unused]
                 //
                 // }
                 //
@@ -539,7 +539,7 @@ fxgroup
                 dcl_output o0.xyzw
                 dcl_output o1.xyzw
                 dcl_output oDepth
-                dcl_temps 1
+                dcl_temps 2
                 //
                 // Initial variable locations:
                 //   v0.x <- IN.Position.x; v0.y <- IN.Position.y; v0.z <- IN.Position.z; v0.w <- IN.Position.w; 
@@ -552,28 +552,31 @@ fxgroup
                 //   oDepth <- <PS return value>.Depth
                 //
                 #line 68 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\geometry.fx"
-                sample r0.xyzw, v2.xyxx, t1.xyzw, s0  // r0.w <- color.w
+                sample r0.xyzw, v2.xyxx, t1.xyzw, s0  // r0.x <- color.x; r0.y <- color.y; r0.z <- color.z; r0.w <- color.w
                 
                 #line 70
-                eq r0.x, r0.w, l(0.000000)
-                discard_nz r0.x
+                eq r1.x, r0.w, l(0.000000)
+                discard_nz r1.x
                 
                 #line 74
-                add r0.xyz, v4.xyzx, -cb1[8].xyzx
-                dp3 r0.x, r0.xyzx, r0.xyzx
-                sqrt r0.x, r0.x
-                div oDepth, r0.x, cb1[8].w
+                add r1.xyz, v4.xyzx, -cb1[8].xyzx
+                dp3 r1.x, r1.xyzx, r1.xyzx
+                sqrt r1.x, r1.x
+                div oDepth, r1.x, cb1[8].w
                 
                 #line 75
-                dp3 r0.x, v1.xyzx, v1.xyzx
-                rsq r0.x, r0.x
-                mul o0.xyz, r0.xxxx, v1.xyzx
+                dp3 r1.x, v1.xyzx, v1.xyzx
+                rsq r1.x, r1.x
+                mul o0.xyz, r1.xxxx, v1.xyzx
+                
+                #line 77
+                mov r0.w, l(1.000000)
+                mul o1.xyzw, r0.xyzw, v3.xyzw
                 
                 #line 78
                 mov o0.w, v1.w
-                mov o1.xyzw, v3.xyzw
                 ret 
-                // Approximately 13 instruction slots used
+                // Approximately 14 instruction slots used
                             
             };
         }

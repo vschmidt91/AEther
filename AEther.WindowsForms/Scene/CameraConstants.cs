@@ -26,7 +26,7 @@ namespace AEther.WindowsForms
         public float FarPlane;
 
         [FieldOffset(144)]
-        public Matrix FarPosMatrix;
+        public Matrix ViewDirectionMatrix;
 
     }
 }

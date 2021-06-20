@@ -1,4 +1,4 @@
-//
+Macros: //
 // FX Version: fx_5_0
 //
 // 1 local buffer(s)
@@ -239,8 +239,8 @@ BlendState BlendNone
 SamplerState Linear
 {
     Filter   = uint(MIN_MAG_MIP_LINEAR /* 21 */);
-    AddressU = uint(WRAP /* 1 */);
-    AddressV = uint(WRAP /* 1 */);
+    AddressU = uint(CLAMP /* 3 */);
+    AddressV = uint(CLAMP /* 3 */);
 };
 SamplerState Point
 {

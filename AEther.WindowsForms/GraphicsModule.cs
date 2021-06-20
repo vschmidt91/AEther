@@ -11,11 +11,10 @@ namespace AEther.WindowsForms
     public class GraphicsModule : ISessionModule
     {
 
-        const bool UseFloatTextures = false;
         const bool UseMapping = true;
 
         readonly Graphics Graphics;
-        readonly SpectrumAccumulator[] Spectrum;
+        readonly SpectrumAccumulator<float>[] Spectrum;
         readonly Histogram[] Histogram;
         readonly ListBox States;
 
@@ -29,20 +28,17 @@ namespace AEther.WindowsForms
 
             Graphics = graphics;
             Spectrum = Enumerable.Range(0, channelCount)
-                .Select<int, SpectrumAccumulator>(i => UseFloatTextures
-                    ? new FloatSpectrum(Graphics, noteCount)
-                    : new ByteSpectrum(Graphics, noteCount))
+                .Select<int, SpectrumAccumulator<float>>(i => new FloatSpectrum(Graphics, noteCount))
                 .ToArray();
                 
             Histogram = Enumerable.Range(0, channelCount)
-                .Select<int, Histogram>(i => UseFloatTextures
-                    ? new FloatHistogram(Graphics, noteCount, historyCount, UseMapping)
-                    : new ByteHistogram(Graphics, noteCount, historyCount, UseMapping))
+                .Select<int, Histogram>(i => new FloatHistogram(Graphics, noteCount, historyCount, UseMapping))
                 .ToArray();
+
             states.Items.Clear();
             states.Items.AddRange(new GraphicsState[]
             {
-                new SceneState(Graphics),
+                new SceneState(Graphics, Spectrum),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
                 new SpectrumState(Graphics, Spectrum),
@@ -80,11 +76,10 @@ namespace AEther.WindowsForms
 
         public void Process(SampleEvent<double> evt)
         {
-            foreach(var (spectrum, c) in Spectrum.WithIndex())
+            foreach (var (spectrum, c) in Spectrum.WithIndex())
             {
                 var channel = evt.GetChannel(c);
                 spectrum.Add(channel.Span);
-                Histogram[c].Add(channel.Span);
             }
             foreach (var (histogram, c) in Histogram.WithIndex())
             {
@@ -96,6 +91,12 @@ namespace AEther.WindowsForms
 
         public void Render()
         {
+            if (States.SelectedItem is GraphicsState state)
+            {
+                Graphics.RenderFrame();
+                state.Render();
+                Graphics.Present();
+            }
             if (0 < Interlocked.Exchange(ref EventCounter, 0))
             {
                 foreach (var spectrum in Spectrum)
@@ -108,12 +109,6 @@ namespace AEther.WindowsForms
                     histogram.Update();
                 }
                 Graphics.FrameConstants.Value.HistogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
-            }
-            if (States.SelectedItem is GraphicsState state)
-            {
-                Graphics.RenderFrame();
-                state.Render();
-                Graphics.Present();
             }
         }
     }

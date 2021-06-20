@@ -1,4 +1,4 @@
-//
+Macros: //
 // FX Version: fx_5_0
 //
 // 1 local buffer(s)
@@ -239,8 +239,8 @@ BlendState BlendNone
 SamplerState Linear
 {
     Filter   = uint(MIN_MAG_MIP_LINEAR /* 21 */);
-    AddressU = uint(WRAP /* 1 */);
-    AddressV = uint(WRAP /* 1 */);
+    AddressU = uint(CLAMP /* 3 */);
+    AddressV = uint(CLAMP /* 3 */);
 };
 SamplerState Point
 {
@@ -432,11 +432,11 @@ fxgroup
                 div r0.x, r0.x, r0.z  // r0.x <- d
                 
                 #line 36
-                add r0.y, r0.x, l(0.220000)
-                div r0.x, r0.x, r0.y  // r0.x <- l
+                mul r0.x, r0.x, l(10.000000)
+                min r0.x, r0.x, l(1.000000)
                 
                 #line 110 "globals.fxi"
-                add r0.y, r0.x, l(0.160000)
+                add r0.y, -r0.x, l(1.160000)
                 mul r0.y, r0.y, l(0.862069)  // r0.y <- l
                 
                 #line 102
@@ -451,7 +451,7 @@ fxgroup
                 dp3_sat o0.z, l(0.021843, -0.080000, 0.414510, 0.000000), r0.yzwy
                 
                 #line 41 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\mandelbox.fx"
-                add o0.w, r0.x, l(-0.100000)
+                add o0.w, -r0.x, l(0.500000)
                 ret 
                 // Approximately 40 instruction slots used
                             

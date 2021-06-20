@@ -13,6 +13,10 @@ namespace AEther.WindowsForms
     public abstract class SpectrumAccumulator
     {
 
+        public event EventHandler? OnUpdate;
+
+        public int NoteCount => Texture.Description.Width;
+
         public readonly Texture2D Texture;
 
         public SpectrumAccumulator(Texture2D texture)
@@ -24,7 +28,11 @@ namespace AEther.WindowsForms
 
         public abstract void Add(ReadOnlySpan<double> values);
 
-        public abstract int Update();
+        public virtual int Update()
+        {
+            OnUpdate?.Invoke(this, EventArgs.Empty);
+            return 0;
+        }
 
         public void Dispose()
         {
@@ -90,7 +98,8 @@ namespace AEther.WindowsForms
             var map = Texture.Map();
             map.WriteRange(Buffer, 0, Buffer.Length);
             map.Dispose();
-            return Buffer.Length * Marshal.SizeOf<T>();
+            var bandwidth = base.Update();
+            return bandwidth + Buffer.Length * Marshal.SizeOf<T>();
         }
 
     }

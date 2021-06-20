@@ -34,13 +34,12 @@ namespace AEther
         readonly Splitter[] Splitter;
         readonly Stopwatch SplitterTimer = Stopwatch.StartNew();
         readonly TimeSpan SplitterInterval;
-        readonly ConcurrentQueue<SampleEvent<byte>> InputQueue = new();
         readonly Pipe SamplePipe = new();
         readonly CancellationTokenSource Cancel = new();
         readonly TransformBlock<SampleEvent<double>, SampleEvent<double>> DFTBlock;
         readonly TransformBlock<SampleEvent<double>, SampleEvent<double>> SplitterBlock;
         readonly ActionBlock<SampleEvent<double>> OutputBlock;
-        readonly Task InputTask = Task.CompletedTask;
+        readonly ActionBlock<SampleEvent<byte>> InputBlock;
         readonly Task BatcherTask = Task.CompletedTask;
 
         public Analyzer(SampleFormat format, AnalyzerOptions options)
@@ -65,10 +64,11 @@ namespace AEther
                 CancellationToken = Cancel.Token,
                 EnsureOrdered = true,
                 MaxDegreeOfParallelism = 1,
-                SingleProducerConstrained = true,
+                SingleProducerConstrained = false,
             };
 
-            InputTask = Task.Run(() => RunInputAsync(Cancel.Token), Cancel.Token);
+            InputBlock = new ActionBlock<SampleEvent<byte>>(RunInputAsync, blockOptions);
+            InputBlock.Completion.ContinueWith(_ => SamplePipe.Writer.CompleteAsync());
             BatcherTask = Task.Run(() => RunBatcherAsync(Cancel.Token), Cancel.Token);
             DFTBlock = new TransformBlock<SampleEvent<double>, SampleEvent<double>>(RunDFT, blockOptions);
             SplitterBlock = new TransformBlock<SampleEvent<double>, SampleEvent<double>>(RunSplitter, blockOptions);
@@ -103,7 +103,7 @@ namespace AEther
             }
             var evt = RentEvent<byte>(data.Length, 1, DateTime.Now);
             data.CopyTo(evt.Samples);
-            InputQueue.Enqueue(evt);
+            InputBlock.Post(evt);
         }
 
         public async Task StopAsync()
@@ -111,7 +111,7 @@ namespace AEther
             Cancel.Cancel();
             try
             {
-                await InputTask;
+                await InputBlock.Completion;
                 await BatcherTask;
                 await DFTBlock.Completion;
                 await SplitterBlock.Completion;
@@ -122,32 +122,11 @@ namespace AEther
             OnStopped?.Invoke(this, EventArgs.Empty);
         }
 
-        public async Task RunInputAsync(CancellationToken cancel)
+        public async Task RunInputAsync(SampleEvent<byte> evt)
         {
-            Exception? error = null;
-            try
-            {
-                while (true)
-                {
-                    cancel.ThrowIfCancellationRequested();
-                    if (!InputQueue.TryDequeue(out var input))
-                    {
-                        Thread.SpinWait(1);
-                        continue;
-                    }
-                    await SamplePipe.Writer.WriteAsync(input.Samples.AsMemory(0, input.SampleCount), cancel);
-                    await SamplePipe.Writer.FlushAsync(cancel);
-                    ReturnEvent(input);
-                }
-            }
-            catch(Exception exc)
-            {
-                error = exc;
-            }
-            finally
-            {
-                await SamplePipe.Writer.CompleteAsync(error);
-            }
+            await SamplePipe.Writer.WriteAsync(evt.Samples.AsMemory(0, evt.SampleCount));
+            await SamplePipe.Writer.FlushAsync();
+            ReturnEvent(evt);
         }
 
         public async Task RunBatcherAsync(CancellationToken cancel)
@@ -217,12 +196,12 @@ namespace AEther
                 Splitter[c].Process(input.GetChannel(c), output.GetChannel(c));
             }
             ReturnEvent(input);
-            //while (SplitterTimer.Elapsed < SplitterInterval)
-            //{
-            //    Thread.SpinWait(100);
-            //}
+            while (SplitterTimer.Elapsed < SplitterInterval)
+            {
+                Thread.SpinWait(10);
+            }
             //var remainingInterval = (SplitterInterval - SplitterTimer.Elapsed).TotalMilliseconds;
-            //if(0 < remainingInterval)
+            //if (0 < remainingInterval)
             //{
             //    await MultimediaTimer.Delay((int)remainingInterval);
             //}

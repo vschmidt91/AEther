@@ -38,7 +38,7 @@ struct PSout
 PSin VS(const VSin IN)
 {
 
-#ifdef INSTANCING
+#ifdef ENABLE_INSTANCING
 	Instance instance = Instances[IN.ID];
 #else
 	Instance instance = SingleInstance;
@@ -74,7 +74,7 @@ PSout PS(const PSin IN)
 	OUT.Depth = distance(IN.WorldPosition, ViewPosition) / FarPlane;
 	OUT.Normal.xyz = normalize(IN.Normal.xyz);
 	OUT.Normal.w = IN.Normal.w;
-	OUT.Color = IN.Color;
+	OUT.Color = IN.Color * color;
 	return OUT;
 
 }

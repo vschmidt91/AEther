@@ -12,14 +12,5 @@ namespace AEther.WindowsForms
 
         public Vector3 Direction => Vector3.Normalize(Transform.Translation);
 
-        public override IEnumerable<string> GetSwitches()
-        {
-            foreach(var define in base.GetSwitches())
-            {
-                yield return define;
-            }
-            yield return "DIRECTIONAL";
-        }
-
     }
 }

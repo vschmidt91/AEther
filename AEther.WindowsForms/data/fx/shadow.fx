@@ -29,7 +29,7 @@ struct PSin
 PSin VS(const VSin IN)
 {
 
-#ifdef INSTANCING
+#ifdef ENABLE_INSTANCING
 	Instance instance = Instances[IN.ID];
 #else
 	Instance instance = SingleInstance;

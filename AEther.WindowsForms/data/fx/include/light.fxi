@@ -35,7 +35,8 @@ cbuffer LightConstants : register(b2)
 //#define DistanceSample(T, p) (-log(lerp(1, exp(-Extinction.r * (T)), (p))) / Extinction.r)
 
 #define ThetaMax (PI / 2)
-#define SampleOffset float4(0, .25, .5, .75)
+#define LightScale 5
+#define AirlightScale 40
 
 SamplerState Airlight_LookupSampler
 {
@@ -56,7 +57,7 @@ float4 PhaseHG4(float4 cosTheta, float g)
 	return (1 - g2) * rsqrt(d * d * d) / (4 * PI);
 }
 
-float3 Airlight(float theta, float d, int numSamples)
+float3 AirlightIntegral(float2 theta, float d, int numSamples)
 {
 
 	float3 Lv = 0;
@@ -64,21 +65,26 @@ float3 Airlight(float theta, float d, int numSamples)
 	for (int i = 0; i < numSamples; ++i)
 	{
 
-		float4 p = (i + SampleOffset) / numSamples;
-		float4 thetas = lerp(theta, ThetaMax, p);
-		float4 ts = AngleToParameter(d, thetas);
-		float4 phase = PhaseHG4(sin(thetas), Anisotropy);
-		float4 depths = sqrt(d * d + ts * ts) + ts;
+		float p = (i + .5) / numSamples;
+		float thetai = lerp(theta[0], theta[1], p);
+		float ti = AngleToParameter(d, thetai);
+		float ri = sqrt(d * d + ti * ti);
 
-		[unroll(4)]
-		for (int j = 0; j < 4; ++j)
-		{
-			Lv += phase[j] * exp(-depths[j] * Extinction.rgb);
-		}
+		float3 Lvi = 1;
+		Lvi *= PhaseHG(sin(thetai), Anisotropy);
+		Lvi *= exp(-(ri + ti) * Extinction);
+
+		Lv += Lvi;
 
 	}
+	
+	Lv *= Scattering;
+	Lv /= numSamples;
 
-	return Lv * (ThetaMax - theta) / (4 * numSamples);
+	Lv *= theta[1] - theta[0];
+	//Lv /= d;
+
+	return Lv;
 
 }
 

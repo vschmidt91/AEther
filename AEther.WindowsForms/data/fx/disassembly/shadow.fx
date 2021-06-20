@@ -1,4 +1,4 @@
-//
+Macros: (ENABLE_INSTANCING,True)//
 // FX Version: fx_5_0
 //
 // 4 local buffer(s)
@@ -17,7 +17,7 @@ cbuffer CameraConstants : register(b1)
     float4x4 Projection;                // Offset:   64, size:   64
     float3  ViewPosition;               // Offset:  128, size:   12
     float   FarPlane;                   // Offset:  140, size:    4
-    float4x4 FarPosMatrix;              // Offset:  144, size:   64
+    float4x4 ViewDirectionMatrix;       // Offset:  144, size:   64
 }
 
 cbuffer LightConstants : register(b2)
@@ -267,8 +267,8 @@ BlendState BlendNone
 SamplerState Linear
 {
     Filter   = uint(MIN_MAG_MIP_LINEAR /* 21 */);
-    AddressU = uint(WRAP /* 1 */);
-    AddressV = uint(WRAP /* 1 */);
+    AddressU = uint(CLAMP /* 3 */);
+    AddressV = uint(CLAMP /* 3 */);
 };
 SamplerState Point
 {

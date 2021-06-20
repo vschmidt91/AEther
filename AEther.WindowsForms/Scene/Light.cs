@@ -15,14 +15,6 @@ namespace AEther.WindowsForms
         public bool CastsShadows;
         public bool IsVolumetric;
 
-        public virtual IEnumerable<string> GetSwitches()
-        {
-            if(IsVolumetric)
-            {
-                yield return "VOLUMETRIC";
-            }    
-        }
-
         //public Matrix GetTransform(Vector3 eyePos)
         //{
         //    if(IsDirectional)

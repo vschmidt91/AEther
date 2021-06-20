@@ -17,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="data\fx\add.fx" />
+    <None Remove="data\fx\airlight.fx" />
     <None Remove="data\fx\copy.fx" />
     <None Remove="data\fx\fluid-advect.fx" />
     <None Remove="data\fx\fluid-diffuse.fx" />
@@ -39,7 +40,6 @@
     <None Remove="data\fx\particles-simulate.fx" />
     <None Remove="data\fx\poisson-sor.fx" />
     <None Remove="data\fx\present.fx" />
-    <None Remove="data\fx\shadow-rectify.fx" />
     <None Remove="data\fx\shadow.fx" />
     <None Remove="sharpdx_direct3d11_1_effects_arm.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x64.dll" />
@@ -49,7 +49,7 @@
     <Content Include="data\fx\add.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\fx\shadow-rectify.fx">
+    <Content Include="data\fx\airlight.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\fluid-advect.fx">

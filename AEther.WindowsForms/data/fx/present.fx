@@ -1,6 +1,7 @@
 ﻿
 #include "states.fxi"
 #include "globals.fxi"
+#include "light.fxi"
 
 Texture2D<float3> Light : register(t0);
 
@@ -31,9 +32,9 @@ technique11 t0
 	pass p0
 	{
 
-		SetRasterizerState(RasterizerBoth);
+		SetRasterizerState(RasterizerDefault);
 		SetDepthStencilState(DepthStencilNone, 0);
-		SetBlendState(BlendAdditive, float4(0, 0, 0, 0), 0xFFFFFFFF);
+		SetBlendState(BlendNone, float4(0, 0, 0, 0), 0xFFFFFFFF);
 
 		SetVertexShader(CompileShader(vs_4_0, VSDefault()));
 		SetGeometryShader(0);
