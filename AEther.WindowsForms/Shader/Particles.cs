@@ -11,12 +11,12 @@ using SharpDX.Direct3D11;
 
 namespace AEther.WindowsForms
 {
-    public class Particles : GraphicsComponent
+    public class Particles : GraphicsComponent, IDisposable
     {
 
         readonly ComputeBuffer Buffer;
-        readonly Shader ParticleSimulationShader;
-        readonly Shader ParticleDrawShader;
+        readonly Shader ShaderSimulate;
+        readonly Shader ShaderDraw;
         readonly Model Model;
 
         public Particles(Graphics graphics, int count, ConstantBuffer<CameraConstants> cameraConstants)
@@ -24,9 +24,9 @@ namespace AEther.WindowsForms
         {
 
             Buffer = new ComputeBuffer(Graphics.Device, 80, count, false);
-            ParticleSimulationShader = Graphics.CreateShader("particles-simulate.fx");
-            ParticleDrawShader = Graphics.CreateShader("particles-draw.fx");
-            ParticleDrawShader.ConstantBuffers[1].SetConstantBuffer(cameraConstants.Buffer);
+            ShaderSimulate = Graphics.CreateShader("particles-simulate.fx");
+            ShaderDraw = Graphics.CreateShader("particles-draw.fx");
+            ShaderDraw.ConstantBuffers["CameraConstants"].SetConstantBuffer(cameraConstants.Buffer);
             //Model = new Model(Graphics.Device, Mesh.CreateSphere(3, 3).SplitVertices(true));
             Model = new Model(Graphics.Device, Mesh.CreateGrid(3, 3));
 
@@ -34,17 +34,23 @@ namespace AEther.WindowsForms
 
         public void Simulate()
         {
-            ParticleSimulationShader.UnorderedAccesses["Particles"].Set(Buffer.UAView);
-            Graphics.Compute(ParticleSimulationShader, (Buffer.ElementCount, 1, 1));
+            ShaderSimulate.UnorderedAccesses["Particles"].Set(Buffer.UAView);
+            Graphics.Compute(ShaderSimulate, (Buffer.ElementCount, 1, 1));
         }
 
         public void Draw(ShaderResourceView? texture = null)
         {
             Graphics.SetModel(Model);
-            ParticleDrawShader.ShaderResources["Texture"].SetResource(texture);
-            ParticleDrawShader.ShaderResources["Particles"].SetResource(Buffer.SRView);
-            Graphics.Draw(ParticleDrawShader, Buffer.ElementCount);
+            ShaderDraw.ShaderResources["Texture"].SetResource(texture);
+            ShaderDraw.ShaderResources["Particles"].SetResource(Buffer.SRView);
+            Graphics.Draw(ShaderDraw, Buffer.ElementCount);
         }
 
+        public void Dispose()
+        {
+            Buffer.Dispose();
+            ShaderSimulate.Dispose();
+            ShaderDraw.Dispose();
+        }
     }
 }

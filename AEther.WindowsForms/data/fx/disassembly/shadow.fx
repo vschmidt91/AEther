@@ -34,7 +34,7 @@ cbuffer LightConstants : register(b2)
     float3  Absorption;                 // Offset:  192, size:   12
 }
 
-cbuffer GeometryConstants : register(b3)
+cbuffer InstanceConstants : register(b3)
 {
     Instance SingleInstance;            // Offset:    0, size:   96
 }

@@ -107,15 +107,16 @@ namespace AEther.WindowsForms
         Texture2D ColorBuffer;
         Texture2D LightBuffer;
         Texture2D AirlightTexture;
-
-        readonly CameraPerspective Camera;
         readonly TextureCube ShadowBuffer;
         readonly Texture2D MandelboxTexture;
+
+        readonly CameraPerspective Camera;
 
         protected bool IsDisposed;
         readonly Stopwatch Timer = new();
         readonly List<SceneNode> Scene = new();
         readonly List<Model> Models = new();
+        readonly Fluid Fluid;
 
         public SceneState(Graphics graphics, SpectrumAccumulator<float>[] spectra)
             : base(graphics)
@@ -133,31 +134,31 @@ namespace AEther.WindowsForms
             Particles = new Particles(Graphics, 1 << 10, CameraConstants);
 
             ShadowShader = Graphics.CreateShader("shadow.fx", new[] { new ShaderMacro("ENABLE_INSTANCING", true)});
-            ShadowShader.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
-            ShadowShader.ConstantBuffers[2].SetConstantBuffer(LightConstants.Buffer);
-            ShadowShader.ConstantBuffers[3].SetConstantBuffer(InstanceConstants.Buffer);
+            ShadowShader.ConstantBuffers["CameraConstants"].SetConstantBuffer(CameraConstants.Buffer);
+            ShadowShader.ConstantBuffers["LightConstants"].SetConstantBuffer(LightConstants.Buffer);
+            ShadowShader.ConstantBuffers["InstanceConstants"].SetConstantBuffer(InstanceConstants.Buffer);
             ShadowShader.ShaderResources["Instances"].SetResource(Instances.SRView);
             ShadowShader.ShaderResources["ColorMap"].SetResource(MandelboxTexture.SRView);
 
             GeometryShader = Graphics.CreateShader("geometry.fx", new[] { new ShaderMacro("ENABLE_INSTANCING", true) });
-            GeometryShader.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
-            GeometryShader.ConstantBuffers[2].SetConstantBuffer(InstanceConstants.Buffer);
+            GeometryShader.ConstantBuffers["CameraConstants"].SetConstantBuffer(CameraConstants.Buffer);
+            GeometryShader.ConstantBuffers["InstanceConstants"].SetConstantBuffer(InstanceConstants.Buffer);
             GeometryShader.ShaderResources["Instances"].SetResource(Instances.SRView);
             GeometryShader.ShaderResources["ColorMap"].SetResource(MandelboxTexture.SRView);
 
             PresentShader = Graphics.CreateShader("present.fx");
 
             AirlightShader = Graphics.CreateShader("airlight.fx");
-            AirlightShader.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
-            AirlightShader.ConstantBuffers[2].SetConstantBuffer(LightConstants.Buffer);
+            AirlightShader.ConstantBuffers["CameraConstants"].SetConstantBuffer(CameraConstants.Buffer);
+            AirlightShader.ConstantBuffers["LightConstants"].SetConstantBuffer(LightConstants.Buffer);
             AirlightTexture = Graphics.CreateTexture(AirlightSize, AirlightSize, Format.R11G11B10_Float);
 
             LightShader = Graphics.CreateShader("light.fx", new[] { new ShaderMacro("EQUIANGULAR", true) });
             LightShadowShader = Graphics.CreateShader("light.fx", new[] { new ShaderMacro("ENABLE_SHADOWS", true), new ShaderMacro("EQUIANGULAR", true)  });
             foreach (var shader in new[] { LightShader, LightShadowShader })
             {
-                shader.ConstantBuffers[1].SetConstantBuffer(CameraConstants.Buffer);
-                shader.ConstantBuffers[2].SetConstantBuffer(LightConstants.Buffer);
+                shader.ConstantBuffers["CameraConstants"].SetConstantBuffer(CameraConstants.Buffer);
+                shader.ConstantBuffers["LightConstants"].SetConstantBuffer(LightConstants.Buffer);
                 shader.ShaderResources["Shadow"].SetResource(ShadowBuffer.SRView);
                 shader.ShaderResources["Airlight"].SetResource(AirlightTexture.SRView);
             }
@@ -172,29 +173,29 @@ namespace AEther.WindowsForms
                 AspectRatio = Graphics.BackBuffer.Width / (float)Graphics.BackBuffer.Height,
             };
             Camera.Direction = Vector3.Normalize(Vector3.Zero - Camera.Position);
-            //for (var i = 0; i < 1 << 8; ++i)
-            //{
-            //    var model = rng.NextDouble() < .5 ? Cube : Sphere;
-            //    var obj = new MyGeometry(model)
-            //    {
-            //        Color = new Vector4(rng.NextVector3(Vector3.Zero, Vector3.One), rng.NextDouble() < .5 ? rng.NextFloat(0, 1) : 1),
-            //        Transform = rng.NextMomentum(10f, 1, 0),
-            //        Momentum = rng.NextMomentum(3f, .1f, 0),
-            //        Roughness = rng.NextFloat(0, 1),
-            //    };
-            //    Scene.Add(obj);
-            //}
-            //Scene.Add(new MyLight());
-
-            for (var c = 0; c < 2; c++)
+            for (var i = 0; i < 1 << 8; ++i)
             {
-                var spectrum = spectra[c];
-                var offset = 5 * (c == 0 ? Vector3.Left : Vector3.Right) + 20 * Vector3.Down;
-                for (var i = 0; i < spectrum.NoteCount; i++)
+                var model = rng.NextDouble() < .5 ? Cube : Sphere;
+                var obj = new MyGeometry(model)
                 {
-                    Scene.Add(new SpectrumLight(spectrum, i, offset, Vector3.Up));
-                }
+                    Color = new Vector4(rng.NextVector3(Vector3.Zero, Vector3.One), rng.NextDouble() < .5 ? rng.NextFloat(0, 1) : 1),
+                    Transform = rng.NextMomentum(10f, 1, 0),
+                    Momentum = rng.NextMomentum(3f, .1f, 0),
+                    Roughness = rng.NextFloat(0, 1),
+                };
+                Scene.Add(obj);
             }
+            Scene.Add(new MyLight());
+
+            //for (var c = 0; c < 2; c++)
+            //{
+            //    var spectrum = spectra[c];
+            //    var offset = 5 * (c == 0 ? Vector3.Left : Vector3.Right) + 20 * Vector3.Down;
+            //    for (var i = 0; i < spectrum.NoteCount; i++)
+            //    {
+            //        Scene.Add(new SpectrumLight(spectrum, i, offset, Vector3.Up));
+            //    }
+            //}
 
             //Scene.Add(new Geometry(floor)
             //{
@@ -216,6 +217,9 @@ namespace AEther.WindowsForms
             Graphics.OnModeChange += Graphics_OnModeChange;
 
             Models = Scene.OfType<Geometry>().Select(g => g.Model).ToHashSet().ToList();
+
+            int size = 1 << 10;
+            Fluid = new Fluid(Graphics, size, size);
 
 
         }
@@ -252,15 +256,31 @@ namespace AEther.WindowsForms
         {
             if(!IsDisposed)
             {
-                MandelboxTexture.Dispose();
+
                 MandelboxShader.Dispose();
+                PresentShader.Dispose();
+                AirlightShader.Dispose();
+                ShadowShader.Dispose();
                 GeometryShader.Dispose();
+                LightShader.Dispose();
+                LightShadowShader.Dispose();
+
+                Particles.Dispose();
                 InstanceConstants.Dispose();
                 CameraConstants.Dispose();
+                LightConstants.Dispose();
+                Instances.Dispose();
                 Cube.Dispose();
                 Sphere.Dispose();
-                Instances.Dispose();
+
                 DepthBuffer.Dispose();
+                NormalBuffer.Dispose();
+                ColorBuffer.Dispose();
+                LightBuffer.Dispose();
+                AirlightTexture.Dispose();
+                ShadowBuffer.Dispose();
+                MandelboxTexture.Dispose();
+
                 GC.SuppressFinalize(this);
                 IsDisposed = true;
             }
@@ -353,6 +373,9 @@ namespace AEther.WindowsForms
 
         public override void Render()
         {
+
+            var fluid = Fluid.Render();
+            GeometryShader.ShaderResources["ColorMap"].SetResource(fluid.SRView);
 
             UpdateScene();
 

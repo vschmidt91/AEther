@@ -20,7 +20,7 @@ cbuffer CameraConstants : register(b1)
     float4x4 ViewDirectionMatrix;       // Offset:  144, size:   64
 }
 
-cbuffer GeometryConstants : register(b2)
+cbuffer InstanceConstants : register(b2)
 {
     Instance SingleInstance;            // Offset:    0, size:   96
 }

@@ -26,19 +26,12 @@ namespace AEther.WindowsForms
         {
             get
             {
-                if(Chain == null)
-                {
-                    return false;
-                }
-                else
-                {
-                    Chain.GetFullscreenState(out var state, out _);
-                    return state;
-                }
+                Chain.GetFullscreenState(out var state, out _);
+                return state;
             }
             set
             {
-                Chain?.SetFullscreenState(value, null);
+                Chain.SetFullscreenState(value, null);
             }
 
         }
@@ -53,6 +46,8 @@ namespace AEther.WindowsForms
         public readonly Device Device;
         public readonly ConstantBuffer<FrameConstants> FrameConstants;
         public readonly ShaderManager Shaders;
+        public readonly Dictionary<string, SharpDX.Direct3D11.Buffer> Constants = new();
+
         readonly DeviceDebug? Debug;
         readonly SwapChain Chain;
         readonly Model Quad;
@@ -150,25 +145,16 @@ namespace AEther.WindowsForms
 
             if (!Chain.Description.ModeDescription.Equals(mode))
             {
-
-                BackBuffer.Dispose();
                 BackBufferResource.Dispose();
-
-                //Debug?.ReportLiveDeviceObjects(ReportingLevel.Detail);
-
+                BackBuffer.Dispose();
                 Context.ClearState();
                 Context.Flush();
-
                 Chain.ResizeBuffers(Chain.Description.BufferCount, mode.Width, mode.Height, mode.Format, SwapChainFlags.AllowModeSwitch);
                 Chain.ResizeTarget(ref mode);
-
                 BackBufferResource = Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0);
                 BackBuffer = new Texture2D(BackBufferResource);
-
                 OnModeChange?.Invoke(this, mode);
-
             }
-
 
         }
 
@@ -178,11 +164,7 @@ namespace AEther.WindowsForms
             Shaders.Dispose();
             FrameConstants.Dispose();
             Quad.Dispose();
-            //BackBuffer.Dispose();
-
             Chain.Dispose();
-
-
             Context.ClearState();
             Context.Flush();
             Context.Dispose();
@@ -288,7 +270,7 @@ namespace AEther.WindowsForms
         {
             var bytecode = Shaders.Compile(key, macros);
             var shader = new Shader(Device, bytecode);
-            shader.ConstantBuffers[0].SetConstantBuffer(FrameConstants.Buffer);
+            shader.ConstantBuffers["FrameConstants"].SetConstantBuffer(FrameConstants.Buffer);
             return shader;
         }
 

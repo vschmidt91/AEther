@@ -1,4 +1,4 @@
-Macros: //
+Macros: (FAST_DERIVATIVES,True)//
 // FX Version: fx_5_0
 //
 // 1 local buffer(s)
@@ -366,7 +366,7 @@ fxgroup
                 dcl_resource_texture2d (float,float,float,float) t1
                 dcl_input_ps linear v1.xy
                 dcl_output o0.xyzw
-                dcl_temps 4
+                dcl_temps 3
                 //
                 // Initial variable locations:
                 //   v0.x <- IN.Position.x; v0.y <- IN.Position.y; v0.z <- IN.Position.z; v0.w <- IN.Position.w; 
@@ -392,28 +392,25 @@ fxgroup
                 #line 26 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\fluid-project.fx"
                 and r0.x, r0.x, l(0x3f800000)
                 
-                #line 17
-                sample_aoffimmi(1,0,0) r1.xyzw, v1.xyxx, t1.xyzw, s0
-                sample_aoffimmi(-1,0,0) r2.xyzw, v1.xyxx, t1.xyzw, s0
-                add r1.x, r1.x, -r2.x  // r1.x <- px
+                #line 13
+                sample r1.xyzw, v1.xyxx, t1.xyzw, s0
+                deriv_rtx r2.x, r1.x  // r2.x <- px
                 
-                #line 18
-                sample_aoffimmi(0,1,0) r2.xyzw, v1.xyxx, t1.xyzw, s0
-                sample_aoffimmi(0,-1,0) r3.xyzw, v1.xyxx, t1.xyzw, s0
-                add r1.y, r2.x, -r3.x  // r1.y <- py
+                #line 14
+                deriv_rty r2.y, r1.x  // r2.y <- py
                 
                 #line 22
-                sample r2.xyzw, v1.xyxx, t0.xyzw, s0  // r2.x <- v.x; r2.y <- v.y; r2.z <- v.z; r2.w <- v.w
+                sample r1.xyzw, v1.xyxx, t0.xyzw, s0  // r1.x <- v.x; r1.y <- v.y; r1.z <- v.z; r1.w <- v.w
                 
                 #line 24
-                mad r2.xy, -r1.xyxx, l(0.500000, 0.500000, 0.000000, 0.000000), r2.xyxx
+                add r1.xy, -r2.xyxx, r1.xyxx
                 
                 #line 26
-                mul o0.xyzw, r0.xxxx, r2.xyzw
+                mul o0.xyzw, r0.xxxx, r1.xyzw
                 
                 #line 27
                 ret 
-                // Approximately 21 instruction slots used
+                // Approximately 18 instruction slots used
                             
             };
         }

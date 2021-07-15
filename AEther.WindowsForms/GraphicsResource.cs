@@ -13,15 +13,14 @@ namespace AEther.WindowsForms
         where T : Resource
     {
 
-        protected readonly T Resource;
-
         public RenderTargetView RTView => RTViewLazy.Value;
         public DepthStencilView DSView => DSViewLazy.Value;
         public ShaderResourceView SRView => SRViewLazy.Value;
 
-        readonly Lazy<RenderTargetView> RTViewLazy;
-        readonly Lazy<DepthStencilView> DSViewLazy;
-        readonly Lazy<ShaderResourceView> SRViewLazy;
+        protected readonly T Resource;
+        protected readonly Lazy<RenderTargetView> RTViewLazy;
+        protected readonly Lazy<DepthStencilView> DSViewLazy;
+        protected readonly Lazy<ShaderResourceView> SRViewLazy;
 
         protected bool IsDisposed;
 

@@ -52,8 +52,8 @@ namespace AEther.WindowsForms
         {
             if(!IsDisposed)
             {
-                Shader.Dispose();
                 WeightVariable.Dispose();
+                Shader.Dispose();
                 GC.SuppressFinalize(this);
                 IsDisposed = true;
             }

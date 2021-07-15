@@ -4,7 +4,7 @@
 #include "camera.fxi"
 
 StructuredBuffer<Instance> Instances : register(t0);
-cbuffer GeometryConstants : register(b2)
+cbuffer InstanceConstants : register(b2)
 {
 	Instance SingleInstance;
 };

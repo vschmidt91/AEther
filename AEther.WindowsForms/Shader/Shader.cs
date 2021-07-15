@@ -109,7 +109,7 @@ namespace AEther.WindowsForms
         public readonly Dictionary<string, EffectDepthStencilViewVariable> DepthStencils;
         public readonly Dictionary<string, EffectRenderTargetViewVariable> RenderTargets;
         public readonly Dictionary<string, EffectUnorderedAccessViewVariable> UnorderedAccesses;
-        public readonly EffectConstantBuffer[] ConstantBuffers;
+        public readonly Dictionary<string, EffectConstantBuffer> ConstantBuffers;
 
         readonly ShaderBytecode Bytecode;
         readonly Effect Effect;
@@ -140,7 +140,7 @@ namespace AEther.WindowsForms
 
             ConstantBuffers = Enumerable.Range(0, Effect.Description.ConstantBufferCount)
                 .Select(i => Effect.GetConstantBufferByIndex(i))
-                .ToArray();
+                .ToDictionary(v => v.Description.Name, v => v);
 
             Techniques = Enumerable.Range(0, Effect.Description.TechniqueCount)
                 .Select(i => new ShaderTechnique(device, Effect.GetTechniqueByIndex(i)))
@@ -166,7 +166,9 @@ namespace AEther.WindowsForms
                     .Concat(Variables.Values.Cast<ComObject>());
 
                 foreach (var obj in comObjects)
+                {
                     obj?.Dispose();
+                }
 
                 ShaderResources.Clear();
                 DepthStencils.Clear();
@@ -174,11 +176,11 @@ namespace AEther.WindowsForms
                 UnorderedAccesses.Clear();
                 Variables.Clear();
 
-                foreach (var constantBuffer in ConstantBuffers)
+                foreach (var constantBuffer in ConstantBuffers.Values)
                 {
-                    constantBuffer?.Dispose();
+                    constantBuffer.Dispose();
                 }
-                Array.Clear(ConstantBuffers, 0, ConstantBuffers.Length);
+                ConstantBuffers.Clear();
 
                 Effect.Dispose();
                 Bytecode.Dispose();

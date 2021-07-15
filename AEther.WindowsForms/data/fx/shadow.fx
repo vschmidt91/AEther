@@ -5,7 +5,7 @@
 #include "light.fxi"
 
 StructuredBuffer<Instance> Instances : register(t0);
-cbuffer GeometryConstants : register(b3)
+cbuffer InstanceConstants : register(b3)
 {
 	Instance SingleInstance;
 };
