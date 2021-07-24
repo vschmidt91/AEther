@@ -27,13 +27,18 @@ namespace AEther.WindowsForms
         {
             InitializeComponent();
             Graphics = new Graphics(Handle);
-            Graphics.Shaders.FileChanged += Shaders_FileChanged;
+            Graphics.OnShaderChange += Graphics_OnShaderChange;
             Input.Items.Clear();
             Input.Items.Add(LoopbackEntry);
             Input.Items.AddRange(Recorder.GetAvailableDeviceNames().ToArray());
             Input.SelectedIndex = 0;
             AnalyzerOptions.SelectedObject = new AnalyzerOptions();
             DMXOptions.SelectedObject = new DMXOptions();
+        }
+
+        private async void Graphics_OnShaderChange(object? sender, string e)
+        {
+            await ResetAsync();
         }
 
         void Start()
@@ -84,19 +89,37 @@ namespace AEther.WindowsForms
             if (Graphics.IsFullscreen)
             {
                 Graphics.IsFullscreen = false;
-                Graphics.Resize(ClientSize.Width, ClientSize.Height);
+                Graphics.SetMode(Graphics.NativeMode with
+                {
+                    Width = ClientSize.Width,
+                    Height = ClientSize.Height,
+                });
             }
             else
             {
                 Graphics.IsFullscreen = true;
-                Graphics.Resize(Graphics.NativeMode);
+                Graphics.SetMode(Graphics.NativeMode);
             }
+        }
+
+        async Task ResetAsync()
+        {
+            if (!Created)
+            {
+                return;
+            }
+            await StopAsync();
+            Start();
         }
 
         protected override void OnResizeEnd(EventArgs e)
         {
             base.OnResizeEnd(e);
-            Graphics.Resize(ClientSize.Width, ClientSize.Height);
+            Graphics.SetMode(Graphics.NativeMode with
+            {
+                Width = ClientSize.Width,
+                Height = ClientSize.Height,
+            });
         }
 
         protected async override void OnFormClosing(FormClosingEventArgs e)
@@ -108,7 +131,11 @@ namespace AEther.WindowsForms
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            Graphics.Resize(ClientSize.Width, ClientSize.Height);
+            Graphics.SetMode(Graphics.NativeMode with
+            {
+                Width = ClientSize.Width,
+                Height = ClientSize.Height,
+            });
             Start();
         }
 
@@ -145,44 +172,19 @@ namespace AEther.WindowsForms
             base.OnKeyPress(e);
         }
 
-        private async void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
-        {
-            if (!Created)
-            {
-                return;
-            }
-            await StopAsync();
-            Start();
-        }
-
         private async void Options_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
         {
-            if (!Created)
-            {
-                return;
-            }
-            await StopAsync();
-            Start();
+            await ResetAsync();
         }
 
         private async void Input_SelectedValueChanged(object? sender, EventArgs e)
         {
-            if (!Created)
-            {
-                return;
-            }
-            await StopAsync();
-            Start();
+            await ResetAsync();
         }
 
         private async void DMXOptions_PropertyValueChanged(object s, PropertyValueChangedEventArgs e)
         {
-            if (!Created)
-            {
-                return;
-            }
-            await StopAsync();
-            Start();
+            await ResetAsync();
         }
 
     }

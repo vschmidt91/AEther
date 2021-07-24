@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 
@@ -16,10 +17,18 @@ namespace AEther.WindowsForms
         readonly (HashSet<string>, Shader)[] Values;
         readonly HashSet<string> Defines;
 
-        public MetaShader(string[] defines, params (HashSet<string>, Shader)[] values)
+        public MetaShader(Graphics graphics, string key, IEnumerable<string> defines)
         {
             Defines = defines.ToHashSet();
-            Values = values;
+            Values = defines
+                .Subsets()
+                .Select(s => (s.ToHashSet(), graphics.CreateShader(key, ToMacros(s))))
+                .ToArray();
+        }
+
+        static ShaderMacro[] ToMacros(IEnumerable<string> defines)
+        {
+            return defines.Select(d => new ShaderMacro(d, true)).ToArray();
         }
 
         public Shader this[params string[] switches] => this[(IEnumerable<string>)switches];

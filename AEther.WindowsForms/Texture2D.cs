@@ -24,12 +24,12 @@ namespace AEther.WindowsForms
             : base(texture)
         { }
 
-        public void Clear(Color4 color = default)
+        public virtual void Clear(Color4 color = default)
         {
             Resource.Device.ImmediateContext.ClearRenderTargetView(RTView, color);
         }
 
-        public void ClearDepth(float depth = 1f)
+        public virtual void ClearDepth(float depth = 1f)
         {
             Resource.Device.ImmediateContext.ClearDepthStencilView(DSView, DepthStencilClearFlags.Depth, depth, 0);
         }

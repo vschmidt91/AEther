@@ -2,7 +2,9 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
+using System.IO.Packaging;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -21,38 +23,20 @@ namespace AEther.WindowsForms
     {
 
         public event EventHandler<ModeDescription>? OnModeChange;
+        public event EventHandler<string>? OnShaderChange;
 
-        public bool IsFullscreen
-        {
-            get
-            {
-                Chain.GetFullscreenState(out var state, out _);
-                return state;
-            }
-            set
-            {
-                Chain.SetFullscreenState(value, null);
-            }
-
-        }
-
-        public readonly ModeDescription NativeMode;
-
-        SharpDX.Direct3D11.Texture2D BackBufferResource;
         public Texture2D BackBuffer { get; protected set; }
+        public readonly ModeDescription NativeMode;
+        public readonly Dictionary<string, SharpDX.Direct3D11.Buffer> ShaderConstants = new();
 
-        public DeviceContext Context => Device.ImmediateContext;
-
-        public readonly Device Device;
-        public readonly ConstantBuffer<FrameConstants> FrameConstants;
-        public readonly ShaderManager Shaders;
-        public readonly Dictionary<string, SharpDX.Direct3D11.Buffer> Constants = new();
-
+        int IndexCount;
+        SharpDX.Direct3D11.Texture2D BackBufferResource;
+        readonly ShaderManager Shaders;
+        readonly Device Device;
         readonly DeviceDebug? Debug;
         readonly SwapChain Chain;
         readonly Model Quad;
-
-        int IndexCount;
+        DeviceContext Context => Device.ImmediateContext;
 
         public Graphics(IntPtr handle)
         {
@@ -105,43 +89,60 @@ namespace AEther.WindowsForms
 
             BackBufferResource = Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0);
             BackBuffer = new Texture2D(BackBufferResource);
-            FrameConstants = new ConstantBuffer<FrameConstants>(Device);
             Shaders = CreateShaderManager();
+            Shaders.FileChanged += Shaders_FileChanged;
             Quad = new Model(Device, Mesh.CreateGrid(2, 2));
 
             var c = new GraphicsCapabilities(Device);
 
         }
 
-        public void Resize(int width, int height, Rational? refreshRate = default, DisplayModeScaling? scaling = default, DisplayModeScanlineOrder? scanlineOrdering = default)
+        private void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
         {
-            var oldMode = Chain.Description.ModeDescription;
-            var mode = new ModeDescription
-            {
-                Width = width,
-                Height = height,
-                Format = Chain.Description.ModeDescription.Format,
-                RefreshRate = refreshRate ?? oldMode.RefreshRate,
-                Scaling = scaling ?? oldMode.Scaling,
-                ScanlineOrdering = scanlineOrdering ?? oldMode.ScanlineOrdering,
-            };
-            SetMode(mode);
+            OnShaderChange?.Invoke(sender, e.FullPath);
         }
 
-        public void Resize(ModeDescription targetMode)
+        public bool IsFullscreen
+        {
+            get
+            {
+                Chain.GetFullscreenState(out var state, out _);
+                return state;
+            }
+            set
+            {
+                Chain.SetFullscreenState(value, null);
+            }
+
+        }
+
+        public MetaShader CreateMetaShader(string key, params string[] defines)
+        {
+            var shader = new MetaShader(this, key, defines);
+            return shader;
+        }
+
+        public Shader CreateShader(string key, params ShaderMacro[] macros)
+        {
+            var bytecode = Shaders.Compile(key, macros);
+            var shader = new Shader(Device, bytecode);
+            foreach (var kvp in ShaderConstants)
+            {
+                shader.ConstantBuffers[kvp.Key].SetConstantBuffer(kvp.Value);
+            }
+            return shader;
+        }
+
+        public Model CreateModel(Mesh mesh)
+            => new(Device, mesh);
+
+        public void SetMode(ModeDescription targetMode)
         {
 
             using var dxgiFactory = new Factory1();
             using var dxgiAdapater = dxgiFactory.GetAdapter(0);
             using var output = dxgiAdapater.GetOutput(0);
-            output.GetClosestMatchingMode(null, targetMode, out var newMode);
-
-            SetMode(newMode);
-
-        }
-
-        public void SetMode(ModeDescription mode)
-        {
+            output.GetClosestMatchingMode(null, targetMode, out var mode);
 
             if (!Chain.Description.ModeDescription.Equals(mode))
             {
@@ -162,7 +163,6 @@ namespace AEther.WindowsForms
         {
 
             Shaders.Dispose();
-            FrameConstants.Dispose();
             Quad.Dispose();
             Chain.Dispose();
             Context.ClearState();
@@ -174,6 +174,13 @@ namespace AEther.WindowsForms
             Debug?.Dispose();
 
         }
+
+        public ConstantBuffer<T> CreateConstantBuffer<T>()
+            where T : struct
+            => new(Device);
+
+        public ComputeBuffer CreateComputeBuffer(int stride, int size, bool cpuWrite)
+            => new(Device, stride, size, cpuWrite);
 
         public Texture2D CreateTexture(int width, int height, Format format,
             BindFlags bindFlags = BindFlags.ShaderResource | BindFlags.RenderTarget,
@@ -215,6 +222,24 @@ namespace AEther.WindowsForms
             return new DepthBuffer(texture);
         }
 
+        public TextureCube CreateTextureCube(int width, int height, Format format)
+        {
+            var texture = new SharpDX.Direct3D11.Texture2D(Device, new()
+            {
+                ArraySize = 6,
+                BindFlags = BindFlags.ShaderResource | BindFlags.DepthStencil,
+                CpuAccessFlags = CpuAccessFlags.None,
+                Format = format,
+                Width = width,
+                Height = height,
+                MipLevels = 1,
+                OptionFlags = ResourceOptionFlags.TextureCube,
+                SampleDescription = new SampleDescription(1, 0),
+                Usage = ResourceUsage.Default,
+            });
+            return new TextureCube(texture);
+        }
+
         ShaderManager CreateShaderManager()
         {
 
@@ -248,42 +273,8 @@ namespace AEther.WindowsForms
             Chain.TryPresent(1, PresentFlags.DoNotWait);
         }
 
-        static ShaderMacro[] ToMacros(string[] defines)
-            => defines.Select(d => new ShaderMacro(d, true)).ToArray();
-
-        public MetaShader CreateMetaShader(string key, params string[] defines)
-        {
-            List<List<string>> combinations = new();
-            combinations.Add(new());
-            foreach(var define in defines)
-            {
-                var macro = new[] { define };
-                var newCombinations = combinations.Select(l => l.Concat(macro).ToList()).ToArray();
-                combinations.AddRange(newCombinations);
-            }
-            var c = combinations.Select(d => d.ToArray());
-            var shaders = c.Select(d => (d.ToHashSet(), CreateShader(key, ToMacros(d)))).ToArray();
-            return new MetaShader(defines, shaders);
-        }
-
-        public Shader CreateShader(string key, params ShaderMacro[] macros)
-        {
-            var bytecode = Shaders.Compile(key, macros);
-            var shader = new Shader(Device, bytecode);
-            shader.ConstantBuffers["FrameConstants"].SetConstantBuffer(FrameConstants.Buffer);
-            return shader;
-        }
-
         public void RenderFrame()
         {
-
-            var dt = .01f;
-            var t = (float)DateTime.Now.TimeOfDay.TotalSeconds;
-
-            FrameConstants.Value.AspectRatio = BackBuffer.Width / (float)BackBuffer.Height;
-            FrameConstants.Value.T = t;
-            FrameConstants.Value.DT = dt;
-            FrameConstants.Update();
 
         }
 
@@ -301,7 +292,15 @@ namespace AEther.WindowsForms
 
         public void SetRenderTargets(DepthStencilView? depthBuffer, params Texture2D[] renderTargets)
         {
-            SetViewport(renderTargets.FirstOrDefault()?.ViewPort ?? default);
+            if(depthBuffer == null)
+            {
+                SetViewport(renderTargets.FirstOrDefault()?.ViewPort ?? default);
+            }
+            else
+            {
+                var resource = depthBuffer.ResourceAs<SharpDX.Direct3D11.Texture2D>();
+                SetViewport(new Viewport(0, 0, resource.Description.Width, resource.Description.Height));
+            }
             Context.OutputMerger.SetRenderTargets(depthBuffer, renderTargets.Select(t => t.RTView).ToArray());
         }
 

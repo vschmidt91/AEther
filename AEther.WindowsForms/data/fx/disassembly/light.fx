@@ -398,6 +398,16 @@ fxgroup
                 //
                 // Buffer Definitions: 
                 //
+                // cbuffer FrameConstants
+                // {
+                //
+                //   float T;                           // Offset:    0 Size:     4
+                //   float DT;                          // Offset:    4 Size:     4 [unused]
+                //   float HistogramShift;              // Offset:    8 Size:     4 [unused]
+                //   float AspectRatio;                 // Offset:   12 Size:     4 [unused]
+                //
+                // }
+                //
                 // cbuffer CameraConstants
                 // {
                 //
@@ -415,7 +425,7 @@ fxgroup
                 //   float4x4 LightView;                // Offset:    0 Size:    64 [unused]
                 //   float4x4 LightProjection;          // Offset:   64 Size:    64 [unused]
                 //   float3 LightIntensity;             // Offset:  128 Size:    12
-                //   float Anisotropy;                  // Offset:  140 Size:     4 [unused]
+                //   float Anisotropy;                  // Offset:  140 Size:     4
                 //   float3 LightPosition;              // Offset:  144 Size:    12
                 //   float LightDistance;               // Offset:  156 Size:     4
                 //   float3 Emission;                   // Offset:  160 Size:    12 [unused]
@@ -435,7 +445,7 @@ fxgroup
                 // Normal                            texture  float4          2d             t1      1 
                 // Color                             texture  float4          2d             t2      1 
                 // Shadow                            texture   float        cube             t3      1 
-                // Airlight                          texture  float3          2d             t4      1 
+                // FrameConstants                    cbuffer      NA          NA            cb0      1 
                 // CameraConstants                   cbuffer      NA          NA            cb1      1 
                 // LightConstants                    cbuffer      NA          NA            cb2      1 
                 //
@@ -446,7 +456,7 @@ fxgroup
                 // Name                 Index   Mask Register SysValue  Format   Used
                 // -------------------- ----- ------ -------- -------- ------- ------
                 // SV_POSITION              0   xyzw        0      POS   float   xy  
-                // TEXCOORDS                0   xy          1     NONE   float       
+                // TEXCOORDS                0   xy          1     NONE   float   xy  
                 // POSITION                 0   xyz         2     NONE   float   xyz 
                 //
                 //
@@ -457,6 +467,7 @@ fxgroup
                 // SV_TARGET                0   xyz         0   TARGET   float   xyz 
                 //
                 ps_4_0
+                dcl_constantbuffer CB0[1], immediateIndexed
                 dcl_constantbuffer CB1[9], immediateIndexed
                 dcl_constantbuffer CB2[13], immediateIndexed
                 dcl_sampler s0, mode_default
@@ -464,11 +475,11 @@ fxgroup
                 dcl_resource_texture2d (float,float,float,float) t1
                 dcl_resource_texture2d (float,float,float,float) t2
                 dcl_resource_texturecube (float,float,float,float) t3
-                dcl_resource_texture2d (float,float,float,float) t4
                 dcl_input_ps_siv linear noperspective v0.xy, position
+                dcl_input_ps linear v1.xy
                 dcl_input_ps linear v2.xyz
                 dcl_output o0.xyz
-                dcl_temps 6
+                dcl_temps 9
                 //
                 // Initial variable locations:
                 //   v0.x <- IN.Position.x; v0.y <- IN.Position.y; v0.z <- IN.Position.z; v0.w <- IN.Position.w; 
@@ -480,93 +491,87 @@ fxgroup
                 ftoi r0.xy, v0.xyxx  // r0.x <- index.x; r0.y <- index.y
                 mov r0.zw, l(0,0,0,0)  // r0.w <- index.z
                 
-                #line 48
-                ld r1.xyzw, r0.xyww, t1.xyzw  // r1.x <- normal.x; r1.y <- normal.y; r1.z <- normal.z
-                
-                #line 51
-                dp3 r1.w, r1.xyzx, r1.xyzx
-                rsq r1.w, r1.w
-                mul r1.xyz, r1.wwww, r1.xyzx  // r1.x <- N.x; r1.y <- N.y; r1.z <- N.z
-                
-                #line 50
-                dp3 r1.w, v2.xyzx, v2.xyzx
-                rsq r1.w, r1.w
-                mul r2.xyz, r1.wwww, v2.xyzx  // r2.x <- V.x; r2.y <- V.y; r2.z <- V.z
-                
                 #line 47
-                ld r3.xyzw, r0.xyww, t0.xyzw
+                ld r1.xyzw, r0.xyww, t0.xyzw
+                mul r1.y, r1.x, cb1[8].w  // r1.y <- depth
+                
+                #line 48
+                ld r2.xyzw, r0.xyww, t1.xyzw  // r2.x <- normal.x; r2.y <- normal.y; r2.z <- normal.z
                 
                 #line 49
                 ld r0.xyzw, r0.xyzw, t2.xyzw  // r0.x <- color.x; r0.y <- color.y; r0.z <- color.z; r0.w <- color.w
                 
-                #line 47
-                mul r3.y, r3.x, cb1[8].w  // r3.y <- depth
+                #line 50
+                dp3 r1.z, v2.xyzx, v2.xyzx
+                rsq r1.z, r1.z
+                mul r3.xyz, r1.zzzz, v2.xyzx  // r3.x <- V.x; r3.y <- V.y; r3.z <- V.z
+                
+                #line 51
+                dp3 r1.z, r2.xyzx, r2.xyzx
+                rsq r1.z, r1.z
+                mul r2.xyz, r1.zzzz, r2.xyzx  // r2.x <- N.x; r2.y <- N.y; r2.z <- N.z
                 
                 #line 52
-                mad r4.xyz, r3.yyyy, r2.xyzx, cb1[8].xyzx  // r4.x <- pos.x; r4.y <- pos.y; r4.z <- pos.z
+                mad r4.xyz, r1.yyyy, r3.xyzx, cb1[8].xyzx  // r4.x <- pos.x; r4.y <- pos.y; r4.z <- pos.z
                 
                 #line 53
                 add r4.xyz, -r4.xyzx, cb2[9].xyzx  // r4.x <- lightVector.x; r4.y <- lightVector.y; r4.z <- lightVector.z
                 
                 #line 54
-                dp3 r1.w, r4.xyzx, r4.xyzx
-                sqrt r1.w, r1.w  // r1.w <- lightDistance
+                dp3 r1.z, r4.xyzx, r4.xyzx
+                sqrt r1.z, r1.z  // r1.z <- lightDistance
                 
                 #line 55
-                div r2.w, l(1.000000, 1.000000, 1.000000, 1.000000), r1.w  // r2.w <- lightDistanceInv
+                div r1.w, l(1.000000, 1.000000, 1.000000, 1.000000), r1.z  // r1.w <- lightDistanceInv
                 
                 #line 56
-                mul r5.xyz, r4.xyzx, r2.wwww  // r5.x <- L.x; r5.y <- L.y; r5.z <- L.z
+                mul r5.xyz, r4.xyzx, r1.wwww  // r5.x <- L.x; r5.y <- L.y; r5.z <- L.z
                 
                 #line 57
                 mov r4.xyz, -r4.xyzx
                 sample r4.xyzw, r4.xyzx, t3.xyzw, s0
-                
-                #line 68
-                mad r3.z, cb2[10].w, r4.x, l(0.001000)
-                ge r1.w, r3.z, r1.w
-                and r1.w, r1.w, l(0x3f800000)
-                
-                #line 67
-                mul r2.w, r2.w, r2.w  // r2.w <- Ls.x
-                
-                #line 68
-                mul r1.w, r1.w, r2.w  // r1.w <- Ls.x
-                
-                #line 69
-                dp3_sat r1.x, r1.xyzx, r5.xyzx
-                mul r1.x, r1.x, r1.w  // r1.x <- Ls.x
-                
-                #line 60
-                add r1.yzw, r0.xxyz, l(0.000000, -1.000000, -1.000000, -1.000000)
                 
                 #line 58
                 eq r2.w, r0.w, l(1.000000)  // r2.w <- isMetal
                 
                 #line 59
                 and r2.w, r2.w, l(0x3f800000)
+                mad r4.yzw, r2.wwww, -r0.xxyz, r0.xxyz  // r4.y <- diffuse.x; r4.z <- diffuse.y; r4.w <- diffuse.z
                 
                 #line 60
-                mad r1.yzw, r2.wwww, r1.yyzw, l(0.000000, 1.000000, 1.000000, 1.000000)  // r1.y <- specular.x; r1.z <- specular.y; r1.w <- specular.z
-                
-                #line 59
-                mad r0.xyz, r2.wwww, -r0.xyzx, r0.xyzx  // r0.x <- diffuse.x; r0.y <- diffuse.y; r0.z <- diffuse.z
+                add r0.xyz, r0.xyzx, l(-1.000000, -1.000000, -1.000000, 0.000000)
+                mad r0.xyz, r2.wwww, r0.xyzx, l(1.000000, 1.000000, 1.000000, 0.000000)  // r0.x <- specular.x; r0.y <- specular.y; r0.z <- specular.z
                 
                 #line 62
-                mul r0.xyz, r0.xyzx, l(0.318319, 0.318319, 0.318319, 0.000000)  // r0.x <- brdfDiffuse.x; r0.y <- brdfDiffuse.y; r0.z <- brdfDiffuse.z
+                mul r4.yzw, r4.yyzw, l(0.000000, 0.318319, 0.318319, 0.318319)  // r4.y <- brdfDiffuse.x; r4.z <- brdfDiffuse.y; r4.w <- brdfDiffuse.z
+                
+                #line 67
+                mul r1.w, r1.w, r1.w  // r1.w <- Ls.x
+                
+                #line 68
+                mad r2.w, cb2[10].w, r4.x, l(0.001000)
+                ge r1.z, r2.w, r1.z
+                and r1.z, r1.z, l(0x3f800000)
+                mul r1.z, r1.z, r1.w  // r1.z <- Ls.x
+                
+                #line 69
+                dp3_sat r1.w, r2.xyzx, r5.xyzx
+                mul r1.z, r1.w, r1.z
                 
                 #line 70
-                mad r1.yzw, r1.yyzw, l(0.000000, 0.318319, 0.318319, 0.318319), -r0.xxyz
-                mad r0.xyz, r0.wwww, r1.yzwy, r0.xyzx
-                mul r0.xyz, r0.xyzx, r1.xxxx  // r0.x <- Ls.x; r0.y <- Ls.y; r0.z <- Ls.z
+                mad r0.xyz, r0.xyzx, l(0.318319, 0.318319, 0.318319, 0.000000), -r4.yzwy
+                mad r0.xyz, r0.wwww, r0.xyzx, r4.yzwy
+                mul r0.xyz, r0.xyzx, r1.zzzz  // r0.x <- Ls.x; r0.y <- Ls.y; r0.z <- Ls.z
+                
+                #line 71
+                add r2.xyz, cb2[11].xyzx, cb2[12].xyzx
+                mul r4.xyz, -r1.yyyy, r2.xyzx
+                mul r4.xyz, r4.xyzx, l(1.442695, 1.442695, 1.442695, 0.000000)
+                exp r4.xyz, r4.xyzx
                 
                 #line 73
-                add r1.xyz, -cb1[8].xyzx, cb2[9].xyzx
-                dp3 r0.w, r1.xyzx, r2.xyzx  // r0.w <- tm
-                
-                #line 75
-                mov r3.x, l(0)
-                add r1.xy, -r0.wwww, r3.xyxx
+                add r5.xyz, -cb1[8].xyzx, cb2[9].xyzx
+                dp3 r0.w, r5.xyzx, r3.xyzx  // r0.w <- tm
                 
                 #line 74
                 mul r1.z, r0.w, r0.w
@@ -574,68 +579,142 @@ fxgroup
                 sqrt r1.z, r1.z  // r1.z <- D
                 
                 #line 75
-                max r2.xy, r1.zzzz, |r1.xyxx|
-                div r2.xy, l(1.000000, 1.000000, 1.000000, 1.000000), r2.xyxx
-                min r2.zw, r1.zzzz, |r1.xxxy|
-                mul r2.xy, r2.xyxx, r2.zwzz
-                mul r2.zw, r2.xxxy, r2.xxxy
-                mad r3.xz, r2.zzwz, l(0.020835, 0.000000, 0.020835, 0.000000), l(-0.085133, 0.000000, -0.085133, 0.000000)
-                mad r3.xz, r2.zzwz, r3.xxzx, l(0.180141, 0.000000, 0.180141, 0.000000)
-                mad r3.xz, r2.zzwz, r3.xxzx, l(-0.330299, 0.000000, -0.330299, 0.000000)
-                mad r2.zw, r2.zzzw, r3.xxxz, l(0.000000, 0.000000, 0.999866, 0.999866)
-                mul r3.xz, r2.zzwz, r2.xxyx
-                mad r3.xz, r3.xxzx, l(-2.000000, 0.000000, -2.000000, 0.000000), l(1.570796, 0.000000, 1.570796, 0.000000)
-                lt r4.xy, r1.zzzz, |r1.xyxx|
-                and r3.xz, r3.xxzx, r4.xxyx
-                mad r2.xy, r2.xyxx, r2.zwzz, r3.xzxx
-                min r2.zw, r1.zzzz, r1.xxxy
+                mov r1.x, l(0)
+                add r1.xy, -r0.wwww, r1.xyxx
+                min r5.xy, r1.zzzz, |r1.xyxx|
+                max r5.zw, r1.zzzz, |r1.xxxy|
+                div r5.zw, l(1.000000, 1.000000, 1.000000, 1.000000), r5.zzzw
+                mul r5.xy, r5.zwzz, r5.xyxx
+                mul r5.zw, r5.xxxy, r5.xxxy
+                mad r6.xy, r5.zwzz, l(0.020835, 0.020835, 0.000000, 0.000000), l(-0.085133, -0.085133, 0.000000, 0.000000)
+                mad r6.xy, r5.zwzz, r6.xyxx, l(0.180141, 0.180141, 0.000000, 0.000000)
+                mad r6.xy, r5.zwzz, r6.xyxx, l(-0.330299, -0.330299, 0.000000, 0.000000)
+                mad r5.zw, r5.zzzw, r6.xxxy, l(0.000000, 0.000000, 0.999866, 0.999866)
+                mul r6.xy, r5.zwzz, r5.xyxx
+                lt r6.zw, r1.zzzz, |r1.xxxy|
+                mad r6.xy, r6.xyxx, l(-2.000000, -2.000000, 0.000000, 0.000000), l(1.570796, 1.570796, 0.000000, 0.000000)
+                and r6.xy, r6.zwzz, r6.xyxx
+                mad r5.xy, r5.xyxx, r5.zwzz, r6.xyxx
+                min r5.zw, r1.zzzz, r1.xxxy
                 max r1.xy, r1.zzzz, r1.xyxx
+                lt r5.zw, r5.zzzw, -r5.zzzw
                 ge r1.xy, r1.xyxx, -r1.xyxx
-                lt r2.zw, r2.zzzw, -r2.zzzw
-                and r1.xy, r1.xyxx, r2.zwzz
-                movc r1.xy, r1.xyxx, -r2.xyxx, r2.xyxx  // r1.x <- theta.x; r1.y <- theta.y
+                and r1.xy, r1.xyxx, r5.zwzz
+                movc r1.xy, r1.xyxx, -r5.xyxx, r5.xyxx  // r1.x <- theta.x; r1.y <- theta.y
                 
-                #line 132
-                mad r2.xy, r1.xyxx, l(0.318319, 0.318319, 0.000000, 0.000000), l(0.500000, 0.500000, 0.000000, 0.000000)  // r2.x <- airlightX.x; r2.y <- airlightX.y
+                #line 187 "globals.fxi"
+                dp2 r1.w, v1.xyxx, l(1.000000, 1.618034, 0.000000, 0.000000)
+                sincos null, r1.w, r1.w
+                mul r1.w, r1.w, l(12345.678711)
+                frc r5.y, r1.w  // r5.y <- <Dither2 return value>
                 
-                #line 134
-                add r1.x, r1.z, l(1.000000)
-                rsq r2.z, r1.x  // r2.z <- airlightY
+                #line 89 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                add r1.y, -r1.x, r1.y
                 
-                #line 136
-                sample r4.xyzw, r2.xzxx, t4.xyzw, s0  // r4.x <- Lv.x; r4.y <- Lv.y; r4.z <- Lv.z
+                #line 49 "light.fxi"
+                mad r1.w, cb2[8].w, cb2[8].w, l(1.000000)
+                add r2.w, cb2[8].w, cb2[8].w
                 
-                #line 137
-                sample r2.xyzw, r2.yzyy, t4.xyzw, s0
-                add r1.xyw, -r2.xyxz, r4.xyxz  // r1.x <- Lv.x; r1.y <- Lv.y; r1.w <- Lv.z
+                #line 50
+                mad r3.w, -cb2[8].w, cb2[8].w, l(1.000000)
                 
-                #line 138
-                mul r1.xyw, r1.xyxw, l(0.025000, 0.025000, 0.000000, 0.025000)
+                #line 187 "globals.fxi"
+                mov r6.x, cb0[0].x
                 
-                #line 71
-                add r2.xyz, cb2[11].xyzx, cb2[12].xyzx
+                #line 82 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                mov r7.xyz, l(0,0,0,0)  // r7.x <- Lv.x; r7.y <- Lv.y; r7.z <- Lv.z
+                mov r4.w, l(0)  // r4.w <- i
+                loop 
+                  ige r5.z, r4.w, l(32)
+                  breakc_nz r5.z
                 
-                #line 142
-                mul r3.xzw, -r0.wwww, r2.xxyz
+                #line 85
+                  itof r6.y, r4.w  // r6.y <- v.y
                 
-                #line 71
-                mul r2.xyz, r2.xyzx, -r3.yyyy
-                mul r2.xyz, r2.xyzx, l(1.442695, 1.442695, 1.442695, 0.000000)
-                exp r2.xyz, r2.xyzx
+                #line 187 "globals.fxi"
+                  dp2 r5.z, r6.xyxx, l(1.000000, 1.618034, 0.000000, 0.000000)
+                  sincos null, r5.z, r5.z
+                  mul r5.z, r5.z, l(12345.678711)
+                  frc r5.x, r5.z  // r5.x <- <Dither2 return value>
+                  dp2 r5.x, r5.xyxx, l(1.000000, 1.618034, 0.000000, 0.000000)
+                  sincos null, r5.x, r5.x
+                  mul r5.x, r5.x, l(12345.678711)
+                  frc r5.x, r5.x  // r5.x <- <Dither2 return value>
                 
-                #line 142
-                mul r3.xyz, r3.xzwx, l(1.442695, 1.442695, 1.442695, 0.000000)
-                exp r3.xyz, r3.xyzx
-                mul r1.xyw, r1.xyxw, r3.xyxz
+                #line 86 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                  add r5.x, r5.x, r6.y
+                  mul r5.x, r1.y, r5.x
                 
-                #line 143
+                #line 89
+                  mad r5.x, r5.x, l(0.031250), r1.x  // r5.x <- thetai
+                
+                #line 90
+                  sincos r5.x, r8.x, r5.x
+                  div r5.z, r5.x, r8.x
+                  mad r5.z, r1.z, r5.z, r0.w  // r5.z <- ti
+                
+                #line 96
+                  mad r6.yzw, r5.zzzz, r3.xxyz, cb1[8].xxyz  // r6.y <- pi.x; r6.z <- pi.y; r6.w <- pi.z
+                
+                #line 97
+                  add r6.yzw, -r6.yyzw, cb2[9].xxyz  // r6.y <- li.x; r6.z <- li.y; r6.w <- li.z
+                
+                #line 98
+                  dp3 r5.w, r6.yzwy, r6.yzwy  // r5.w <- ri2
+                
+                #line 99
+                  sqrt r5.w, r5.w  // r5.w <- ri
+                
+                #line 100
+                  mov r6.yzw, -r6.yyzw
+                  sample r8.xyzw, r6.yzwy, t3.xyzw, s0
+                  mul r6.y, r8.x, cb2[10].w  // r6.y <- si
+                
+                #line 49 "light.fxi"
+                  mad r5.x, -r2.w, r5.x, r1.w  // r5.x <- d
+                
+                #line 50
+                  mul r6.z, r5.x, r5.x
+                  mul r5.x, r5.x, r6.z
+                  rsq r5.x, r5.x
+                  mul r5.x, r3.w, r5.x
+                  mul r5.x, r5.x, l(0.079580)  // r5.x <- <PhaseHG return value>
+                
+                #line 104 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                  ge r6.y, r6.y, r5.w
+                  and r6.y, r6.y, l(0x3f800000)
+                  mul r5.x, r5.x, r6.y  // r5.x <- Lvi.x
+                
+                #line 107
+                  add r5.z, r5.z, r5.w
+                  mul r6.yzw, r2.xxyz, -r5.zzzz
+                  mul r6.yzw, r6.yyzw, l(0.000000, 1.442695, 1.442695, 1.442695)
+                  exp r6.yzw, r6.yyzw
+                
+                #line 114
+                  mad r7.xyz, r5.xxxx, r6.yzwy, r7.xyzx
+                
+                #line 116
+                  iadd r4.w, r4.w, l(1)
+                endloop 
+                
+                #line 119
+                mul r1.xyw, r1.yyyy, r7.xyxz  // r1.x <- Lv.x; r1.y <- Lv.y; r1.w <- Lv.z
+                
+                #line 120
                 div r1.xyz, r1.xywx, r1.zzzz  // r1.z <- Lv.z
                 
+                #line 126
+                mul r1.xyz, r1.xyzx, cb2[11].xyzx
+                
+                #line 127
+                mul r1.xyz, r1.xyzx, l(0.031250, 0.031250, 0.031250, 0.000000)
+                
                 #line 147
-                mad r0.xyz, r0.xyzx, r2.xyzx, r1.xyzx
+                mad r0.xyz, r0.xyzx, r4.xyzx, r1.xyzx
                 mul o0.xyz, r0.xyzx, cb2[8].xyzx
                 ret 
-                // Approximately 82 instruction slots used
+                // Approximately 126 instruction slots used
                             
             };
         }

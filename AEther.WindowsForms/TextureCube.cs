@@ -35,22 +35,10 @@ namespace AEther.WindowsForms
 
         public readonly DepthStencilView[] DSViews;
 
-        public TextureCube(Graphics graphics, int width, int height, Format format)
-            : base(new SharpDX.Direct3D11.Texture2D(graphics.Device, new()
-            {
-                ArraySize = 6,
-                BindFlags = BindFlags.ShaderResource | BindFlags.DepthStencil,
-                CpuAccessFlags = CpuAccessFlags.None,
-                Format = format,
-                Width = width,
-                Height = height,
-                MipLevels = 1,
-                OptionFlags = ResourceOptionFlags.TextureCube,
-                SampleDescription = new SampleDescription(1, 0),
-                Usage = ResourceUsage.Default,
-            }))
+        public TextureCube(SharpDX.Direct3D11.Texture2D texture)
+            : base(texture)
         {
-            var dsFormat = format switch
+            var dsFormat = texture.Description.Format switch
             {
                 Format.R16_Typeless => Format.D16_UNorm,
                 Format.R32_Typeless => Format.D32_Float,
@@ -89,6 +77,15 @@ namespace AEther.WindowsForms
                     MostDetailedMip = 0,
                 },
             });
+        }
+
+        public override void ClearDepth(float depth = 1f)
+        {
+            //base.ClearDepth(depth);
+            for (var i = 0; i < DSViews.Length; ++i)
+            {
+                Resource.Device.ImmediateContext.ClearDepthStencilView(DSViews[i], DepthStencilClearFlags.Depth, depth, 0);
+            }
         }
 
     }

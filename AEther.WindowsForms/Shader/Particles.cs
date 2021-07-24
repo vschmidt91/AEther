@@ -23,12 +23,12 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
-            Buffer = new ComputeBuffer(Graphics.Device, 80, count, false);
+            Buffer = Graphics.CreateComputeBuffer(80, count, false);
             ShaderSimulate = Graphics.CreateShader("particles-simulate.fx");
             ShaderDraw = Graphics.CreateShader("particles-draw.fx");
             ShaderDraw.ConstantBuffers["CameraConstants"].SetConstantBuffer(cameraConstants.Buffer);
             //Model = new Model(Graphics.Device, Mesh.CreateSphere(3, 3).SplitVertices(true));
-            Model = new Model(Graphics.Device, Mesh.CreateGrid(3, 3));
+            Model = Graphics.CreateModel(Mesh.CreateGrid(3, 3));
 
         }
 

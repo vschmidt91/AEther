@@ -17,6 +17,18 @@ namespace AEther
     public static class Extensions
     {
 
+        public static List<IEnumerable<T>> Subsets<T>(this IEnumerable<T> values)
+        {
+            List<IEnumerable<T>> subsets = new();
+            subsets.Add(Array.Empty<T>());
+            foreach (var value in values)
+            {
+                var newSubsets = subsets.Select(l => l.Concat(new[] { value }));
+                subsets.AddRange(newSubsets);
+            }
+            return subsets;
+        }
+
         public static async IAsyncEnumerable<ReadResult> ReadAllAsync(this PipeReader reader, [EnumeratorCancellation]CancellationToken cancel = default)
         {
             while (true)

@@ -122,25 +122,25 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
-            ShadowBuffer = new TextureCube(Graphics, ShadowBufferSize, ShadowBufferSize, Format.R32_Typeless);
+            ShadowBuffer = Graphics.CreateTextureCube(ShadowBufferSize, ShadowBufferSize, Format.R32_Typeless);
 
             MandelboxShader = Graphics.CreateShader("mandelbox.fx");
             MandelboxTexture = Graphics.CreateTexture(1 << 10, 1 << 10, SharpDX.DXGI.Format.R8G8B8A8_UNorm);
 
-            InstanceConstants = new(Graphics.Device);
-            CameraConstants = new(Graphics.Device);
-            LightConstants = new(Graphics.Device);
-            Instances = new ComputeBuffer(Graphics.Device, Marshal.SizeOf<Instance>(), 1 << 10, true);
+            InstanceConstants = Graphics.CreateConstantBuffer<Instance>();
+            CameraConstants = Graphics.CreateConstantBuffer<CameraConstants>();
+            LightConstants = Graphics.CreateConstantBuffer<LightConstants>();
+            Instances = Graphics.CreateComputeBuffer(Marshal.SizeOf<Instance>(), 1 << 10, true);
             Particles = new Particles(Graphics, 1 << 10, CameraConstants);
 
-            ShadowShader = Graphics.CreateShader("shadow.fx", new[] { new ShaderMacro("ENABLE_INSTANCING", true)});
+            ShadowShader = Graphics.CreateShader("shadow.fx", new ShaderMacro("ENABLE_INSTANCING", true));
             ShadowShader.ConstantBuffers["CameraConstants"].SetConstantBuffer(CameraConstants.Buffer);
             ShadowShader.ConstantBuffers["LightConstants"].SetConstantBuffer(LightConstants.Buffer);
             ShadowShader.ConstantBuffers["InstanceConstants"].SetConstantBuffer(InstanceConstants.Buffer);
             ShadowShader.ShaderResources["Instances"].SetResource(Instances.SRView);
             ShadowShader.ShaderResources["ColorMap"].SetResource(MandelboxTexture.SRView);
 
-            GeometryShader = Graphics.CreateShader("geometry.fx", new[] { new ShaderMacro("ENABLE_INSTANCING", true) });
+            GeometryShader = Graphics.CreateShader("geometry.fx", new ShaderMacro("ENABLE_INSTANCING", true));
             GeometryShader.ConstantBuffers["CameraConstants"].SetConstantBuffer(CameraConstants.Buffer);
             GeometryShader.ConstantBuffers["InstanceConstants"].SetConstantBuffer(InstanceConstants.Buffer);
             GeometryShader.ShaderResources["Instances"].SetResource(Instances.SRView);
@@ -153,8 +153,8 @@ namespace AEther.WindowsForms
             AirlightShader.ConstantBuffers["LightConstants"].SetConstantBuffer(LightConstants.Buffer);
             AirlightTexture = Graphics.CreateTexture(AirlightSize, AirlightSize, Format.R11G11B10_Float);
 
-            LightShader = Graphics.CreateShader("light.fx", new[] { new ShaderMacro("EQUIANGULAR", true) });
-            LightShadowShader = Graphics.CreateShader("light.fx", new[] { new ShaderMacro("ENABLE_SHADOWS", true), new ShaderMacro("EQUIANGULAR", true)  });
+            LightShader = Graphics.CreateShader("light.fx", new ShaderMacro("EQUIANGULAR", true));
+            LightShadowShader = Graphics.CreateShader("light.fx", new ShaderMacro("ENABLE_SHADOWS", true), new ShaderMacro("EQUIANGULAR", true));
             foreach (var shader in new[] { LightShader, LightShadowShader })
             {
                 shader.ConstantBuffers["CameraConstants"].SetConstantBuffer(CameraConstants.Buffer);
@@ -164,9 +164,9 @@ namespace AEther.WindowsForms
             }
 
             var rng = new Random(0);
-            Cube = new Model(Graphics.Device, Mesh.CreateSphere(3, 3).SplitVertices(true));
-            Sphere = new Model(Graphics.Device, Mesh.CreateSphere(15, 15));
-            var floor = new Model(Graphics.Device, Mesh.CreateGrid(32, 32));
+            Cube = Graphics.CreateModel(Mesh.CreateSphere(3, 3).SplitVertices(true));
+            Sphere = Graphics.CreateModel(Mesh.CreateSphere(15, 15));
+            var floor = Graphics.CreateModel(Mesh.CreateGrid(32, 32));
             Camera = new CameraPerspective
             {
                 Position = 20 * Vector3.BackwardLH,
@@ -411,10 +411,7 @@ namespace AEther.WindowsForms
                 LightConstants.Value.ShadowFarPlane = TextureCube.FarPlane;
                 LightConstants.Update();
 
-                for (var i = 0; i < 6; ++i)
-                {
-                    Graphics.Context.ClearDepthStencilView(ShadowBuffer.DSViews[i], DepthStencilClearFlags.Depth, 1, 0);
-                }
+                ShadowBuffer.ClearDepth(1);
 
                 if (light.CastsShadows)
                 {
@@ -423,7 +420,8 @@ namespace AEther.WindowsForms
                     {
                         LightConstants.Value.View = TextureCube.CreateView(i, light.Transform.Translation);
                         LightConstants.Update();
-                        Graphics.Context.OutputMerger.SetRenderTargets(ShadowBuffer.DSViews[i]);
+                        Graphics.SetRenderTargets(ShadowBuffer.DSViews[i]);
+                        //Graphics.Context.OutputMerger.SetRenderTargets(ShadowBuffer.DSViews[i]);
                         RenderScene(Scene.OfType<Geometry>(), ShadowShader);
                     }
                 }

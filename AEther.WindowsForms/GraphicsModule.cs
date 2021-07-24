@@ -17,6 +17,7 @@ namespace AEther.WindowsForms
         readonly SpectrumAccumulator<float>[] Spectrum;
         readonly Histogram[] Histogram;
         readonly ListBox States;
+        readonly ConstantBuffer<FrameConstants> FrameConstants;
 
         int EventCounter = 0;
 
@@ -27,6 +28,10 @@ namespace AEther.WindowsForms
             var A2 = System.Numerics.Matrix4x4.CreateLookAt(System.Numerics.Vector3.Zero, -System.Numerics.Vector3.UnitZ, System.Numerics.Vector3.UnitY);
 
             Graphics = graphics;
+
+            FrameConstants = Graphics.CreateConstantBuffer<FrameConstants>();
+            Graphics.ShaderConstants["FrameConstants"] = FrameConstants.Buffer;
+
             Spectrum = Enumerable.Range(0, channelCount)
                 .Select<int, SpectrumAccumulator<float>>(i => new FloatSpectrum(Graphics, noteCount))
                 .ToArray();
@@ -64,6 +69,7 @@ namespace AEther.WindowsForms
             {
                 state.Dispose();
             }
+            FrameConstants.Dispose();
         }
 
         public void ProcessKeyPress(KeyPressEventArgs evt)
@@ -91,6 +97,15 @@ namespace AEther.WindowsForms
 
         public void Render()
         {
+
+            var dt = .01f;
+            var t = (float)DateTime.Now.TimeOfDay.TotalSeconds;
+
+            FrameConstants.Value.AspectRatio = Graphics.BackBuffer.Width / (float)Graphics.BackBuffer.Height;
+            FrameConstants.Value.T = t;
+            FrameConstants.Value.DT = dt;
+            FrameConstants.Update();
+
             if (States.SelectedItem is GraphicsState state)
             {
                 Graphics.RenderFrame();
@@ -108,7 +123,6 @@ namespace AEther.WindowsForms
                 {
                     histogram.Update();
                 }
-                Graphics.FrameConstants.Value.HistogramShift = (Histogram[0].Position - .1f) / Histogram[0].Texture.Height;
             }
         }
     }
