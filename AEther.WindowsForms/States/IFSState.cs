@@ -25,8 +25,8 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
-            InputShader = Graphics.CreateShader("ifs-input.fx");
-            OutputShader = Graphics.CreateShader("ifs-output.fx");
+            InputShader = Graphics.LoadShader("ifs-input.fx");
+            OutputShader = Graphics.LoadShader("ifs-output.fx");
 
             //var ifsSize = Math.Max(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
             var ifsSize = 1 << 8;
@@ -85,8 +85,8 @@ namespace AEther.WindowsForms
             }
             //sumWeight = .25f * Vector4.Dot(sumWeight, Vector4.One) * Vector4.One;
 
-
-            Graphics.SetFullscreenTarget(Source);
+            Graphics.SetModel();
+            Graphics.SetRenderTargets(null, Source);
             Graphics.Draw(InputShader);
 
             //Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), Color4.White);
@@ -94,7 +94,7 @@ namespace AEther.WindowsForms
             {
 
                 Target.Clear();
-                Graphics.SetFullscreenTarget(Target);
+                Graphics.SetRenderTargets(null, Target);
                 foreach(var element in Elements)
                 {
                     element.Weight /= sumWeight;
@@ -105,7 +105,7 @@ namespace AEther.WindowsForms
 
             }
 
-            Graphics.SetFullscreenTarget(Graphics.BackBuffer);
+            Graphics.SetRenderTargets(null, Graphics.BackBuffer);
             OutputShader.ShaderResources["Source"].SetResource(Source.SRView);
             Graphics.Draw(OutputShader);
 

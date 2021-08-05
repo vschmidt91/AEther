@@ -489,10 +489,10 @@ fxgroup
                 #line 82
                 mul r0.xyz, r0.yyyy, r0.xzwx
                 
-                #line 16 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\airlight.fx"
-                mul o0.xyz, r0.xyzx, l(0.156250, 0.156250, 0.156250, 0.000000)
+                #line 84
+                mul o0.xyz, r0.xyzx, l(0.003906, 0.003906, 0.003906, 0.000000)
                 
-                #line 17
+                #line 17 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\airlight.fx"
                 ret 
                 // Approximately 42 instruction slots used
                             

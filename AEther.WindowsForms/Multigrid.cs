@@ -39,9 +39,9 @@ namespace AEther.WindowsForms
             internal CoarseGrid(Graphics graphics, int width, int height, Format format, Vector2 scale)
                 : base(graphics)
             {
-                CopyShader = Graphics.CreateShader("copy.fx");
-                AddShader = Graphics.CreateShader("add.fx");
-                ResidualShader = Graphics.CreateShader("mg-residual.fx");
+                CopyShader = Graphics.LoadShader("copy.fx");
+                AddShader = Graphics.LoadShader("add.fx");
+                ResidualShader = Graphics.LoadShader("mg-residual.fx");
                 Solver = new Multigrid(graphics, width, height, format, scale);
                 Solution = Graphics.CreateTexture(width, height, format);
                 Residual = Graphics.CreateTexture(width, height, format);
@@ -60,14 +60,16 @@ namespace AEther.WindowsForms
                 Debug.Assert(Residual.Size == Solution.Size);
                 Debug.Assert(solutionFine.Size == 2 * Solution.Size);
 
+                Graphics.SetModel();
+
                 // Residual
-                Graphics.SetFullscreenTarget(ResidualFine);
+                Graphics.SetRenderTargets(null, ResidualFine);
                 ResidualShader.ShaderResources["Solution"].SetResource(solutionFine.SRView);
                 ResidualShader.ShaderResources["Target"].SetResource(targetFine.SRView);
                 Graphics.Draw(ResidualShader);
 
                 // Projection
-                Graphics.SetFullscreenTarget(Residual);
+                Graphics.SetRenderTargets(null, Residual);
                 CopyShader.ShaderResources["Source"].SetResource(ResidualFine.SRView);
                 Graphics.Draw(CopyShader);
 
@@ -76,7 +78,7 @@ namespace AEther.WindowsForms
                 Solver.Solve(Residual, Solution, mode);
 
                 // Interpolation
-                Graphics.SetFullscreenTarget(solutionFine);
+                Graphics.SetRenderTargets(null, solutionFine);
                 AddShader.ShaderResources["Source"].SetResource(Solution.SRView);
                 Graphics.Draw(AddShader);
 

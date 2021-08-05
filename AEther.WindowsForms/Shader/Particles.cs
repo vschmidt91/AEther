@@ -24,8 +24,8 @@ namespace AEther.WindowsForms
         {
 
             Buffer = Graphics.CreateComputeBuffer(80, count, false);
-            ShaderSimulate = Graphics.CreateShader("particles-simulate.fx");
-            ShaderDraw = Graphics.CreateShader("particles-draw.fx");
+            ShaderSimulate = Graphics.LoadShader("particles-simulate.fx");
+            ShaderDraw = Graphics.LoadShader("particles-draw.fx");
             ShaderDraw.ConstantBuffers["CameraConstants"].SetConstantBuffer(cameraConstants.Buffer);
             //Model = new Model(Graphics.Device, Mesh.CreateSphere(3, 3).SplitVertices(true));
             Model = Graphics.CreateModel(Mesh.CreateGrid(3, 3));

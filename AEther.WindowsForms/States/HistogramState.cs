@@ -10,7 +10,7 @@ namespace AEther.WindowsForms
     {
 
         public HistogramState(Graphics graphics, Histogram[] histogram)
-            : base(graphics, graphics.CreateShader("histogram.fx"))
+            : base(graphics, graphics.LoadShader("histogram.fx"))
         {
             for(var i = 0; i < histogram.Length; ++i)
             {

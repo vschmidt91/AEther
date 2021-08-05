@@ -47,6 +47,16 @@ namespace AEther.WindowsForms
             Resource.Device.ImmediateContext.UpdateSubresource(data, Resource, subResource, 0, 0, region);
         }
 
+        public virtual void Clear(Color4 color = default)
+        {
+            Resource.Device.ImmediateContext.ClearRenderTargetView(RTView, color);
+        }
+
+        public virtual void ClearDepth(float depth = 1f)
+        {
+            Resource.Device.ImmediateContext.ClearDepthStencilView(DSView, DepthStencilClearFlags.Depth, depth, 0);
+        }
+
         public void Dispose()
         {
             if(!IsDisposed)

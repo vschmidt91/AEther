@@ -32,6 +32,7 @@ namespace AEther.WindowsForms
         int IndexCount;
         SharpDX.Direct3D11.Texture2D BackBufferResource;
         readonly ShaderManager Shaders;
+        readonly FileSystemWatcher ShaderWatcher;
         readonly Device Device;
         readonly DeviceDebug? Debug;
         readonly SwapChain Chain;
@@ -47,9 +48,8 @@ namespace AEther.WindowsForms
             using var dxgiAdapater = dxgiFactory.GetAdapter(0);
             using var output = dxgiAdapater.GetOutput(0);
             NativeMode = output.GetDisplayModeList(format, modeFlags)
-                .OrderByDescending(m => m.Width)
-                .ThenByDescending(m => m.Height)
-                .ThenByDescending(m => m.RefreshRate.Numerator / m.RefreshRate.Denominator)
+                .OrderByDescending(m => m.Width * m.Height)
+                .ThenByDescending(m => m.RefreshRate.Numerator / (float)m.RefreshRate.Denominator)
                 .First();
 
             var desc = new SwapChainDescription()
@@ -89,15 +89,15 @@ namespace AEther.WindowsForms
 
             BackBufferResource = Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0);
             BackBuffer = new Texture2D(BackBufferResource);
-            Shaders = CreateShaderManager();
-            Shaders.FileChanged += Shaders_FileChanged;
+            (Shaders, ShaderWatcher) = CreateShaderManager();
+            ShaderWatcher.Changed += ShaderWatcher_Changed;
             Quad = new Model(Device, Mesh.CreateGrid(2, 2));
 
             var c = new GraphicsCapabilities(Device);
 
         }
 
-        private void Shaders_FileChanged(object? sender, FileSystemEventArgs e)
+        private void ShaderWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             OnShaderChange?.Invoke(sender, e.FullPath);
         }
@@ -116,15 +116,9 @@ namespace AEther.WindowsForms
 
         }
 
-        public MetaShader CreateMetaShader(string key, params string[] defines)
+        public Shader LoadShader(string key, params ShaderMacro[] macros)
         {
-            var shader = new MetaShader(this, key, defines);
-            return shader;
-        }
-
-        public Shader CreateShader(string key, params ShaderMacro[] macros)
-        {
-            var bytecode = Shaders.Compile(key, macros);
+            var bytecode = Shaders.Load(key, macros);
             var shader = new Shader(Device, bytecode);
             foreach (var kvp in ShaderConstants)
             {
@@ -240,7 +234,7 @@ namespace AEther.WindowsForms
             return new TextureCube(texture);
         }
 
-        ShaderManager CreateShaderManager()
+        (ShaderManager, FileSystemWatcher) CreateShaderManager()
         {
 
             var assemblyPath = Assembly.GetExecutingAssembly().Location;
@@ -253,7 +247,13 @@ namespace AEther.WindowsForms
             //shaderDir = Directory.GetParent(shaderDir)?.FullName ?? string.Empty;
 #endif
             var shaderPath = Path.Join(shaderDir, "data", "fx");
-            return new ShaderManager(this, shaderPath, true);
+            var shader = new ShaderManager(this, shaderPath);
+            var watcher = new FileSystemWatcher(shaderPath)
+            {
+                NotifyFilter = NotifyFilters.LastWrite,
+                EnableRaisingEvents = true,
+            };
+            return (shader, watcher);
         }
 
         public void SetModel(Model? model = default)
@@ -273,35 +273,17 @@ namespace AEther.WindowsForms
             Chain.TryPresent(1, PresentFlags.DoNotWait);
         }
 
-        public void RenderFrame()
+        public void SetRenderTargets(Texture2D? depthBuffer, params Texture2D[] renderTargets)
         {
-
-        }
-
-        public void SetFullscreenTarget(Texture2D target, DepthStencilView? dsv = null)
-        {
-            SetModel(null);
-            Context.Rasterizer.SetViewport(target.ViewPort);
-            Context.OutputMerger.SetRenderTargets(dsv, target.RTView);
-        }
-
-        public void SetViewport(Viewport viewPort)
-        {
-            Context.Rasterizer.SetViewport(viewPort);
-        }
-
-        public void SetRenderTargets(DepthStencilView? depthBuffer, params Texture2D[] renderTargets)
-        {
-            if(depthBuffer == null)
+            if (depthBuffer is Texture2D db)
             {
-                SetViewport(renderTargets.FirstOrDefault()?.ViewPort ?? default);
+                Context.Rasterizer.SetViewport(0, 0, db.Width, db.Height);
             }
-            else
+            else if (renderTargets.FirstOrDefault() is Texture2D rt)
             {
-                var resource = depthBuffer.ResourceAs<SharpDX.Direct3D11.Texture2D>();
-                SetViewport(new Viewport(0, 0, resource.Description.Width, resource.Description.Height));
+                Context.Rasterizer.SetViewport(0, 0, rt.Width, rt.Height);
             }
-            Context.OutputMerger.SetRenderTargets(depthBuffer, renderTargets.Select(t => t.RTView).ToArray());
+            Context.OutputMerger.SetRenderTargets(depthBuffer?.DSView, renderTargets.Select(t => t.RTView).ToArray());
         }
 
         public void Compute(Shader shader, (int, int, int)? threadCount = default, int? techniqueIndex = default)
@@ -325,23 +307,23 @@ namespace AEther.WindowsForms
 
         }
 
-        public void Draw(Shader shader, int? instanceCount = default, int? techniqueIndex = default, int? indexOffset = default, int? vertexOffset = default, int? instanceOffset = default)
+        public void Draw(Shader shader, int instanceCount = 0, int techniqueIndex = 0, int indexOffset = 0, int vertexOffset = 0, int instanceOffset = 0)
         {
 
-            var technique = shader[techniqueIndex ?? 0];
+            var technique = shader[techniqueIndex];
             for(int passIndex = 0; passIndex < technique.PassCount; ++passIndex)
             {
 
                 var pass = technique[passIndex];
                 pass.Apply(Context);
 
-                if (instanceCount is int n)
+                if (0 < instanceCount)
                 {
-                    Context.DrawIndexedInstanced(IndexCount, n, indexOffset ?? 0, vertexOffset ?? 0, instanceOffset ?? 0);
+                    Context.DrawIndexedInstanced(IndexCount, instanceCount, indexOffset, vertexOffset, instanceOffset);
                 }
                 else
                 {
-                    Context.DrawIndexed(IndexCount, indexOffset ?? 0, vertexOffset ?? 0);
+                    Context.DrawIndexed(IndexCount, indexOffset, vertexOffset);
                 }
 
                 UnsetResources(shader);

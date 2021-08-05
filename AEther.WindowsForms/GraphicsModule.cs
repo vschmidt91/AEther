@@ -101,14 +101,17 @@ namespace AEther.WindowsForms
             var dt = .01f;
             var t = (float)DateTime.Now.TimeOfDay.TotalSeconds;
 
-            FrameConstants.Value.AspectRatio = Graphics.BackBuffer.Width / (float)Graphics.BackBuffer.Height;
-            FrameConstants.Value.T = t;
-            FrameConstants.Value.DT = dt;
+            FrameConstants.Value = new()
+            {
+                AspectRatio = Graphics.BackBuffer.Width / (float)Graphics.BackBuffer.Height,
+                T = t,
+                DT = dt,
+                HistogramShift = (float)Histogram[0].Position / Histogram[0].Length,
+            };
             FrameConstants.Update();
 
             if (States.SelectedItem is GraphicsState state)
             {
-                Graphics.RenderFrame();
                 state.Render();
                 Graphics.Present();
             }

@@ -53,7 +53,7 @@ float PS(const PSin IN) : SV_DEPTH
 
 	float4 color = ColorMap.Sample(Linear, IN.UV);
 
-	if (color.a == 0) discard;
+	//if (color.a == 0) discard;
 
 	return IN.Depth;
 

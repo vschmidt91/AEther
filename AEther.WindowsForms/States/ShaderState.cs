@@ -29,7 +29,8 @@ namespace AEther.WindowsForms
 
         public override void Render()
         {
-            Graphics.SetFullscreenTarget(Graphics.BackBuffer);
+            Graphics.SetModel();
+            Graphics.SetRenderTargets(null, Graphics.BackBuffer);
             Graphics.Draw(Shader);
         }
 

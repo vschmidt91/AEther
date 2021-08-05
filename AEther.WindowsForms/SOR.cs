@@ -55,8 +55,8 @@ namespace AEther.WindowsForms
         public SOR(Graphics graphics, int width, int height, Format format)
             : base(graphics)
         {
-            SolverEven = Graphics.CreateShader("poisson-sor.fx");
-            SolverOdd = Graphics.CreateShader("poisson-sor.fx");
+            SolverEven = Graphics.LoadShader("poisson-sor.fx");
+            SolverOdd = Graphics.LoadShader("poisson-sor.fx");
             Buffer = Graphics.CreateTexture(width, height, format);
 
             foreach (var solver in new[] { SolverEven, SolverOdd })
@@ -88,11 +88,13 @@ namespace AEther.WindowsForms
             SolverOdd.ShaderResources["Target"].SetResource(target.SRView);
             SolverOdd.ShaderResources["Solution"].SetResource(Buffer.SRView);
 
+            Graphics.SetModel();
+
             for (var i = 0; i < Iterations; ++i)
             {
-                Graphics.SetFullscreenTarget(Buffer);
+                Graphics.SetRenderTargets(null, Buffer);
                 Graphics.Draw(SolverEven);
-                Graphics.SetFullscreenTarget(solution);
+                Graphics.SetRenderTargets(null, solution);
                 Graphics.Draw(SolverOdd);
             }
 

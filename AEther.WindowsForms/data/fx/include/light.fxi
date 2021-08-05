@@ -36,7 +36,7 @@ cbuffer LightConstants : register(b2)
 
 #define ThetaMax (PI / 2)
 #define LightScale 5
-#define AirlightScale 40
+#define AirlightScale 1
 
 SamplerState Airlight_LookupSampler
 {

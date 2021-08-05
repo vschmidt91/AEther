@@ -1,4 +1,5 @@
-﻿using SharpDX;
+﻿using Assimp.Unmanaged;
+using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using System;
@@ -9,6 +10,62 @@ using System.Threading.Tasks;
 
 namespace AEther.WindowsForms
 {
+    public class TextureCubeSlice : Texture2D
+    {
+
+        public readonly int Index;
+
+        readonly Vector3[] Directions = new[]
+        {
+            Vector3.Right,
+            Vector3.Left,
+            Vector3.Up,
+            Vector3.Down,
+            Vector3.ForwardLH,
+            Vector3.BackwardLH,
+        };
+        public Vector3 Direction => Directions[Index];
+
+        readonly Vector3[] Ups = new[]
+        {
+            Vector3.Up,
+            Vector3.Up,
+            Vector3.BackwardLH,
+            Vector3.ForwardLH,
+            Vector3.Up,
+            Vector3.Up,
+        };
+        public Vector3 Up => Ups[Index];
+
+        public TextureCubeSlice(SharpDX.Direct3D11.Texture2D texture, int index)
+            : base(texture)
+        {
+            Index = index;
+        }
+
+        protected override DepthStencilView CreateDSView()
+        {
+            var dsFormat = Resource.Description.Format switch
+            {
+                Format.R16_Typeless => Format.D16_UNorm,
+                Format.R32_Typeless => Format.D32_Float,
+                _ => throw new FormatException(nameof(Resource.Description.Format))
+            };
+            return new DepthStencilView(Resource.Device, Resource, new()
+            {
+                Format = dsFormat,
+                Dimension = DepthStencilViewDimension.Texture2DArray,
+                Texture2DArray = new()
+                {
+                    ArraySize = 1,
+                    FirstArraySlice = Index,
+                    MipSlice = 0,
+                },
+            });
+        }
+
+    }
+
     public class TextureCube : Texture2D
     {
 
@@ -17,45 +74,13 @@ namespace AEther.WindowsForms
         public const float FarPlane = 100f;
         public static readonly Matrix Projection = Matrix.PerspectiveFovLH(FOV, 1, NearPlane, FarPlane);
 
-        public static Matrix CreateView(int i, Vector3 position)
-        {
-            var direction = Vector3.Zero;
-            var up = Vector3.Up;
-            switch (i)
-            {
-                case 0: direction = Vector3.Right; break;
-                case 1: direction = Vector3.Left; break;
-                case 2: direction = Vector3.Up; up = Vector3.BackwardLH; break;
-                case 3: direction = Vector3.Down; up = Vector3.ForwardLH; break;
-                case 4: direction = Vector3.ForwardLH; break;
-                case 5: direction = Vector3.BackwardLH; break;
-            }
-            return Matrix.LookAtLH(position, position + direction, up);
-        }
-
-        public readonly DepthStencilView[] DSViews;
+        public readonly TextureCubeSlice[] Slices;
 
         public TextureCube(SharpDX.Direct3D11.Texture2D texture)
             : base(texture)
         {
-            var dsFormat = texture.Description.Format switch
-            {
-                Format.R16_Typeless => Format.D16_UNorm,
-                Format.R32_Typeless => Format.D32_Float,
-                _ => throw new KeyNotFoundException()
-            };
-            DSViews = Enumerable.Range(0, Resource.Description.ArraySize)
-                .Select(i => new DepthStencilView(Resource.Device, Resource, new()
-                {
-                    Format = dsFormat,
-                    Dimension = DepthStencilViewDimension.Texture2DArray,
-                    Texture2DArray = new()
-                    {
-                        ArraySize = 1,
-                        FirstArraySlice = i,
-                        MipSlice = 0,
-                    },
-                }))
+            Slices = Enumerable.Range(0, Resource.Description.ArraySize)
+                .Select(i => new TextureCubeSlice(texture, i))
                 .ToArray();
         }
 
@@ -65,7 +90,7 @@ namespace AEther.WindowsForms
             {
                 Format.R16_Typeless => Format.R16_UNorm,
                 Format.R32_Typeless => Format.R32_Float,
-                _ => throw new KeyNotFoundException()
+                _ => throw new FormatException(nameof(Resource.Description.Format))
             };
             return new ShaderResourceView(Resource.Device, Resource, new()
             {
@@ -79,14 +104,14 @@ namespace AEther.WindowsForms
             });
         }
 
-        public override void ClearDepth(float depth = 1f)
-        {
-            //base.ClearDepth(depth);
-            for (var i = 0; i < DSViews.Length; ++i)
-            {
-                Resource.Device.ImmediateContext.ClearDepthStencilView(DSViews[i], DepthStencilClearFlags.Depth, depth, 0);
-            }
-        }
+        //public override void ClearDepth(float depth = 1f)
+        //{
+        //    //base.ClearDepth(depth);
+        //    for (var i = 0; i < DSViews.Length; ++i)
+        //    {
+        //        Resource.Device.ImmediateContext.ClearDepthStencilView(DSViews[i], DepthStencilClearFlags.Depth, depth, 0);
+        //    }
+        //}
 
     }
 }

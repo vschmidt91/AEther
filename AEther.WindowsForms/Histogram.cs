@@ -26,6 +26,7 @@ namespace AEther.WindowsForms
         }
 
         public abstract int Position { get; }
+        public abstract int Length { get; }
 
         public abstract void Add(ReadOnlySpan<double> src);
 
@@ -48,7 +49,6 @@ namespace AEther.WindowsForms
         public Format Format => Texture.Description.Format;
 
         public int Width => Texture.Width;
-        public int Length => Texture.Height;
 
         public readonly bool UseMapping;
 
@@ -56,6 +56,7 @@ namespace AEther.WindowsForms
         readonly T[] Slice;
         readonly int Pitch;
 
+        public override int Length => Texture.Height;
         public override int Position => UpdatePosition;
 
         int UpdatePosition;

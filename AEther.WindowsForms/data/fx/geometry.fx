@@ -67,7 +67,7 @@ PSout PS(const PSin IN)
 
 	float4 color = ColorMap.Sample(Linear, IN.UV);
 
-	if (color.a == 0) discard;
+	//if (color.a == 0) discard;
 	color.a = 1;
 
 	PSout OUT;

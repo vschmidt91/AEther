@@ -37,12 +37,12 @@ namespace AEther.WindowsForms
             : base(graphics)
         {
 
-            Input = Graphics.CreateShader("fluid-input.fx");
-            Advect = Graphics.CreateShader("fluid-advect.fx");
-            Diffuse = Graphics.CreateShader("fluid-diffuse.fx");
-            DivergenceShader = Graphics.CreateShader("fluid-divergence.fx");
-            Project = Graphics.CreateShader("fluid-project.fx", new SharpDX.Direct3D.ShaderMacro("FAST_DERIVATIVES", true));
-            Output = Graphics.CreateShader("fluid-output.fx");
+            Input = Graphics.LoadShader("fluid-input.fx");
+            Advect = Graphics.LoadShader("fluid-advect.fx");
+            Diffuse = Graphics.LoadShader("fluid-diffuse.fx");
+            DivergenceShader = Graphics.LoadShader("fluid-divergence.fx");
+            Project = Graphics.LoadShader("fluid-project.fx", new SharpDX.Direct3D.ShaderMacro("FAST_DERIVATIVES", true));
+            Output = Graphics.LoadShader("fluid-output.fx");
             DiffusionVariable = Diffuse.Variables["Variance"].AsScalar();
 
             //PoissonSolver = new SOR(graphics, width, height, Format.R16_Float) { Iterations = 256, Omega = 1.8f };
@@ -74,6 +74,8 @@ namespace AEther.WindowsForms
         public Texture2D Render()
         {
 
+            Graphics.SetModel();
+
             RenderInput();
             RenderAdvect();
             if(0 < Diffusion)
@@ -90,7 +92,7 @@ namespace AEther.WindowsForms
         void RenderInput()
         {
 
-            Graphics.SetFullscreenTarget(VelocityNew);
+            Graphics.SetRenderTargets(null, VelocityNew);
             Input.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(Input);
 
@@ -101,7 +103,7 @@ namespace AEther.WindowsForms
         void RenderAdvect()
         {
 
-            Graphics.SetFullscreenTarget(VelocityNew);
+            Graphics.SetRenderTargets(null, VelocityNew);
             Advect.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(Advect);
 
@@ -112,7 +114,7 @@ namespace AEther.WindowsForms
         void RenderDiffuse()
         {
 
-            Graphics.SetFullscreenTarget(VelocityNew);
+            Graphics.SetRenderTargets(null, VelocityNew);
             Diffuse.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(Diffuse);
 
@@ -123,14 +125,14 @@ namespace AEther.WindowsForms
         void RenderProject()
         {
 
-            Graphics.SetFullscreenTarget(Divergence);
+            Graphics.SetRenderTargets(null, Divergence);
             DivergenceShader.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(DivergenceShader);
 
             Pressure.Clear();
             PoissonSolver.Solve(Divergence, Pressure);
 
-            Graphics.SetFullscreenTarget(VelocityNew);
+            Graphics.SetRenderTargets(null, VelocityNew);
             Project.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Project.ShaderResources["Pressure"].SetResource(Pressure.SRView);
             Graphics.Draw(Project);
@@ -142,7 +144,7 @@ namespace AEther.WindowsForms
         void RenderOutput()
         {
 
-            Graphics.SetFullscreenTarget(Graphics.BackBuffer);
+            Graphics.SetRenderTargets(null, Graphics.BackBuffer);
             Output.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(Output);
 

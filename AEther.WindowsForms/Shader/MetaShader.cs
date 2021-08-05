@@ -22,7 +22,7 @@ namespace AEther.WindowsForms
             Defines = defines.ToHashSet();
             Values = defines
                 .Subsets()
-                .Select(s => (s.ToHashSet(), graphics.CreateShader(key, ToMacros(s))))
+                .Select(s => (s.ToHashSet(), graphics.LoadShader(key, ToMacros(s))))
                 .ToArray();
         }
 

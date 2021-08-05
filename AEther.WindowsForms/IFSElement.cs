@@ -28,7 +28,7 @@ namespace AEther.WindowsForms
         public IFSElement(Graphics graphics, string shader)
             : base(graphics)
         {
-            Shader = Graphics.CreateShader(shader);
+            Shader = Graphics.LoadShader(shader);
             WeightVariable = Shader.Variables["Weight"].AsVector();
             Weight = Vector4.One;
         }

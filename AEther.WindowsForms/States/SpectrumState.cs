@@ -10,7 +10,7 @@ namespace AEther.WindowsForms
     {
 
         public SpectrumState(Graphics graphics, SpectrumAccumulator[] spectrum)
-            : base(graphics, graphics.CreateShader("spectrum.fx"))
+            : base(graphics, graphics.LoadShader("spectrum.fx"))
         {
             for (var i = 0; i < spectrum.Length; ++i)
             {

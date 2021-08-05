@@ -18,21 +18,10 @@ namespace AEther.WindowsForms
         public int Width => Description.Width;
         public int Height => Description.Height;
         public Size Size => new(Width, Height);
-        public Viewport ViewPort => new(0, 0, Width, Height, 0, 1);
 
         public Texture2D(SharpDX.Direct3D11.Texture2D texture)
             : base(texture)
         { }
-
-        public virtual void Clear(Color4 color = default)
-        {
-            Resource.Device.ImmediateContext.ClearRenderTargetView(RTView, color);
-        }
-
-        public virtual void ClearDepth(float depth = 1f)
-        {
-            Resource.Device.ImmediateContext.ClearDepthStencilView(DSView, DepthStencilClearFlags.Depth, depth, 0);
-        }
 
     }
 }

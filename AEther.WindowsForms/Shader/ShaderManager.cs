@@ -23,15 +23,12 @@ namespace AEther.WindowsForms
     public class ShaderManager : GraphicsComponent, IDisposable
     {
 
-        public event EventHandler<FileSystemEventArgs>? FileChanged;
-
         readonly IncludeHandler Includes;
-        readonly FileSystemWatcher? Watcher;
         readonly string BasePath;
 
         protected bool IsDisposed;
 
-        public ShaderManager(Graphics graphics, string basePath, bool watch = false)
+        public ShaderManager(Graphics graphics, string basePath)
             : base(graphics)
         {
 
@@ -41,19 +38,9 @@ namespace AEther.WindowsForms
                 //.ToDictionary(path => new FileInfo(path).Name, File.ReadAllText);
             Includes = new IncludeHandler(Path.Join(basePath, "include"));
 
-            if (watch)
-            {
-                Watcher = new(basePath)
-                {
-                    NotifyFilter = NotifyFilters.LastWrite,
-                    EnableRaisingEvents = true,
-                };
-                Watcher.Changed += (obj, evt) => FileChanged?.Invoke(this, evt);
-            }
-
         }
 
-        public ShaderBytecode Compile(string key, ShaderMacro[]? macros = null)
+        public ShaderBytecode Load(string key, ShaderMacro[]? macros = null)
         {
 
             var path = Path.Join(BasePath, key);
@@ -105,7 +92,6 @@ namespace AEther.WindowsForms
             if(!IsDisposed)
             {
                 Includes.Dispose();
-                Watcher?.Dispose();
                 GC.SuppressFinalize(this);
                 IsDisposed = true;
             }

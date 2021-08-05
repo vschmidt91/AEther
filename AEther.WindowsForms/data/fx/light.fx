@@ -133,7 +133,7 @@ float3 PS(const PSin IN) : SV_TARGET
 	//float2 airlightX = .5 + .5 * (float2(0, depth) - tm) / LightScale;
 	float airlightY = rsqrt(1 + D);
 
-	Lv = Airlight.Sample(Linear, float2(airlightX[0], airlightY));
+	Lv += Airlight.Sample(Linear, float2(airlightX[0], airlightY));
 	Lv -= Airlight.Sample(Linear, float2(airlightX[1], airlightY));
 	Lv /= AirlightScale;
 
