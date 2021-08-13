@@ -37,7 +37,7 @@ namespace AEther
                 {
                     break;
                 }
-                OnDataAvailable?.Invoke(this, buffer.AsMemory(0, count));
+                DataAvailable?.Invoke(this, buffer.AsMemory(0, count));
             }
             //OnStopped?.Invoke(this, null);
         }

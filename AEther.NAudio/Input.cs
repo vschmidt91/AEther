@@ -40,7 +40,7 @@ namespace AEther.NAudio
         private void Device_DataAvailable(object? sender, WaveInEventArgs evt)
         {
             var data = evt.Buffer.AsMemory(0, evt.BytesRecorded);
-            OnDataAvailable?.Invoke(this, data);
+            DataAvailable?.Invoke(this, data);
         }
 
         public void Playback()

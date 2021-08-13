@@ -45,7 +45,7 @@ namespace AEther.Bass
 
             Marshal.Copy(data, Buffer, 0, length);
 
-            OnDataAvailable?.Invoke(this, Buffer.AsMemory(0, length));
+            DataAvailable?.Invoke(this, Buffer.AsMemory(0, length));
 
             return true;
 

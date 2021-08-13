@@ -55,7 +55,7 @@ namespace AEther.Benchmarks
             var outputBytes = new byte[sizeof(double) * outputDoubles.Length];
             var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
-            session.OnSamplesAvailable += async (obj, evt) =>
+            session.SamplesAnalyzed += async (obj, evt) =>
             {
                 for (int c = 0; c < sampleSource.Format.ChannelCount; ++c)
                 {

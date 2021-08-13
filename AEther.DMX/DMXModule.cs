@@ -9,7 +9,7 @@ using AEther;
 
 namespace AEther.DMX
 {
-    public class DMXModule : ISessionModule
+    public class DMXModule : IDisposable
     {
 
         const int Baudrate = 250000;
@@ -151,9 +151,6 @@ namespace AEther.DMX
                 Serial.Dispose();
             }
         }
-
-        public void Render()
-        { }
 
     }
 }

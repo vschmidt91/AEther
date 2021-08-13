@@ -5,7 +5,7 @@
     <FileUpgradeFlags>40</FileUpgradeFlags>
     <UpgradeBackupLocation>C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\Backup\AEther.Benchmarks\</UpgradeBackupLocation>
     <OldToolsVersion>2.0</OldToolsVersion>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="test_input.wav" />

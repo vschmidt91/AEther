@@ -22,16 +22,7 @@ namespace AEther
         {
             int Compare((T, int) x, (T, int) y)
             {
-                var c = comparer.Compare(x.Item1, y.Item1);
-                if (c == 0)
-                {
-                    return c;
-                    //return x.Item2 - y.Item2;
-                }
-                else
-                {
-                    return c;
-                }
+                return comparer.Compare(x.Item1, y.Item1);
             }
             return Comparer<(T, int)>.Create(Compare);
         }
@@ -41,6 +32,7 @@ namespace AEther
             Indirection[item.Item2] = Size;
             base.Insert(item);
         }
+
         protected override void Swap(int i, int j)
         {
             base.Swap(i, j);

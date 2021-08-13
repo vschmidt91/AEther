@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {
-    public class GraphicsModule : ISessionModule
+    public class GraphicsModule
     {
 
         const bool UseMapping = true;

@@ -40,7 +40,9 @@ namespace AEther
             for (int i = 0; i < Quantiles.Length; ++i)
             {
                 if (x < States[i])
+                {
                     State = Quantiles[i].Quantile;
+                }
             }
         }
 

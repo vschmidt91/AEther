@@ -31,7 +31,7 @@ namespace AEther.WindowsForms
 
         public void Write(ReadOnlySpan<byte> buffer)
         {
-            ((System.IO.Stream)Stream).Write(buffer);
+            ((Stream)Stream).Write(buffer);
         }
 
         public void Write<T>(T value)

@@ -22,17 +22,17 @@ namespace AEther
     public class Analyzer
     {
 
-        public event EventHandler<SampleEvent<double>>? OnSamplesAvailable;
-        public event EventHandler? OnStopped;
+        public event EventHandler<SampleEvent<double>>? SamplesAnalyzed;
 
         public readonly SampleFormat Format;
         public readonly Domain Domain;
+        public readonly Task Completion;
 
         readonly int BatchSize;
         readonly byte[] Batch;
         readonly DFTProcessor[] DFT;
         readonly Splitter[] Splitter;
-        readonly Stopwatch SplitterTimer = Stopwatch.StartNew();
+        readonly Stopwatch SplitterTimer;
         readonly TimeSpan SplitterInterval;
         readonly Pipe SamplePipe = new();
         readonly CancellationTokenSource Cancel = new();
@@ -40,7 +40,7 @@ namespace AEther
         readonly TransformBlock<SampleEvent<double>, SampleEvent<double>> SplitterBlock;
         readonly ActionBlock<SampleEvent<double>> OutputBlock;
         readonly ActionBlock<SampleEvent<byte>> InputBlock;
-        readonly Task BatcherTask = Task.CompletedTask;
+        readonly Task BatcherTask;
 
         public Analyzer(SampleFormat format, AnalyzerOptions options)
         {
@@ -82,6 +82,15 @@ namespace AEther
             DFTBlock.LinkTo(SplitterBlock, linkOptions);
             SplitterBlock.LinkTo(OutputBlock, linkOptions);
 
+            Completion = Task.WhenAll(
+                InputBlock.Completion,
+                BatcherTask,
+                DFTBlock.Completion,
+                SplitterBlock.Completion,
+                OutputBlock.Completion);
+
+            SplitterTimer = Stopwatch.StartNew();
+
         }
 
         static SampleEvent<T> RentEvent<T>(int sampleCount, int channelCount, DateTime time)
@@ -106,20 +115,9 @@ namespace AEther
             InputBlock.Post(evt);
         }
 
-        public async Task StopAsync()
+        public void Stop()
         {
             Cancel.Cancel();
-            try
-            {
-                await InputBlock.Completion;
-                await BatcherTask;
-                await DFTBlock.Completion;
-                await SplitterBlock.Completion;
-                await OutputBlock.Completion;
-            }
-            catch(OperationCanceledException)
-            { }
-            OnStopped?.Invoke(this, EventArgs.Empty);
         }
 
         public async Task RunInputAsync(SampleEvent<byte> evt)
@@ -211,7 +209,7 @@ namespace AEther
 
         public void RunOutput(SampleEvent<double> input)
         {
-            OnSamplesAvailable?.Invoke(this, input);
+            SamplesAnalyzed?.Invoke(this, input);
             ReturnEvent(input);
         }
 

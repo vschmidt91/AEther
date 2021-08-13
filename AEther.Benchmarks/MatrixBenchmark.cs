@@ -13,30 +13,30 @@ namespace AEther.Benchmarks
     public class MatrixBenchmark
     {
 
-        static int Iterations = 1 << 20;
+        const int Iterations = 1 << 20;
 
         [Benchmark]
         public void SharpDXBenchmark()
         {
-            var M = SharpDX.Matrix.Identity;
+            var M = Matrix.Identity;
             for(var i= 1; i < Iterations; i++)
             {
-                var A = SharpDX.Matrix.Scaling(1f / i);
-                var B = SharpDX.Matrix.RotationYawPitchRoll(i, i, i);
-                var C = SharpDX.Matrix.Translation(new SharpDX.Vector3(i, i, i));
-                M += A * B *C;
+                var A = Matrix.Scaling(1f / i);
+                var B = Matrix.RotationYawPitchRoll(i, i, i);
+                var C = Matrix.Translation(new SharpDX.Vector3(i, i, i));
+                M += A * B * C;
             }
         }
 
         [Benchmark]
         public void SystemNumericsBenchmark()
         {
-            var M = System.Numerics.Matrix4x4.Identity;
+            var M = Matrix4x4.Identity;
             for (var i = 1; i < Iterations; i++)
             {
-                var A = System.Numerics.Matrix4x4.CreateScale(1f / i);
-                var B = System.Numerics.Matrix4x4.CreateFromYawPitchRoll(i, i, i);
-                var C = System.Numerics.Matrix4x4.CreateTranslation(new System.Numerics.Vector3(i, i, i));
+                var A = Matrix4x4.CreateScale(1f / i);
+                var B = Matrix4x4.CreateFromYawPitchRoll(i, i, i);
+                var C = Matrix4x4.CreateTranslation(new System.Numerics.Vector3(i, i, i));
                 M += A * B * C;
             }
         }

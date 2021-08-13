@@ -19,7 +19,7 @@ namespace AEther.CLI
 {
     class Program
     {
-        static void Main(string path)
+        static async void Main(string path)
         {
 
             //path = Path.Join(Environment.CurrentDirectory, "..", "..", "..", "..", "TestFiles", "test_input.wav");
@@ -32,12 +32,11 @@ namespace AEther.CLI
             using var standardOutput = Console.OpenStandardOutput();
             using var sampleSource = new WAVReader(File.OpenRead(path));
 
-            var session = new Analyzer(sampleSource.Format, options);
+            var analyzer = new Analyzer(sampleSource.Format, options);
             var hash = MD5.Create();
             byte[] buffer = Array.Empty<byte>();
-            var waitHandle = new EventWaitHandle(false, EventResetMode.ManualReset);
 
-            session.OnSamplesAvailable += async (obj, evt) =>
+            analyzer.SamplesAnalyzed += async (obj, evt) =>
             {
                 var byteCount = sizeof(double) * evt.SampleCount;
                 if (buffer.Length < byteCount)
@@ -49,10 +48,9 @@ namespace AEther.CLI
                 Console.WriteLine(BitConverter.ToString(hash.ComputeHash(buffer, 0, byteCount)));
                 await outputStream.WriteAsync(buffer.AsMemory(0, byteCount));
             };
-            session.OnStopped += (obj, evt) => waitHandle.Set();
 
             sampleSource.Start();
-            waitHandle.WaitOne();
+            await analyzer.Completion;
 
         }
 

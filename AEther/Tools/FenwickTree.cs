@@ -7,14 +7,8 @@ using System.Threading.Tasks;
 namespace AEther
 {
     public class FenwickTree<T>
-        where T : struct
+        where T : struct, IAdditionOperators<T, T, T>, ISubtractionOperators<T, T, T>
     {
-
-        static GenericOperator<T, T, T>.Operator Add
-            => GenericOperator<T, T, T>.Add;
-
-        static GenericOperator<T, T, T>.Operator Subtract
-            => GenericOperator<T, T, T>.Subtract;
 
         public int Size => Items.Length;
 
@@ -28,7 +22,7 @@ namespace AEther
                 int j = i + LSB(i + 1);
                 if (j < Size)
                 {
-                    Items[j] = Add(Items[j], Items[i]);
+                    Items[j] += Items[i];
                 }
             }
         }
@@ -43,7 +37,7 @@ namespace AEther
             T sum = default;
             for(; i > 0; i -= LSB(i))
             {
-                sum = Add(sum, Items[i - 1]);
+                sum += Items[i - 1];
             }
             return sum;
         }
@@ -53,11 +47,11 @@ namespace AEther
             T sum = default;
             for (; j > i; j -= LSB(j))
             {
-                sum = Add(sum, Items[j - 1]);
+                sum += Items[j - 1];
             }
             for (; i > j; i -= LSB(i))
             {
-                sum = Subtract(sum, Items[i - 1]);
+                sum -= Items[i - 1];
             }
             return sum;
         }
@@ -68,13 +62,13 @@ namespace AEther
         {
             for(; i < Size; i += LSB(i + 1))
             {
-                Items[i] = Add(Items[i], item);
+                Items[i] += item;
             }
         }
 
         public void SetItem(int i, T item)
         {
-            AddItem(i, Subtract(item, GetItem(i)));
+            AddItem(i, item - GetItem(i));
         }
 
         static int LSB(int n) => n & (-n);

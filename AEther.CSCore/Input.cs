@@ -55,7 +55,7 @@ namespace AEther.CSCore
         private void Device_DataAvailable(object? sender, DataAvailableEventArgs evt)
         {
             var samples = evt.Data.AsMemory(evt.Offset, evt.ByteCount);
-            OnDataAvailable?.Invoke(this, samples);
+            DataAvailable?.Invoke(this, samples);
         }
 
         public void Playback()

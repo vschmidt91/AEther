@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {
-    public class StatisticsModule : ISessionModule
+    public class StatisticsModule
     {
 
         readonly TimeSpan UpdateInterval;
@@ -27,12 +27,7 @@ namespace AEther.WindowsForms
             Latency = TimeSpan.Zero;
         }
 
-        public void Dispose()
-        {
-            GC.SuppressFinalize(this);
-        }
-
-        public void Render()
+        public void Update()
         {
 
             var frameTime = FrameTimer.Elapsed;

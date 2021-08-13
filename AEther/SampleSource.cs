@@ -14,7 +14,7 @@ namespace AEther
     public abstract class SampleSource : IDisposable
     {
 
-        public EventHandler<ReadOnlyMemory<byte>>? OnDataAvailable;
+        public EventHandler<ReadOnlyMemory<byte>>? DataAvailable;
         public EventHandler<Exception?>? OnStopped;
 
         public abstract SampleFormat Format { get; }

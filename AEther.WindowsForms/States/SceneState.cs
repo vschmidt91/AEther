@@ -102,11 +102,10 @@ namespace AEther.WindowsForms
         readonly Model Cube;
         readonly Model Sphere;
 
-        DepthBuffer DepthBuffer;
-        Texture2D NormalBuffer;
-        Texture2D ColorBuffer;
+        GeometryBuffer GeometryBuffer;
         Texture2D LightBuffer;
-        Texture2D AirlightTexture;
+
+        readonly Texture2D AirlightTexture;
         readonly TextureCube ShadowBuffer;
         readonly Texture2D MandelboxTexture;
 
@@ -116,7 +115,6 @@ namespace AEther.WindowsForms
         readonly Stopwatch Timer = new();
         readonly List<SceneNode> Scene = new();
         readonly List<Model> Models = new();
-        readonly Fluid Fluid;
 
         public SceneState(Graphics graphics, SpectrumAccumulator<float>[] spectra)
             : base(graphics)
@@ -212,45 +210,46 @@ namespace AEther.WindowsForms
             LightConstants.Value.Scattering = 0.02f * new Vector3(1, 2, 3);
             LightConstants.Value.Absorption = 0f * Vector3.One;
 
-            CreateTextures(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
+            GeometryBuffer = CreateGeometryBuffer();
+            LightBuffer = CreateLightBuffer();
 
             Graphics.OnModeChange += Graphics_OnModeChange;
 
             Models = Scene.OfType<Geometry>().Select(g => g.Model).ToHashSet().ToList();
 
-            int size = 1 << 10;
-            Fluid = new Fluid(Graphics, size, size);
-
 
         }
 
-        void CreateTextures(int width, int height)
+        GeometryBuffer CreateGeometryBuffer()
         {
 
-            DepthBuffer = Graphics.CreateDepthBuffer(width, height, Format.R16_Typeless);
-            NormalBuffer = Graphics.CreateTexture(width, height, Format.R8G8B8A8_SNorm);
-            ColorBuffer = Graphics.CreateTexture(width, height, Format.R8G8B8A8_UNorm);
-            LightBuffer = Graphics.CreateTexture(width, height, Format.R11G11B10_Float);
+            var buffer = new GeometryBuffer(Graphics, Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
 
-            LightShader.ShaderResources["Depth"].SetResource(DepthBuffer.SRView);
-            LightShader.ShaderResources["Normal"].SetResource(NormalBuffer.SRView);
-            LightShader.ShaderResources["Color"].SetResource(ColorBuffer.SRView);
+            LightShader.ShaderResources["Depth"].SetResource(buffer.Depth.SRView);
+            LightShader.ShaderResources["Normal"].SetResource(buffer.Normal.SRView);
+            LightShader.ShaderResources["Color"].SetResource(buffer.Color.SRView);
 
-            LightShadowShader.ShaderResources["Depth"].SetResource(DepthBuffer.SRView);
-            LightShadowShader.ShaderResources["Normal"].SetResource(NormalBuffer.SRView);
-            LightShadowShader.ShaderResources["Color"].SetResource(ColorBuffer.SRView);
+            LightShadowShader.ShaderResources["Depth"].SetResource(buffer.Depth.SRView);
+            LightShadowShader.ShaderResources["Normal"].SetResource(buffer.Normal.SRView);
+            LightShadowShader.ShaderResources["Color"].SetResource(buffer.Color.SRView);
 
-            PresentShader.ShaderResources["Light"].SetResource(LightBuffer.SRView);
+            return buffer;
 
+        }
+
+        Texture2D CreateLightBuffer()
+        {
+            var buffer = Graphics.CreateTexture(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height, Format.R11G11B10_Float);
+            PresentShader.ShaderResources["Light"].SetResource(buffer.SRView);
+            return buffer;
         }
 
         private void Graphics_OnModeChange(object? sender, ModeDescription mode)
         {
-            DepthBuffer.Dispose();
-            NormalBuffer.Dispose();
-            ColorBuffer.Dispose();
+            GeometryBuffer.Dispose();
             LightBuffer.Dispose();
-            CreateTextures(Graphics.BackBuffer.Width, Graphics.BackBuffer.Height);
+            GeometryBuffer = CreateGeometryBuffer();
+            LightBuffer = CreateLightBuffer();
             Camera.AspectRatio = mode.Width / (float)mode.Height;
         }
 
@@ -275,9 +274,7 @@ namespace AEther.WindowsForms
                 Cube.Dispose();
                 Sphere.Dispose();
 
-                DepthBuffer.Dispose();
-                NormalBuffer.Dispose();
-                ColorBuffer.Dispose();
+                GeometryBuffer.Dispose();
                 LightBuffer.Dispose();
                 AirlightTexture.Dispose();
                 ShadowBuffer.Dispose();
@@ -393,10 +390,10 @@ namespace AEther.WindowsForms
             CameraConstants.Value.ViewDirectionMatrix = Camera.GetViewDirectionMatrix();
             CameraConstants.Update();
 
-            DepthBuffer.ClearDepth();
-            NormalBuffer.Clear(new Color4(0, 0, 1, 0));
-            ColorBuffer.Clear();
-            Graphics.SetRenderTargets(DepthBuffer, NormalBuffer, ColorBuffer);
+            GeometryBuffer.Depth.ClearDepth();
+            GeometryBuffer.Normal.Clear(new Color4(0, 0, 1, 0));
+            GeometryBuffer.Color.Clear();
+            Graphics.SetRenderTargets(GeometryBuffer.Depth, GeometryBuffer.Normal, GeometryBuffer.Color);
             RenderScene(Scene.OfType<Geometry>(), GeometryShader);
 
             LightBuffer.Clear();
