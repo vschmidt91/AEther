@@ -15,7 +15,7 @@ namespace AEther
     {
 
         public EventHandler<ReadOnlyMemory<byte>>? DataAvailable;
-        public EventHandler<Exception?>? OnStopped;
+        public EventHandler<Exception?>? Stopped;
 
         public abstract SampleFormat Format { get; }
         public abstract void Start();

@@ -92,7 +92,7 @@ namespace AEther.WindowsForms
         void RenderInput()
         {
 
-            Graphics.SetRenderTargets(null, VelocityNew);
+            Graphics.SetRenderTarget(null, VelocityNew);
             Input.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(Input);
 
@@ -103,7 +103,7 @@ namespace AEther.WindowsForms
         void RenderAdvect()
         {
 
-            Graphics.SetRenderTargets(null, VelocityNew);
+            Graphics.SetRenderTarget(null, VelocityNew);
             Advect.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(Advect);
 
@@ -114,7 +114,7 @@ namespace AEther.WindowsForms
         void RenderDiffuse()
         {
 
-            Graphics.SetRenderTargets(null, VelocityNew);
+            Graphics.SetRenderTarget(null, VelocityNew);
             Diffuse.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(Diffuse);
 
@@ -125,14 +125,14 @@ namespace AEther.WindowsForms
         void RenderProject()
         {
 
-            Graphics.SetRenderTargets(null, Divergence);
+            Graphics.SetRenderTarget(null, Divergence);
             DivergenceShader.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(DivergenceShader);
 
             Pressure.Clear();
             PoissonSolver.Solve(Divergence, Pressure);
 
-            Graphics.SetRenderTargets(null, VelocityNew);
+            Graphics.SetRenderTarget(null, VelocityNew);
             Project.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Project.ShaderResources["Pressure"].SetResource(Pressure.SRView);
             Graphics.Draw(Project);
@@ -144,7 +144,7 @@ namespace AEther.WindowsForms
         void RenderOutput()
         {
 
-            Graphics.SetRenderTargets(null, Graphics.BackBuffer);
+            Graphics.SetRenderTarget(null, Graphics.BackBuffer);
             Output.ShaderResources["Velocity"].SetResource(Velocity.SRView);
             Graphics.Draw(Output);
 

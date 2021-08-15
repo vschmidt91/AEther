@@ -92,9 +92,9 @@ namespace AEther.WindowsForms
 
             for (var i = 0; i < Iterations; ++i)
             {
-                Graphics.SetRenderTargets(null, Buffer);
+                Graphics.SetRenderTarget(null, Buffer);
                 Graphics.Draw(SolverEven);
-                Graphics.SetRenderTargets(null, solution);
+                Graphics.SetRenderTarget(null, solution);
                 Graphics.Draw(SolverOdd);
             }
 

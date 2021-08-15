@@ -9,7 +9,7 @@ using AEther;
 
 namespace AEther.DMX
 {
-    public class DMXModule : IDisposable
+    public class DMXController : IDisposable
     {
 
         const int Baudrate = 250000;
@@ -30,7 +30,7 @@ namespace AEther.DMX
         public double SinuoidThreshold;
         public double TransientThreshold;
 
-        public DMXModule(Domain domain, DMXOptions options)
+        public DMXController(Domain domain, DMXOptions options)
         {
 
             var comPort = $"COM{options.COMPort}";

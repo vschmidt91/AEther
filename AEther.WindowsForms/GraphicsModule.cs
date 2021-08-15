@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {
-    public class GraphicsModule
+    public class GraphicsModule : IDisposable
     {
 
         const bool UseMapping = true;
@@ -22,7 +22,7 @@ namespace AEther.WindowsForms
         int EventCounter = 0;
 
         public GraphicsModule(Graphics graphics, ListBox states, int channelCount, int noteCount, int historyCount)
-        {
+        { 
 
             var A1 = SharpDX.Matrix.LookAtLH(SharpDX.Vector3.Zero, SharpDX.Vector3.ForwardLH, SharpDX.Vector3.Up);
             var A2 = System.Numerics.Matrix4x4.CreateLookAt(System.Numerics.Vector3.Zero, -System.Numerics.Vector3.UnitZ, System.Numerics.Vector3.UnitY);
@@ -33,11 +33,11 @@ namespace AEther.WindowsForms
             Graphics.ShaderConstants["FrameConstants"] = FrameConstants.Buffer;
 
             Spectrum = Enumerable.Range(0, channelCount)
-                .Select<int, SpectrumAccumulator<float>>(i => new FloatSpectrum(Graphics, noteCount))
+                .Select(i => (SpectrumAccumulator<float>)new FloatSpectrum(Graphics, noteCount))
                 .ToArray();
                 
             Histogram = Enumerable.Range(0, channelCount)
-                .Select<int, Histogram>(i => new FloatHistogram(Graphics, noteCount, historyCount, UseMapping))
+                .Select(i => (Histogram)new FloatHistogram(Graphics, noteCount, historyCount, UseMapping))
                 .ToArray();
 
             states.Items.Clear();

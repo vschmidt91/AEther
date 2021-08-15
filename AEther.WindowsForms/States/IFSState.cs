@@ -86,7 +86,7 @@ namespace AEther.WindowsForms
             //sumWeight = .25f * Vector4.Dot(sumWeight, Vector4.One) * Vector4.One;
 
             Graphics.SetModel();
-            Graphics.SetRenderTargets(null, Source);
+            Graphics.SetRenderTarget(null, Source);
             Graphics.Draw(InputShader);
 
             //Graphics.Context.ClearRenderTargetView(Source.GetRenderTargetView(), Color4.White);
@@ -94,7 +94,7 @@ namespace AEther.WindowsForms
             {
 
                 Target.Clear();
-                Graphics.SetRenderTargets(null, Target);
+                Graphics.SetRenderTarget(null, Target);
                 foreach(var element in Elements)
                 {
                     element.Weight /= sumWeight;
@@ -105,7 +105,7 @@ namespace AEther.WindowsForms
 
             }
 
-            Graphics.SetRenderTargets(null, Graphics.BackBuffer);
+            Graphics.SetRenderTarget(null, Graphics.BackBuffer);
             OutputShader.ShaderResources["Source"].SetResource(Source.SRView);
             Graphics.Draw(OutputShader);
 

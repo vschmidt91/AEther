@@ -19,14 +19,8 @@ namespace AEther.WindowsForms
 
         public const string LoopbackEntry = "Loopback";
 
-        readonly Graphics Graphics;
-        readonly AutoResetEvent RenderEvent = new(false);
-        readonly StatisticsModule Statistics;
-
-        SampleSource? Source = null;
-        Analyzer? Analyzer = null;
-        DMXModule? DMX = null;
-        GraphicsModule? GraphicsModule = null;
+        public readonly Graphics Graphics;
+        Session? Session;
 
         public MainForm()
         {
@@ -39,7 +33,6 @@ namespace AEther.WindowsForms
             Input.SelectedIndex = 0;
             AnalyzerOptions.SelectedObject = new AnalyzerOptions();
             DMXOptions.SelectedObject = new DMXOptions();
-            Statistics = new StatisticsModule(this);
         }
 
         private async void Graphics_OnShaderChange(object? sender, string e)
@@ -53,74 +46,35 @@ namespace AEther.WindowsForms
             {
                 throw new InvalidCastException();
             }
-            Source = Input.SelectedItem?.ToString() switch
+            if (DMXOptions.SelectedObject is not DMXOptions dmxOptions)
+            {
+                throw new InvalidCastException();
+            }
+            SampleSource source = Input.SelectedItem?.ToString() switch
             {
                 LoopbackEntry => new Loopback(),
                 string s => new Recorder(s),
                 _ => throw new Exception(),
             };
-            Analyzer = new(Source.Format, options);
+            Session = new(this, source, States, options, dmxOptions);
+            Session.Start();
 
-            if (DMXOptions.SelectedObject is DMXOptions dmxOptions)
-            {
-                DMX = new DMXModule(options.Domain, dmxOptions);
-            }
-
-            GraphicsModule = new GraphicsModule(Graphics, States, Source.Format.ChannelCount, options.Domain.Length, options.TimeResolution);
-
-            Analyzer.SamplesAnalyzed += Analyzer_SamplesAnalyzed;
-            Source.DataAvailable += Source_DataAvailable;
-            KeyPress += MainForm_KeyPress;
-            Source.Start();
-
-        }
-
-        private void MainForm_KeyPress(object? sender, KeyPressEventArgs evt)
-        {
-            GraphicsModule?.ProcessKeyPress(evt);
-        }
-
-        private void Source_DataAvailable(object? sender, ReadOnlyMemory<byte> evt)
-        {
-            Analyzer?.PostSamples(evt);
-        }
-
-        private void Analyzer_SamplesAnalyzed(object? sender, SampleEvent<double> evt)
-        {
-            Statistics?.Process(evt);
-            DMX?.Process(evt);
-            GraphicsModule?.Process(evt);
         }
 
         public async Task StopAsync()
         {
-            if (Interlocked.Exchange(ref Source, null) is not SampleSource source)
+            if(Session is Session session)
             {
-                return;
+                await session.StopAsync();
             }
-            if (Interlocked.Exchange(ref Analyzer, null) is not Analyzer analyzer)
-            {
-                return;
-            }
-            Interlocked.Exchange(ref GraphicsModule, null)?.Dispose();
-            Interlocked.Exchange(ref DMX, null)?.Dispose();
-            RenderEvent.WaitOne();
-            analyzer.Stop();
-            try
-            {
-                await analyzer.Completion;
-            }
-            catch (OperationCanceledException)
-            { }
-            source.Stop();
         }
 
         public void Render()
         {
-            RenderEvent.Reset();
-            Statistics?.Update();
-            GraphicsModule?.Render();
-            RenderEvent.Set();
+            if (Session is Session session)
+            {
+                session.Render();
+            }
         }
 
         void ToggleFullscreen()

@@ -49,7 +49,7 @@ namespace AEther.CSCore
 
         private void Device_Stopped(object? sender, RecordingStoppedEventArgs evt)
         {
-            OnStopped?.Invoke(this, evt.Exception);
+            Stopped?.Invoke(this, evt.Exception);
         }
 
         private void Device_DataAvailable(object? sender, DataAvailableEventArgs evt)

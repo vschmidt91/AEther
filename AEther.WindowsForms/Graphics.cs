@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -72,15 +73,13 @@ namespace AEther.WindowsForms
             Device.CreateWithSwapChain(
                 DriverType.Hardware,
                 deviceFlags,
-                new[] { FeatureLevel.Level_10_0 },
+                new[] { FeatureLevel.Level_11_0 },
                 desc,
                 out Device,
                 out Chain);
 
-            using (var factory = Chain.GetParent<Factory>())
-            {
-                factory.MakeWindowAssociation(handle, WindowAssociationFlags.IgnoreAll);
-            }
+            using var factory = Chain.GetParent<Factory>();
+            factory.MakeWindowAssociation(handle, WindowAssociationFlags.None);
 
             if (Device.CreationFlags.HasFlag(DeviceCreationFlags.Debug))
             {
@@ -273,8 +272,31 @@ namespace AEther.WindowsForms
             Chain.TryPresent(1, PresentFlags.DoNotWait);
         }
 
-        public void SetRenderTargets(Texture2D? depthBuffer, params Texture2D[] renderTargets)
+        RenderTargetView[] RTViews = Array.Empty<RenderTargetView>();
+
+        public void SetRenderTarget(Texture2D depthBuffer)
         {
+            Context.Rasterizer.SetViewport(0, 0, depthBuffer.Width, depthBuffer.Height);
+            Context.OutputMerger.SetRenderTargets(depthBuffer.DSView);
+        }
+
+        public void SetRenderTarget(Texture2D? depthBuffer, Texture2D renderTarget)
+        {
+            Context.Rasterizer.SetViewport(0, 0, renderTarget.Width, renderTarget.Height);
+            Context.OutputMerger.SetRenderTargets(depthBuffer?.DSView, renderTarget.RTView);
+        }
+
+        public void SetRenderTargets(Texture2D? depthBuffer, Texture2D[] renderTargets)
+        {
+            if(RTViews.Length < renderTargets.Length)
+            {
+                RTViews = new RenderTargetView[renderTargets.Length];
+            }
+            Array.Clear(RTViews, 0, RTViews.Length);
+            for(var i = 0; i < renderTargets.Length; ++i)
+            {
+                RTViews[i] = renderTargets[i].RTView;
+            }
             if (depthBuffer is Texture2D db)
             {
                 Context.Rasterizer.SetViewport(0, 0, db.Width, db.Height);
@@ -283,7 +305,7 @@ namespace AEther.WindowsForms
             {
                 Context.Rasterizer.SetViewport(0, 0, rt.Width, rt.Height);
             }
-            Context.OutputMerger.SetRenderTargets(depthBuffer?.DSView, renderTargets.Select(t => t.RTView).ToArray());
+            Context.OutputMerger.SetRenderTargets(depthBuffer?.DSView, RTViews);
         }
 
         public void Compute(Shader shader, (int, int, int)? threadCount = default, int? techniqueIndex = default)

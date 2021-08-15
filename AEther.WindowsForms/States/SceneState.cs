@@ -53,15 +53,20 @@ namespace AEther.WindowsForms
                 IsVolumetric = true;
                 CastsShadows = false;
                 Transform.Translation = offset + .3f * note * direction;
-                Intensity = 100 * Vector3.One;
+                Intensity = Vector3.Zero;
             }
 
             private void Spectrum_OnUpdate(object? sender, EventArgs e)
             {
                 if (sender is SpectrumAccumulator<float> spectrum)
                 {
-                    var v = spectrum.Buffer[(4 * Note)..(4 * Note + 3)];
-                    Intensity = 100f * new Vector3(v);
+                    var v = new Vector3()
+                    {
+                        X = spectrum.Buffer[4 * Note + 0],
+                        Y = spectrum.Buffer[4 * Note + 1],
+                        Z = spectrum.Buffer[4 * Note + 2],
+                    };
+                    Intensity = 300 * v * v;
                     //Intensity.Y = 0;
                 }
             }
@@ -94,7 +99,7 @@ namespace AEther.WindowsForms
         readonly Shader LightShader;
         readonly Shader LightShadowShader;
 
-        readonly Particles Particles;
+        //readonly Particles Particles;
         readonly ConstantBuffer<Instance> InstanceConstants;
         readonly ConstantBuffer<CameraConstants> CameraConstants;
         readonly ConstantBuffer<LightConstants> LightConstants;
@@ -129,7 +134,7 @@ namespace AEther.WindowsForms
             CameraConstants = Graphics.CreateConstantBuffer<CameraConstants>();
             LightConstants = Graphics.CreateConstantBuffer<LightConstants>();
             Instances = Graphics.CreateComputeBuffer(Marshal.SizeOf<Instance>(), 1 << 10, true);
-            Particles = new Particles(Graphics, 1 << 10, CameraConstants);
+            //Particles = new Particles(Graphics, 1 << 10, CameraConstants);
 
             ShadowShader = Graphics.LoadShader("shadow.fx", new ShaderMacro("ENABLE_INSTANCING", true));
             ShadowShader.ConstantBuffers["CameraConstants"].SetConstantBuffer(CameraConstants.Buffer);
@@ -183,7 +188,7 @@ namespace AEther.WindowsForms
                 };
                 Scene.Add(obj);
             }
-            Scene.Add(new MyLight());
+            //Scene.Add(new MyLight());
 
             for (var c = 0; c < 2; c++)
             {
@@ -209,9 +214,14 @@ namespace AEther.WindowsForms
             LightConstants.Value.Emission = 0f * Vector3.One;
             LightConstants.Value.Scattering = 0.02f * new Vector3(1, 2, 3);
             LightConstants.Value.Absorption = 0f * Vector3.One;
+            LightConstants.Update();
 
             GeometryBuffer = CreateGeometryBuffer();
             LightBuffer = CreateLightBuffer();
+
+            Graphics.SetModel();
+            Graphics.SetRenderTarget(null, AirlightTexture);
+            Graphics.Draw(AirlightShader);
 
             Graphics.OnModeChange += Graphics_OnModeChange;
 
@@ -266,7 +276,7 @@ namespace AEther.WindowsForms
                 LightShader.Dispose();
                 LightShadowShader.Dispose();
 
-                Particles.Dispose();
+                //Particles.Dispose();
                 InstanceConstants.Dispose();
                 CameraConstants.Dispose();
                 LightConstants.Dispose();
@@ -306,7 +316,7 @@ namespace AEther.WindowsForms
                 g.Update(dt);
             }
 
-            Particles.Simulate();
+            //Particles.Simulate();
 
         }
 
@@ -376,11 +386,7 @@ namespace AEther.WindowsForms
             UpdateScene();
 
             Graphics.SetModel();
-            Graphics.SetRenderTargets(null, AirlightTexture);
-            Graphics.Draw(AirlightShader);
-
-            Graphics.SetModel();
-            Graphics.SetRenderTargets(null, MandelboxTexture);
+            Graphics.SetRenderTarget(null, MandelboxTexture);
             Graphics.Draw(MandelboxShader);
 
             CameraConstants.Value.View = Camera.View;
@@ -393,7 +399,7 @@ namespace AEther.WindowsForms
             GeometryBuffer.Depth.ClearDepth();
             GeometryBuffer.Normal.Clear(new Color4(0, 0, 1, 0));
             GeometryBuffer.Color.Clear();
-            Graphics.SetRenderTargets(GeometryBuffer.Depth, GeometryBuffer.Normal, GeometryBuffer.Color);
+            Graphics.SetRenderTargets(GeometryBuffer.Depth, GeometryBuffer.Textures);
             RenderScene(Scene.OfType<Geometry>(), GeometryShader);
 
             LightBuffer.Clear();
@@ -409,28 +415,27 @@ namespace AEther.WindowsForms
 
                 if (light.CastsShadows)
                 {
-                    foreach(var slice in ShadowBuffer.Slices)
+                    foreach (var slice in ShadowBuffer.Slices)
                     {
                         slice.ClearDepth();
                         var position = light.Transform.Translation;
                         LightConstants.Value.View = Matrix.LookAtLH(position, position + slice.Direction, slice.Up);
                         LightConstants.Update();
-                        Graphics.SetRenderTargets(slice);
+                        Graphics.SetRenderTarget(slice);
                         RenderScene(Scene.OfType<Geometry>(), ShadowShader);
                     }
                 }
 
                 var shader = light.CastsShadows ? LightShadowShader : LightShader;
                 Graphics.SetModel();
-                Graphics.SetRenderTargets(null, LightBuffer);
+                Graphics.SetRenderTarget(null, LightBuffer);
                 Graphics.Draw(shader);
 
             }
 
-
             Graphics.BackBuffer.Clear();
             Graphics.SetModel();
-            Graphics.SetRenderTargets(null, Graphics.BackBuffer);
+            Graphics.SetRenderTarget(null, Graphics.BackBuffer);
             Graphics.Draw(PresentShader);
 
 

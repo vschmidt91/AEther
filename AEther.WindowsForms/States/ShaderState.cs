@@ -30,7 +30,7 @@ namespace AEther.WindowsForms
         public override void Render()
         {
             Graphics.SetModel();
-            Graphics.SetRenderTargets(null, Graphics.BackBuffer);
+            Graphics.SetRenderTarget(null, Graphics.BackBuffer);
             Graphics.Draw(Shader);
         }
 

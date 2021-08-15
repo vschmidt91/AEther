@@ -34,7 +34,7 @@ namespace AEther.NAudio
 
         private void Device_RecordingStopped(object? sender, StoppedEventArgs e)
         {
-            OnStopped?.Invoke(this, e.Exception);
+            Stopped?.Invoke(this, e.Exception);
         }
 
         private void Device_DataAvailable(object? sender, WaveInEventArgs evt)
