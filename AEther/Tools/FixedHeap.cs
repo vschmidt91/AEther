@@ -36,8 +36,10 @@ namespace AEther
         protected override void Swap(int i, int j)
         {
             base.Swap(i, j);
-            Indirection[Items[i].Item2] = i;
-            Indirection[Items[j].Item2] = j;
+            (_, var ki) = Items[i];
+            (_, var kj) = Items[j];
+            Indirection[ki] = i;
+            Indirection[kj] = j;
         }
 
         public void Delete(int key)

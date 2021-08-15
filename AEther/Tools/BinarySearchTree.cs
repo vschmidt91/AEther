@@ -61,8 +61,8 @@ namespace AEther
                 }
                 else
                 {
-                    //(Left, Item) = Left?.RemoveRightmost() ?? throw new KeyNotFoundException();
-                    (Right, Item) = Right?.RemoveLeftmost() ?? throw new KeyNotFoundException();
+                    (Left, Item) = Left?.RemoveRightmost() ?? throw new KeyNotFoundException();
+                    //(Right, Item) = Right?.RemoveLeftmost() ?? throw new KeyNotFoundException();
                     return this;
                 }
             }

@@ -43,9 +43,7 @@ namespace AEther.Tests
                 var x = rng.NextDouble();
                 a.Filter(x);
                 b.Filter(x);
-                var y1 = a.State;
-                var y2 = b.State;
-                Assert.AreEqual(y1, y2);
+                Assert.AreEqual(a.State, b.State);
             }
         }
 

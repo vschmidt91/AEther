@@ -23,5 +23,8 @@ namespace AEther
         public X Leftmost() => Left?.Leftmost() ?? (X)this;
         public X Rightmost() => Right?.Rightmost() ?? (X)this;
 
+        public override string ToString()
+            => $"{Item} ({Left?.ToString() ?? "()"} {Right?.ToString() ?? "()"})";
+
     }
 }

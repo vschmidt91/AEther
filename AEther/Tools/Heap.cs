@@ -68,34 +68,46 @@ namespace AEther
 
         protected void BubbleUp(int i)
         {
-            if (0 < i)
+            while (0 < i)
             {
                 var p = Parent(i);
-                if (Comparer.Compare(Items[i], Items[p]) < 0)
+                if (0 <= Comparer.Compare(Items[i], Items[p]))
                 {
-                    Swap(i, p);
-                    BubbleUp(p);
+                    break;
                 }
+                Swap(i, p);
+                i = p;
             }
         }
 
         protected void BubbleDown(int i)
         {
 
-            var smallest = i;
-
-            var l = LeftChild(i);
-            if (l < Size && Comparer.Compare(Items[l], Items[smallest]) < 0)
-                smallest = l;
-
-            var r = RightChild(i);
-            if (r < Size && Comparer.Compare(Items[r], Items[smallest]) < 0)
-                smallest = r;
-
-            if (smallest != i)
+            while(true)
             {
+
+                var smallest = i;
+
+                var l = LeftChild(i);
+                if (l < Size && Comparer.Compare(Items[l], Items[smallest]) < 0)
+                {
+                    smallest = l;
+                }
+
+                var r = RightChild(i);
+                if (r < Size && Comparer.Compare(Items[r], Items[smallest]) < 0)
+                {
+                    smallest = r;
+                }
+
+                if (smallest == i)
+                {
+                    break;
+                }
+
                 Swap(i, smallest);
-                BubbleDown(smallest);
+                i = smallest;
+
             }
 
         }
