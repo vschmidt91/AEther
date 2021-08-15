@@ -35,13 +35,12 @@ namespace AEther
         readonly Pipe SamplePipe = new();
         readonly CancellationTokenSource Cancel = new();
         readonly TransformBlock<SampleEvent<double>, SampleEvent<double>> DFTBlock;
-        readonly TransformBlock<SampleEvent<double>, SampleEvent<double>> SplitterBlock;
-        readonly ActionBlock<SampleEvent<double>> OutputBlock;
+        readonly ActionBlock<SampleEvent<double>> SplitterBlock;
         readonly ActionBlock<SampleEvent<byte>> InputBlock;
+        readonly ConcurrentQueue<SampleEvent<double>> OutputBuffer = new();
         readonly Task BatcherTask;
 
         readonly MultimediaTimer OutputTimer;
-        readonly AutoResetEvent OutputTimerHandle = new(false);
 
         public Analyzer(SampleFormat format, AnalyzerOptions options)
         {
@@ -70,8 +69,7 @@ namespace AEther
             InputBlock.Completion.ContinueWith(_ => SamplePipe.Writer.CompleteAsync());
             BatcherTask = Task.Run(() => RunBatcherAsync(Cancel.Token), Cancel.Token);
             DFTBlock = new TransformBlock<SampleEvent<double>, SampleEvent<double>>(RunDFT, blockOptions);
-            SplitterBlock = new TransformBlock<SampleEvent<double>, SampleEvent<double>>(RunSplitter, blockOptions);
-            OutputBlock = new ActionBlock<SampleEvent<double>>(RunOutput, blockOptions);
+            SplitterBlock = new ActionBlock<SampleEvent<double>>(RunSplitter, blockOptions);
 
             var linkOptions = new DataflowLinkOptions
             {
@@ -79,33 +77,47 @@ namespace AEther
             };
 
             DFTBlock.LinkTo(SplitterBlock, linkOptions);
-            SplitterBlock.LinkTo(OutputBlock, linkOptions);
+            //SplitterBlock.LinkTo(OutputBlock, linkOptions);
 
             Completion = Task.WhenAll(
                 InputBlock.Completion,
                 BatcherTask,
                 DFTBlock.Completion,
-                SplitterBlock.Completion,
-                OutputBlock.Completion);
+                SplitterBlock.Completion);
 
 
             var interval = (int)TimeSpan.FromSeconds(1.0 / options.TimeResolution).TotalMilliseconds;
 
             OutputTimer = new()
             {
+                Resolution = 0,
                 Interval = interval,
             };
-            OutputTimer.Elapsed += Timer_Elapsed;
-            if(0 < OutputTimer.Interval)
+
+
+        }
+
+        public void Start()
+        {
+            if (0 < OutputTimer.Interval)
             {
+                OutputTimer.Elapsed += Timer_Elapsed;
                 OutputTimer.Start();
             }
-
         }
 
         private void Timer_Elapsed(object? sender, EventArgs e)
         {
-            OutputTimerHandle.Set();
+            if(OutputBuffer.TryDequeue(out var output))
+            {
+                PublishOutput(output);
+            }
+        }
+
+        void PublishOutput(SampleEvent<double> output)
+        {
+            SamplesAnalyzed?.Invoke(this, output);
+            ReturnEvent(output);
         }
 
         static SampleEvent<T> RentEvent<T>(int sampleCount, int channelCount, DateTime time)
@@ -132,6 +144,11 @@ namespace AEther
 
         public void Stop()
         {
+            if (OutputTimer.IsRunning)
+            {
+                OutputTimer.Elapsed -= Timer_Elapsed;
+                OutputTimer.Stop();
+            }
             Cancel.Cancel();
         }
 
@@ -201,7 +218,7 @@ namespace AEther
             return output;
         }
 
-        public SampleEvent<double> RunSplitter(SampleEvent<double> input)
+        public void RunSplitter(SampleEvent<double> input)
         {
             var output = RentEvent<double>(4 * Domain.Length, Format.ChannelCount, input.Time);
             for (var c = 0; c < Format.ChannelCount; ++c)
@@ -209,17 +226,14 @@ namespace AEther
                 Splitter[c].Process(input.GetChannel(c), output.GetChannel(c));
             }
             ReturnEvent(input);
-            return output;
-        }
-
-        public void RunOutput(SampleEvent<double> input)
-        {
-            if (0 < OutputTimer.Interval)
+            if (OutputTimer.IsRunning)
             {
-                OutputTimerHandle.WaitOne();
+                OutputBuffer.Enqueue(output);
             }
-            SamplesAnalyzed?.Invoke(this, input);
-            ReturnEvent(input);
+            else
+            {
+                PublishOutput(output);
+            }
         }
 
     }

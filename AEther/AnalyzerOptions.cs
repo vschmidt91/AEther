@@ -19,9 +19,6 @@ namespace AEther
         [Category("Pipeline")]
         public int BufferCapacity { get; set; } = -1;
 
-        [Category("Pipeline")]
-        public double MicroTimingAmount { get; set; } = .95;
-
         [Category("Domain")]
         public double MinFrequency { get; set; } = 27.5;
 

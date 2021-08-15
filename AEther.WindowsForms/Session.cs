@@ -52,6 +52,7 @@ namespace AEther.WindowsForms
 
         public void Start()
         {
+            Analyzer.Start();
             Source.Start();
         }
 
