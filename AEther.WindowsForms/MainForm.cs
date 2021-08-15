@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using System.Linq;
 
 using AEther.DMX;
-using AEther.CSCore;
+using AEther.NAudio;
 
 namespace AEther.WindowsForms
 {

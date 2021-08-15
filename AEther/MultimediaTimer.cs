@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -11,16 +12,13 @@ namespace AEther
 {
     /// <summary>
     /// A timer based on the multimedia timer API with 1ms precision.
-    /// SOURCE: https://github.com/mzboray/HighPrecisionTimer
     /// </summary>
     public class MultimediaTimer : IDisposable
     {
-
-        public event EventHandler? Elapsed;
         private const int EventTypeSingle = 0;
         private const int EventTypePeriodic = 1;
 
-        private bool IsDisposed;
+        private bool disposed = false;
         private int interval, resolution;
         private volatile uint timerId;
 
@@ -158,9 +156,10 @@ namespace AEther
             timerId = 0;
         }
 
+        public event EventHandler? Elapsed;
+
         public void Dispose()
         {
-            GC.SuppressFinalize(this);
             Dispose(true);
         }
 
@@ -171,25 +170,26 @@ namespace AEther
 
         private void CheckDisposed()
         {
-            if (IsDisposed)
+            if (disposed)
                 throw new ObjectDisposedException("MultimediaTimer");
         }
 
         private void Dispose(bool disposing)
         {
-            if (!IsDisposed)
+            if (disposed)
+                return;
+
+            disposed = true;
+            if (IsRunning)
             {
-                if (disposing)
-                {
-                    Elapsed = null;
-                }
-                if (IsRunning)
-                {
-                    StopInternal();
-                }
-                IsDisposed = true;
+                StopInternal();
             }
 
+            if (disposing)
+            {
+                Elapsed = null;
+                GC.SuppressFinalize(this);
+            }
         }
     }
 
@@ -203,5 +203,4 @@ namespace AEther
         [DllImport("winmm.dll", SetLastError = true, EntryPoint = "timeKillEvent")]
         internal static extern void TimeKillEvent(UInt32 uTimerId);
     }
-
 }

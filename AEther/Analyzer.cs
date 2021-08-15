@@ -32,8 +32,6 @@ namespace AEther
         readonly byte[] Batch;
         readonly DFTProcessor[] DFT;
         readonly Splitter[] Splitter;
-        readonly Stopwatch SplitterTimer;
-        readonly TimeSpan SplitterInterval;
         readonly Pipe SamplePipe = new();
         readonly CancellationTokenSource Cancel = new();
         readonly TransformBlock<SampleEvent<double>, SampleEvent<double>> DFTBlock;
@@ -42,13 +40,14 @@ namespace AEther
         readonly ActionBlock<SampleEvent<byte>> InputBlock;
         readonly Task BatcherTask;
 
+        readonly MultimediaTimer OutputTimer;
+        readonly AutoResetEvent OutputTimerHandle = new(false);
+
         public Analyzer(SampleFormat format, AnalyzerOptions options)
         {
 
             Domain = options.Domain;
             Format = format;
-
-            SplitterInterval = TimeSpan.FromSeconds(options.MicroTimingAmount / options.TimeResolution);
             BatchSize = Format.SampleRate / options.TimeResolution;
             Batch = new byte[BatchSize * Format.Size];
             DFT = Enumerable.Range(0, Format.ChannelCount)
@@ -89,8 +88,24 @@ namespace AEther
                 SplitterBlock.Completion,
                 OutputBlock.Completion);
 
-            SplitterTimer = Stopwatch.StartNew();
 
+            var interval = (int)TimeSpan.FromSeconds(1.0 / options.TimeResolution).TotalMilliseconds;
+
+            OutputTimer = new()
+            {
+                Interval = interval,
+            };
+            OutputTimer.Elapsed += Timer_Elapsed;
+            if(0 < OutputTimer.Interval)
+            {
+                OutputTimer.Start();
+            }
+
+        }
+
+        private void Timer_Elapsed(object? sender, EventArgs e)
+        {
+            OutputTimerHandle.Set();
         }
 
         static SampleEvent<T> RentEvent<T>(int sampleCount, int channelCount, DateTime time)
@@ -194,21 +209,15 @@ namespace AEther
                 Splitter[c].Process(input.GetChannel(c), output.GetChannel(c));
             }
             ReturnEvent(input);
-            while (SplitterTimer.Elapsed < SplitterInterval)
-            {
-                Thread.SpinWait(10);
-            }
-            //var remainingInterval = (SplitterInterval - SplitterTimer.Elapsed).TotalMilliseconds;
-            //if (0 < remainingInterval)
-            //{
-            //    await MultimediaTimer.Delay((int)remainingInterval);
-            //}
-            SplitterTimer.Restart();
             return output;
         }
 
         public void RunOutput(SampleEvent<double> input)
         {
+            if (0 < OutputTimer.Interval)
+            {
+                OutputTimerHandle.WaitOne();
+            }
             SamplesAnalyzed?.Invoke(this, input);
             ReturnEvent(input);
         }
