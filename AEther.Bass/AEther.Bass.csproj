@@ -24,8 +24,8 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ManagedBass" Version="3.0.0" />
-    <PackageReference Include="System.IO.Pipelines" Version="6.0.0-preview.6.21352.12" />
+    <PackageReference Include="ManagedBass" Version="3.1.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="6.0.0-preview.7.21377.19" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AEther\AEther.csproj" />

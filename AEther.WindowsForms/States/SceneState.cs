@@ -188,7 +188,7 @@ namespace AEther.WindowsForms
                 };
                 Scene.Add(obj);
             }
-            //Scene.Add(new MyLight());
+            Scene.Add(new MyLight());
 
             for (var c = 0; c < 2; c++)
             {

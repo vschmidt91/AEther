@@ -160,6 +160,7 @@ namespace AEther
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             Dispose(true);
         }
 
@@ -188,7 +189,6 @@ namespace AEther
             if (disposing)
             {
                 Elapsed = null;
-                GC.SuppressFinalize(this);
             }
         }
     }
