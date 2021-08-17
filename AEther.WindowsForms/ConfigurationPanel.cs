@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows.Forms;
+﻿using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {
@@ -32,7 +29,7 @@ namespace AEther.WindowsForms
 
         private void ConfigurationGrid_PropertyValueChanged(object? sender, PropertyValueChangedEventArgs e)
         {
-            if(Configuration != default)
+            if (Configuration != default)
             {
                 ConfigurationChanged?.Invoke(sender, Configuration);
             }

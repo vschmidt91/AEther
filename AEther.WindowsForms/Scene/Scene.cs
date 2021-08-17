@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AEther.WindowsForms
+﻿namespace AEther.WindowsForms
 {
     public class Scene
     {

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Buffers;
 
 namespace AEther
 {
@@ -77,7 +69,7 @@ namespace AEther
 
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
             var noiseFloor = 0.0;
-            for(var i = 0; i < input.Length; ++i)
+            for (var i = 0; i < input.Length; ++i)
             {
                 noiseFloor += input.Span[i];
             }
@@ -99,7 +91,7 @@ namespace AEther
 
                 y[0] = sinuoids;
                 y[1] = transients;
-                y[2] = 1 + .15 * src[k];
+                y[2] = 1 + .2 * src[k];
                 y[3] = 0;
 
             }

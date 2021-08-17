@@ -1,19 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.IO;
-using System.IO.Pipelines;
-using System.Numerics;
-using System.Threading;
-using System.Threading.Channels;
-using System.Threading.Tasks;
-
-using NAudio;
-using NAudio.CoreAudioApi;
-using NAudio.MediaFoundation;
-using NAudio.Wave;
-using System.Buffers;
+﻿using NAudio.Wave;
 
 namespace AEther.NAudio
 {

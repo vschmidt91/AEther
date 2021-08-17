@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using SharpDX.D3DCompiler;
 using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX;
-using SharpDX.D3DCompiler;
 
 namespace AEther.WindowsForms
 {
@@ -40,7 +33,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            if(!IsDisposed)
+            if (!IsDisposed)
             {
                 Shadow.Dispose();
                 GC.SuppressFinalize(this);

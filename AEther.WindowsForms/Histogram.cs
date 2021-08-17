@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-using SharpDX;
+﻿using SharpDX.Direct3D11;
 using SharpDX.DXGI;
-using SharpDX.Direct3D11;
 using System.Runtime.InteropServices;
 
 namespace AEther.WindowsForms
@@ -34,7 +25,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            if(!IsDisposed)
+            if (!IsDisposed)
             {
                 Texture.Dispose();
                 GC.SuppressFinalize(this);
@@ -68,7 +59,7 @@ namespace AEther.WindowsForms
 
             UseMapping = useMapping;
 
-            if(useMapping)
+            if (useMapping)
             {
                 var map = Texture.Map();
                 Pitch = (int)map.Pitch;
@@ -109,7 +100,7 @@ namespace AEther.WindowsForms
         public override void Add(ReadOnlySpan<double> src)
         {
 
-            for(int i = 0; i < src.Length; ++i)
+            for (int i = 0; i < src.Length; ++i)
             {
                 Slice[i] = Convert(src[i]);
             }

@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using SharpDX.Direct3D11;
+﻿using SharpDX.Direct3D11;
 using SharpDX.DXGI;
+using System.Numerics;
 
 namespace AEther.WindowsForms
 {
@@ -78,7 +72,7 @@ namespace AEther.WindowsForms
 
             RenderInput();
             RenderAdvect();
-            if(0 < Diffusion)
+            if (0 < Diffusion)
             {
                 RenderDiffuse();
             }

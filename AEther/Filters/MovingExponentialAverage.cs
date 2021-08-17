@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AEther
+﻿namespace AEther
 {
     public class MovingExponentialAverage : MovingFilter<double>
     {

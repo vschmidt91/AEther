@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace AEther
+﻿namespace AEther
 {
     public class MovingDistributionEstimator : MovingFilter<double>
     {
@@ -24,7 +19,7 @@ namespace AEther
         public override void Clear(double state)
         {
             base.Clear(state);
-            foreach(var quantile in Quantiles)
+            foreach (var quantile in Quantiles)
             {
                 quantile.Clear(state);
             }
@@ -32,7 +27,7 @@ namespace AEther
 
         public override void Filter(double x)
         {
-            for(int i = 0; i < Quantiles.Length; ++i)
+            for (int i = 0; i < Quantiles.Length; ++i)
             {
                 Quantiles[i].Filter(x);
                 States[i] = Quantiles[i].State;

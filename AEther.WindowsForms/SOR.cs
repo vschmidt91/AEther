@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SharpDX.Direct3D11;
+using SharpDX.DXGI;
 using System.Diagnostics;
 using System.Numerics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX.DXGI;
-using SharpDX.Direct3D11;
 
 namespace AEther.WindowsForms
 {
@@ -102,7 +96,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            if(!IsDisposed)
+            if (!IsDisposed)
             {
                 OmegaVariableEven.Dispose();
                 OmegaVariableOdd.Dispose();

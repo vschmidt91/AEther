@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using SharpDX.Direct3D11;
-using SharpDX.DXGI;
-
-namespace AEther.WindowsForms
+﻿namespace AEther.WindowsForms
 {
 
     public class FluidState : GraphicsState

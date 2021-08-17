@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-
-using SharpDX;
-using SharpDX.Direct3D11;
+﻿using SharpDX.Direct3D11;
 using Vector4 = System.Numerics.Vector4;
 
 namespace AEther.WindowsForms
@@ -50,7 +43,7 @@ namespace AEther.WindowsForms
 
         public virtual void Dispose()
         {
-            if(!IsDisposed)
+            if (!IsDisposed)
             {
                 WeightVariable.Dispose();
                 Shader.Dispose();

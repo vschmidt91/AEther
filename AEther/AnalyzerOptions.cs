@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Linq;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml;
+﻿using System.ComponentModel;
 using System.Xml.Serialization;
 
 namespace AEther
@@ -71,6 +63,6 @@ namespace AEther
             serializer.Serialize(stream, this);
 
         }
-        
+
     }
 }

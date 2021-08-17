@@ -1,21 +1,7 @@
-﻿using System;
+﻿using System.Buffers;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.IO;
-using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
-using System.Threading.Channels;
-using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
-using System.Dynamic;
-using System.Xml;
-using System.Buffers;
 using System.IO.Pipelines;
-using System.Runtime.CompilerServices;
+using System.Threading.Tasks.Dataflow;
 
 namespace AEther
 {
@@ -27,6 +13,7 @@ namespace AEther
         public readonly SampleFormat Format;
         public readonly Domain Domain;
         public readonly Task Completion;
+        public readonly AnalyzerOptions Options;
 
         readonly int BatchSize;
         readonly byte[] Batch;
@@ -55,6 +42,7 @@ namespace AEther
             Splitter = Enumerable.Range(0, Format.ChannelCount)
                 .Select(c => new Splitter(Domain, options))
                 .ToArray();
+            Options = options;
 
             var blockOptions = new ExecutionDataflowBlockOptions
             {
@@ -108,10 +96,13 @@ namespace AEther
 
         private void Timer_Elapsed(object? sender, EventArgs e)
         {
-            if(OutputBuffer.TryDequeue(out var output))
+            if (OutputBuffer.TryDequeue(out var output))
             {
                 PublishOutput(output);
             }
+            while (0 < Options.BufferCapacity
+                && Options.BufferCapacity < OutputBuffer.Count
+                && OutputBuffer.TryDequeue(out _)) ;
         }
 
         void PublishOutput(SampleEvent<double> output)

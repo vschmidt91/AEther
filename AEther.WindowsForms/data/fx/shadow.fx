@@ -43,7 +43,7 @@ PSin VS(const VSin IN)
 	PSin OUT;
 	OUT.Position = clipPos;
 	OUT.UV = IN.UV;
-	OUT.Depth = distance(LightPosition, worldPos.xyz) / ShadowFarPlane;
+	OUT.Depth = distance(LightPosition, worldPos.xyz) / LightFarPlane;
 	return OUT;
 
 }

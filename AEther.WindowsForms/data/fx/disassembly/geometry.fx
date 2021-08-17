@@ -503,8 +503,6 @@ fxgroup
                 //
                 // Name                                 Type  Format         Dim      HLSL Bind  Count
                 // ------------------------------ ---------- ------- ----------- -------------- ------
-                // Linear                            sampler      NA          NA             s0      1 
-                // ColorMap                          texture  float4          2d             t1      1 
                 // CameraConstants                   cbuffer      NA          NA            cb1      1 
                 //
                 //
@@ -515,7 +513,7 @@ fxgroup
                 // -------------------- ----- ------ -------- -------- ------- ------
                 // SV_POSITION              0   xyzw        0      POS   float       
                 // NORMAL                   0   xyzw        1     NONE   float   xyzw
-                // TEXCOORDS                0   xy          2     NONE   float   xy  
+                // TEXCOORDS                0   xy          2     NONE   float       
                 // COLOR                    0   xyzw        3     NONE   float   xyzw
                 // POSITION                 0   xyz         4     NONE   float   xyz 
                 //
@@ -530,10 +528,7 @@ fxgroup
                 //
                 ps_4_0
                 dcl_constantbuffer CB1[9], immediateIndexed
-                dcl_sampler s0, mode_default
-                dcl_resource_texture2d (float,float,float,float) t1
                 dcl_input_ps linear v1.xyzw
-                dcl_input_ps linear v2.xy
                 dcl_input_ps linear v3.xyzw
                 dcl_input_ps linear v4.xyz
                 dcl_output o0.xyzw
@@ -564,17 +559,9 @@ fxgroup
                 
                 #line 78
                 mov o0.w, v1.w
-                
-                #line 68
-                sample r0.xyzw, v2.xyxx, t1.xyzw, s0  // r0.x <- color.x; r0.y <- color.y; r0.z <- color.z
-                
-                #line 77
-                mov r0.w, l(1.000000)
-                mul o1.xyzw, r0.xyzw, v3.xyzw
-                
-                #line 78
+                mov o1.xyzw, v3.xyzw
                 ret 
-                // Approximately 12 instruction slots used
+                // Approximately 10 instruction slots used
                             
             };
         }

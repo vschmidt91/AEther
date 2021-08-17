@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
+﻿using System.Numerics;
 
 namespace AEther
 {
@@ -51,7 +44,7 @@ namespace AEther
 
         public void Process(ReadOnlyMemory<double> samples)
         {
-            while(0 < samples.Length)
+            while (0 < samples.Length)
             {
 
                 var dst = Buffer.GetMemory(samples.Length);

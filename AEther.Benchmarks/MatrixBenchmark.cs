@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 
 using SharpDX;
 using System.Numerics;
@@ -19,7 +14,7 @@ namespace AEther.Benchmarks
         public void SharpDXBenchmark()
         {
             var M = Matrix.Identity;
-            for(var i= 1; i < Iterations; i++)
+            for (var i = 1; i < Iterations; i++)
             {
                 var A = Matrix.Scaling(1f / i);
                 var B = Matrix.RotationYawPitchRoll(i, i, i);

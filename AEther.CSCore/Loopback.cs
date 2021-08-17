@@ -1,12 +1,5 @@
-﻿using CSCore.SoundIn;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-
-using CSCore;
+﻿using CSCore;
+using CSCore.SoundIn;
 
 namespace AEther.CSCore
 {

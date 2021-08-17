@@ -1,20 +1,6 @@
 ﻿#nullable enable
 
-using System;
-using System.Diagnostics;
-using System.Linq;
-using System.IO;
-using System.IO.Pipelines;
-using System.Numerics;
-using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Threading.Channels;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-
 using CSCore;
-using CSCore.CoreAudioAPI;
 using CSCore.SoundIn;
 using CSCore.SoundOut;
 using CSCore.Streams;

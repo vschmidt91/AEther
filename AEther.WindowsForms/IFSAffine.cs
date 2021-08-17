@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using SharpDX.Direct3D11;
 using System.Numerics;
-using System.Text;
-
-using SharpDX.Direct3D11;
 
 namespace AEther.WindowsForms
 {

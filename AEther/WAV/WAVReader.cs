@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Buffers;
-using System.IO;
-using System.IO.Pipelines;
-using System.Text;
-using System.Threading.Tasks;
-using System.Net.WebSockets;
-using System.Threading;
-
-namespace AEther
+﻿namespace AEther
 {
     public class WAVReader : SampleSource
     {

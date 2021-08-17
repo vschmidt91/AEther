@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AEther.WindowsForms
+﻿namespace AEther.WindowsForms
 {
     public class HistogramState : ShaderState
     {
@@ -12,7 +6,7 @@ namespace AEther.WindowsForms
         public HistogramState(Graphics graphics, Histogram[] histogram)
             : base(graphics, graphics.LoadShader("histogram.fx"))
         {
-            for(var i = 0; i < histogram.Length; ++i)
+            for (var i = 0; i < histogram.Length; ++i)
             {
                 Shader.Variables["Histogram" + i.ToString()].AsShaderResource().SetResource(histogram[i].Texture.SRView);
             }

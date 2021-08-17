@@ -1,11 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.IO.Ports;
+﻿using System.IO.Ports;
 using System.Numerics;
-using System.Threading;
-using System.Threading.Tasks;
-
-using AEther;
 
 namespace AEther.DMX
 {
@@ -95,10 +89,10 @@ namespace AEther.DMX
             {
                 sum += new Vector4
                 {
-                    X = (float)evt.Samples[i+0],
-                    Y = (float)evt.Samples[i+1],
-                    Z = (float)evt.Samples[i+2],
-                    W = (float)evt.Samples[i+3],
+                    X = (float)evt.Samples[i + 0],
+                    Y = (float)evt.Samples[i + 1],
+                    Z = (float)evt.Samples[i + 2],
+                    W = (float)evt.Samples[i + 3],
                 };
                 //sum[i % sum.Length] += scale * evt.Samples[i];
             }
@@ -117,7 +111,7 @@ namespace AEther.DMX
             for (var i = 0; i < Channels.Length; ++i)
             {
                 var channel = Channels[i];
-                if(channel is DMXChannelDiscrete discrete)
+                if (channel is DMXChannelDiscrete discrete)
                 {
                     if (sinuoid < 1)
                     {
@@ -125,13 +119,13 @@ namespace AEther.DMX
                     }
                     else
                     {
-                        if(1 < discrete.Count)
+                        if (1 < discrete.Count)
                         {
                             discrete.Index = 1 + (Key % (discrete.Count - 1));
                         }
                     }
                 }
-                else if(channel is DMXChannelContinuous continuous)
+                else if (channel is DMXChannelContinuous continuous)
                 {
                     continuous.Value = transients.Clamp(0, 1);
                 }
@@ -143,7 +137,7 @@ namespace AEther.DMX
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            if(!Cancel.IsCancellationRequested)
+            if (!Cancel.IsCancellationRequested)
             {
                 Cancel.Cancel();
                 WriterThread.Join();

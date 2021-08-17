@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Runtime.InteropServices;
-
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.Direct3D11;
+using System.Runtime.InteropServices;
 using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace AEther.WindowsForms
@@ -21,18 +15,18 @@ namespace AEther.WindowsForms
         public bool UseResourceMapping = true;
 
         protected bool IsDisposed;
-        
+
         public ConstantBuffer(Device device, BufferDescription? description = default)
         {
 
             Buffer = new Buffer(device, description ?? new BufferDescription()
             {
                 BindFlags = BindFlags.ConstantBuffer,
-                CpuAccessFlags = CpuAccessFlags.Write,
+                CpuAccessFlags = UseResourceMapping ? CpuAccessFlags.Write : CpuAccessFlags.None,
                 OptionFlags = ResourceOptionFlags.None,
                 SizeInBytes = Marshal.SizeOf(Value),
                 StructureByteStride = 0,
-                Usage = ResourceUsage.Dynamic,
+                Usage = UseResourceMapping ? ResourceUsage.Dynamic : ResourceUsage.Default,
             });
 
         }

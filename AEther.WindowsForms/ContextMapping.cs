@@ -1,9 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Runtime.Intrinsics.X86;
-using System.Text;
-
+﻿
 using SharpDX;
 using SharpDX.Direct3D11;
 
@@ -53,7 +48,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            if(!IsDisposed)
+            if (!IsDisposed)
             {
                 Stream.Close();
                 Stream.Dispose();

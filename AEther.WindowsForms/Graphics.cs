@@ -1,21 +1,7 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.IO.Packaging;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using SharpDX;
-using SharpDX.D3DCompiler;
-using SharpDX.Diagnostics;
-using SharpDX.Direct3D;
+﻿using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
+using System.Reflection;
 using Device = SharpDX.Direct3D11.Device;
 
 namespace AEther.WindowsForms
@@ -28,6 +14,7 @@ namespace AEther.WindowsForms
 
         public Texture2D BackBuffer { get; protected set; }
         public readonly ModeDescription NativeMode;
+        public readonly IAssetImporter AssetImporter;
         public readonly Dictionary<string, SharpDX.Direct3D11.Buffer> ShaderConstants = new();
 
         int IndexCount;
@@ -38,6 +25,7 @@ namespace AEther.WindowsForms
         readonly DeviceDebug? Debug;
         readonly SwapChain Chain;
         readonly Model Quad;
+        readonly string AssemblyDirectory;
         DeviceContext Context => Device.ImmediateContext;
 
         public Graphics(IntPtr handle)
@@ -86,12 +74,17 @@ namespace AEther.WindowsForms
                 Debug = new DeviceDebug(Device);
             }
 
+
+            var assemblyPath = Assembly.GetExecutingAssembly().Location;
+            AssemblyDirectory = Path.GetDirectoryName(assemblyPath) ?? throw new NullReferenceException();
+
             BackBufferResource = Chain.GetBackBuffer<SharpDX.Direct3D11.Texture2D>(0);
             BackBuffer = new Texture2D(BackBufferResource);
             (Shaders, ShaderWatcher) = CreateShaderManager();
             ShaderWatcher.Changed += ShaderWatcher_Changed;
             Quad = new Model(Device, Mesh.CreateGrid(2, 2));
 
+            AssetImporter = CreateAssetImporter();
             var c = new GraphicsCapabilities(Device);
 
         }
@@ -233,11 +226,17 @@ namespace AEther.WindowsForms
             return new TextureCube(texture);
         }
 
+        IAssetImporter CreateAssetImporter()
+        {
+            var prefix = AssemblyDirectory;
+            prefix = Path.Join(prefix, "data", "assets");
+            return new AssimpAssetImporter(prefix);
+        }
+
         (ShaderManager, FileSystemWatcher) CreateShaderManager()
         {
 
-            var assemblyPath = Assembly.GetExecutingAssembly().Location;
-            var shaderDir = Path.GetDirectoryName(assemblyPath);
+            var shaderDir = AssemblyDirectory;
 
 #if DEBUG
             shaderDir = Path.Join(shaderDir, "..", "..", "..");
@@ -288,12 +287,12 @@ namespace AEther.WindowsForms
 
         public void SetRenderTargets(Texture2D? depthBuffer, Texture2D[] renderTargets)
         {
-            if(RTViews.Length < renderTargets.Length)
+            if (RTViews.Length < renderTargets.Length)
             {
                 RTViews = new RenderTargetView[renderTargets.Length];
             }
             Array.Clear(RTViews, 0, RTViews.Length);
-            for(var i = 0; i < renderTargets.Length; ++i)
+            for (var i = 0; i < renderTargets.Length; ++i)
             {
                 RTViews[i] = renderTargets[i].RTView;
             }
@@ -333,7 +332,7 @@ namespace AEther.WindowsForms
         {
 
             var technique = shader[techniqueIndex];
-            for(int passIndex = 0; passIndex < technique.PassCount; ++passIndex)
+            for (int passIndex = 0; passIndex < technique.PassCount; ++passIndex)
             {
 
                 var pass = technique[passIndex];

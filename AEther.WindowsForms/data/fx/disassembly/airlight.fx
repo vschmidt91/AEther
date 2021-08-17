@@ -29,7 +29,7 @@ cbuffer LightConstants : register(b2)
     float3  LightPosition;              // Offset:  144, size:   12
     float   LightDistance;              // Offset:  156, size:    4
     float3  Emission;                   // Offset:  160, size:   12
-    float   ShadowFarPlane;             // Offset:  172, size:    4
+    float   LightFarPlane;              // Offset:  172, size:    4
     float3  Scattering;                 // Offset:  176, size:   12
     float3  Absorption;                 // Offset:  192, size:   12
 }
@@ -373,7 +373,7 @@ fxgroup
                 //   float3 LightPosition;              // Offset:  144 Size:    12 [unused]
                 //   float LightDistance;               // Offset:  156 Size:     4 [unused]
                 //   float3 Emission;                   // Offset:  160 Size:    12 [unused]
-                //   float ShadowFarPlane;              // Offset:  172 Size:     4 [unused]
+                //   float LightFarPlane;               // Offset:  172 Size:     4 [unused]
                 //   float3 Scattering;                 // Offset:  176 Size:    12
                 //   float3 Absorption;                 // Offset:  192 Size:    12
                 //
@@ -422,77 +422,77 @@ fxgroup
                 add r0.y, v1.x, l(-0.500000)
                 mul r0.z, r0.y, l(3.141500)  // r0.z <- theta.x
                 
-                #line 69 "light.fxi"
+                #line 70 "light.fxi"
                 mad r0.y, -r0.y, l(3.141500), l(1.570750)
                 
-                #line 49
+                #line 50
                 mad r0.w, cb2[8].w, cb2[8].w, l(1.000000)
                 add r1.x, cb2[8].w, cb2[8].w
                 
-                #line 50
+                #line 51
                 mad r1.y, -cb2[8].w, cb2[8].w, l(1.000000)
                 
-                #line 75
+                #line 76
                 add r2.xyz, cb2[11].xyzx, cb2[12].xyzx
                 
-                #line 65
+                #line 66
                 mov r3.xyz, l(0,0,0,0)  // r3.x <- Lv.x; r3.y <- Lv.y; r3.z <- Lv.z
                 mov r1.z, l(0)  // r1.z <- i
                 loop 
                   ige r1.w, r1.z, l(256)
                   breakc_nz r1.w
                 
-                #line 68
+                #line 69
                   itof r1.w, r1.z
                   add r1.w, r1.w, l(0.500000)
                   mul r1.w, r0.y, r1.w
                 
-                #line 69
+                #line 70
                   mad r1.w, r1.w, l(0.003906), r0.z  // r1.w <- thetai
                 
-                #line 70
+                #line 71
                   sincos r4.x, r5.x, r1.w
                   div r1.w, r4.x, r5.x
                   mul r2.w, r0.x, r1.w  // r2.w <- ti
                 
-                #line 71
+                #line 72
                   mul r2.w, r2.w, r2.w
                   mad r2.w, r0.x, r0.x, r2.w
                   sqrt r2.w, r2.w  // r2.w <- ri
                 
-                #line 49
+                #line 50
                   mad r3.w, -r1.x, r4.x, r0.w  // r3.w <- d
                 
-                #line 50
+                #line 51
                   mul r4.x, r3.w, r3.w
                   mul r3.w, r3.w, r4.x
                   rsq r3.w, r3.w
                   mul r3.w, r1.y, r3.w
                   mul r3.w, r3.w, l(0.079580)  // r3.w <- <PhaseHG return value>
                 
-                #line 75
+                #line 76
                   mad r1.w, r0.x, r1.w, r2.w
                   mul r4.xyz, r2.xyzx, -r1.wwww
                   mul r4.xyz, r4.xyzx, l(1.442695, 1.442695, 1.442695, 0.000000)
                   exp r4.xyz, r4.xyzx
                 
-                #line 77
+                #line 78
                   mad r3.xyz, r3.wwww, r4.xyzx, r3.xyzx
                 
-                #line 79
+                #line 80
                   iadd r1.z, r1.z, l(1)
                 endloop 
                 
-                #line 81
+                #line 82
                 mul r0.xzw, r3.xxyz, cb2[11].xxyz  // r0.x <- Lv.x; r0.z <- Lv.y; r0.w <- Lv.z
                 
-                #line 82
+                #line 83
                 mul r0.xyz, r0.yyyy, r0.xzwx
                 
-                #line 84
-                mul o0.xyz, r0.xyzx, l(0.003906, 0.003906, 0.003906, 0.000000)
+                #line 16 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\airlight.fx"
+                mul o0.xyz, r0.xyzx, l(0.390625, 0.390625, 0.390625, 0.000000)
                 
-                #line 17 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\airlight.fx"
+                #line 17
                 ret 
                 // Approximately 42 instruction slots used
                             

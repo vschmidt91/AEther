@@ -1,22 +1,7 @@
-﻿using SharpDX.Direct3D11;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-
-using SharpDX;
+﻿using SharpDX;
 using SharpDX.D3DCompiler;
-using SharpDX.Diagnostics;
 using SharpDX.Direct3D;
-using SharpDX.DXGI;
-
-using Device = SharpDX.Direct3D11.Device;
-using System.Windows.Forms;
-using System.Drawing;
-using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace AEther.WindowsForms
 {
@@ -35,7 +20,7 @@ namespace AEther.WindowsForms
             BasePath = basePath;
 
             //var includes = Directory.EnumerateFiles(basePath, "*.fxi", SearchOption.AllDirectories);
-                //.ToDictionary(path => new FileInfo(path).Name, File.ReadAllText);
+            //.ToDictionary(path => new FileInfo(path).Name, File.ReadAllText);
             Includes = new IncludeHandler(Path.Join(basePath, "include"));
 
         }
@@ -66,7 +51,7 @@ namespace AEther.WindowsForms
                 throw new CompilationException(compiled.Message);
             }
 
-            if(!compiled.Message.Equals("warning X4717: Effects deprecated for D3DCompiler_47\n"))
+            if (!compiled.Message.Equals("warning X4717: Effects deprecated for D3DCompiler_47\n"))
             {
                 Debug.WriteLine(compiled.Message);
             }
@@ -89,7 +74,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            if(!IsDisposed)
+            if (!IsDisposed)
             {
                 Includes.Dispose();
                 GC.SuppressFinalize(this);

@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Reflection;
+﻿using SharpDX.Direct3D11;
 using System.Runtime.InteropServices;
-
-using SharpDX;
-using SharpDX.Direct3D11;
-using SharpDX.DXGI;
 using Buffer = SharpDX.Direct3D11.Buffer;
 
 namespace AEther.WindowsForms
@@ -32,7 +23,7 @@ namespace AEther.WindowsForms
 
         public void Dispose()
         {
-            if(!IsDisposed)
+            if (!IsDisposed)
             {
                 VertexBuffer.Dispose();
                 IndexBuffer.Dispose();

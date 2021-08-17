@@ -1,13 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AEther
+﻿namespace AEther
 {
     public class MovingMedianRef<T> : WindowedFilter<T>
     {
@@ -37,7 +28,7 @@ namespace AEther
         public override void Filter(T value)
         {
 
-            if(Size < WindowSize)
+            if (Size < WindowSize)
             {
                 Size++;
             }
@@ -45,7 +36,7 @@ namespace AEther
             Buffer[Position] = value;
 
             Position++;
-            if(Position == WindowSize)
+            if (Position == WindowSize)
             {
                 Position = 0;
             }

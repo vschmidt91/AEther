@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using SharpDX;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX;
 
 namespace AEther.WindowsForms
 {
@@ -35,7 +29,7 @@ namespace AEther.WindowsForms
         public Vector3 Emission;
 
         [FieldOffset(172)]
-        public float ShadowFarPlane;
+        public float FarPlane;
 
         [FieldOffset(176)]
         public Vector3 Scattering;

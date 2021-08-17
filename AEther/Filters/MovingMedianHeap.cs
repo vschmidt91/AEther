@@ -1,14 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Net.WebSockets;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Serialization;
-
-namespace AEther
+﻿namespace AEther
 {
 
     public class MovingMedianHeap<T> : WindowedFilter<T>
@@ -55,11 +45,11 @@ namespace AEther
                 }
             }
 
-            if(0 < Size)
+            if (0 < Size)
             {
                 Flags[Position] = 0 < Comparer.Compare(value, State);
             }
-            
+
             if (Flags[Position])
             {
                 Above.Insert((value, Position));
@@ -79,7 +69,7 @@ namespace AEther
             }
 
             Position += 1;
-            if(Position == WindowSize)
+            if (Position == WindowSize)
             {
                 Position = 0;
             }

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 using SharpDX;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
@@ -95,7 +90,7 @@ namespace AEther.WindowsForms
 
                 Target.Clear();
                 Graphics.SetRenderTarget(null, Target);
-                foreach(var element in Elements)
+                foreach (var element in Elements)
                 {
                     element.Weight /= sumWeight;
                     element.Draw(Source);
@@ -118,7 +113,7 @@ namespace AEther.WindowsForms
             Target.Dispose();
             InputShader.Dispose();
             OutputShader.Dispose();
-            foreach(var element in Elements)
+            foreach (var element in Elements)
             {
                 element.Dispose();
             }

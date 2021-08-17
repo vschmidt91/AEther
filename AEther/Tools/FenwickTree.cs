@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AEther
+﻿namespace AEther
 {
     public class FenwickTree<T>
         where T : struct, IAdditionOperators<T, T, T>, ISubtractionOperators<T, T, T>
@@ -17,7 +11,7 @@ namespace AEther
         public FenwickTree(T[] items)
         {
             Items = items;
-            for(int i = 0; i < Size; ++i)
+            for (int i = 0; i < Size; ++i)
             {
                 int j = i + LSB(i + 1);
                 if (j < Size)
@@ -35,7 +29,7 @@ namespace AEther
         public T GetSum(int i)
         {
             T sum = default;
-            for(; i > 0; i -= LSB(i))
+            for (; i > 0; i -= LSB(i))
             {
                 sum += Items[i - 1];
             }
@@ -60,7 +54,7 @@ namespace AEther
 
         public void AddItem(int i, T item)
         {
-            for(; i < Size; i += LSB(i + 1))
+            for (; i < Size; i += LSB(i + 1))
             {
                 Items[i] += item;
             }

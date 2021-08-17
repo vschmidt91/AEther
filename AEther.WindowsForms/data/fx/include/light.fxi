@@ -10,7 +10,7 @@ cbuffer LightConstants : register(b2)
     float3 LightPosition;
 	float LightDistance;
     float3 Emission;
-	float ShadowFarPlane;
+	float LightFarPlane;
     float3 Scattering;
     float3 Absorption;
 };
@@ -20,11 +20,12 @@ cbuffer LightConstants : register(b2)
 #endif
 
 #define fatan(x)  ((x) / (1 + .28125 * (x) * (x)))
-#define fatan2(y, x) ((x) * (y) / ((x) * (x) + .28125 * (y) * (y)))
-#define fatan3(y, x) lerp(sign(y) * PI / 2 - fatan2(y, x), fatan2(x, y), abs(y) >)
+#define fatan2(y, x) (2 * fatan((y) / (sqrt((x) * (x) + (y) * (y)) + (x))))
+#define fatan3(y, z) (2 * (y) * (z) / ((z) * (z) + .28125 * (y) * (y)))
 
 #define AngleToParameter(D, theta) ((D) * tan(theta))
-#define ParameterToAngle(D, t) atan2((t), (D))
+#define ParameterToAngle(D, t) fatan2((t), (D))
+#define ParameterToAngle2(D, t, l) fatan3((t), (D) + (l))
 
 #define LightSamplePDF(theta0, theta1, D, t) ((D) / ((theta1 - theta0) * ((D) * (D)  + (t) * (t))))
 #define LightSampleCDFinv(theta0, theta1, D, p) (AngleToParameter(D, lerp(theta0, theta1, p)))
@@ -36,7 +37,7 @@ cbuffer LightConstants : register(b2)
 
 #define ThetaMax (PI / 2)
 #define LightScale 5
-#define AirlightScale 1
+#define AirlightScale 100
 
 SamplerState Airlight_LookupSampler
 {

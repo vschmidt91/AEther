@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using SharpDX.Direct3D11;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX.Direct3D11;
 
 namespace AEther.WindowsForms
 {
@@ -42,7 +36,7 @@ namespace AEther.WindowsForms
     }
 
     public abstract class SpectrumAccumulator<T> : SpectrumAccumulator
-        where T : struct 
+        where T : struct
     {
 
         public readonly T[] Buffer;
@@ -76,26 +70,9 @@ namespace AEther.WindowsForms
             Array.Clear(Buffer, 0, Buffer.Length);
         }
 
-        protected abstract T Convert(double value);
-
-        protected abstract T Combine(T src, T dst);
-
-        public override void Add(ReadOnlySpan<double> src)
-        {
-            if(src.Length < Buffer.Length)
-            {
-                throw new Exception();
-            }
-            for (int i = 0; i < Buffer.Length; ++i)
-            {
-                var value = Convert(src[i]);
-                Buffer[i] = Combine(value, Buffer[i]);
-            }
-        }
-
         public override int Update()
         {
-            var map = Texture.Map();
+            using var map = Texture.Map();
             map.WriteRange(Buffer, 0, Buffer.Length);
             map.Dispose();
             var bandwidth = base.Update();
@@ -111,11 +88,18 @@ namespace AEther.WindowsForms
             : base(graphics, length, SharpDX.DXGI.Format.R8G8B8A8_UNorm)
         { }
 
-        protected override byte Combine(byte src, byte dst)
-            => Math.Max(src, dst);
-
-        protected override byte Convert(double value)
-            => (byte)(255 * value.Clamp(0, 1));
+        public override void Add(ReadOnlySpan<double> values)
+        {
+            if (values.Length < Buffer.Length)
+            {
+                throw new Exception();
+            }
+            for (int i = 0; i < Buffer.Length; ++i)
+            {
+                var value = (byte)(255 * values[i].Clamp(0, 1));
+                Buffer[i] = Math.Max(value, Buffer[i]);
+            }
+        }
 
     }
 
@@ -126,11 +110,18 @@ namespace AEther.WindowsForms
             : base(graphics, length, SharpDX.DXGI.Format.R32G32B32A32_Float)
         { }
 
-        protected override float Combine(float src, float dst)
-            => Math.Max(src, dst);
-
-        protected override float Convert(double value)
-            => (float)value;
+        public override void Add(ReadOnlySpan<double> values)
+        {
+            if (values.Length < Buffer.Length)
+            {
+                throw new Exception();
+            }
+            for (int i = 0; i < Buffer.Length; ++i)
+            {
+                var value = (float)values[i].Clamp(0, 1);
+                Buffer[i] = Math.Max(value, Buffer[i]);
+            }
+        }
 
     }
 

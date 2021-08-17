@@ -1,13 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AEther
+﻿namespace AEther
 {
     public class MovingMedianArray<T> : WindowedFilter<T>
     {
@@ -88,7 +79,7 @@ namespace AEther
             var l = 0;
             var r = Size;
 
-            while(l < r)
+            while (l < r)
             {
                 var m = (l + r) / 2;
                 if (Comparer.Compare(value, data[m]) < 0)
@@ -111,7 +102,7 @@ namespace AEther
             {
                 var m = (l + r) / 2;
                 if (Comparer.Compare(data[m], value) < 0)
-                        l = m + 1;
+                    l = m + 1;
                 else
                     r = m;
             }

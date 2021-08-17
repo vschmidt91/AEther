@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
 
 namespace AEther
 {
@@ -21,9 +16,9 @@ namespace AEther
         public int Insert(T newItem)
         {
             var comparison = Comparer.Compare(newItem, Item);
-            if(comparison < 0)
+            if (comparison < 0)
             {
-                if(Left == null)
+                if (Left == null)
                 {
                     Left = new BinarySearchTree<T>(newItem, null, null, Comparer);
                 }
@@ -49,7 +44,7 @@ namespace AEther
         public BinarySearchTree<T>? Remove(T oldItem)
         {
             var comparison = Comparer.Compare(oldItem, Item);
-            if(comparison == 0)
+            if (comparison == 0)
             {
                 if (Left is null)
                 {
@@ -66,9 +61,9 @@ namespace AEther
                     return this;
                 }
             }
-            else if(comparison < 0)
+            else if (comparison < 0)
             {
-                if(Left is null)
+                if (Left is null)
                 {
                     throw new KeyNotFoundException();
                 }
@@ -108,7 +103,7 @@ namespace AEther
 
         public (BinarySearchTree<T>?, T) RemoveRightmost()
         {
-            if(Right is null)
+            if (Right is null)
             {
                 return (Left, Item);
             }

@@ -7,7 +7,8 @@
     <FileUpgradeFlags>40</FileUpgradeFlags>
     <UpgradeBackupLocation>C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\Backup\AEther.WindowsForms\</UpgradeBackupLocation>
     <OldToolsVersion>2.0</OldToolsVersion>
-    <LangVersion>default</LangVersion>
+	<EnablePreviewFeatures>True</EnablePreviewFeatures>
+	<LangVersion>preview</LangVersion>
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
@@ -16,6 +17,10 @@
     <None Remove="lib\**" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="data\assets\sponza\sponza.mtl" />
+    <None Remove="data\assets\sponza\sponza.obj" />
+    <None Remove="data\assets\sponza\sponza2.mtl" />
+    <None Remove="data\assets\sponza\sponza2.obj" />
     <None Remove="data\fx\add.fx" />
     <None Remove="data\fx\airlight.fx" />
     <None Remove="data\fx\copy.fx" />
@@ -41,11 +46,31 @@
     <None Remove="data\fx\poisson-sor.fx" />
     <None Remove="data\fx\present.fx" />
     <None Remove="data\fx\shadow.fx" />
+    <None Remove="data\assets\dragon\dragon.ASE" />
+    <None Remove="data\assets\dragon\dragon.DWF" />
+    <None Remove="data\assets\dragon\dragon.max" />
+    <None Remove="data\assets\dragon\dragon.mtl" />
+    <None Remove="data\assets\dragon\dragon.obj" />
+    <None Remove="data\assets\dragon\dragon2.mtl" />
+    <None Remove="data\assets\dragon\dragon2.obj" />
+    <None Remove="data\assets\dragon\From MrBluesummers.com.txt" />
     <None Remove="sharpdx_direct3d11_1_effects_arm.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x64.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x86.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="data\assets\sponza\sponza.mtl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\sponza\sponza.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\sponza\sponza2.mtl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\sponza\sponza2.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="data\fx\add.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -158,6 +183,30 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\mandelbox.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\dragon\dragon.ASE">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\dragon\dragon.DWF">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\dragon\dragon.max">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\dragon\dragon.mtl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\dragon\dragon.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\dragon\dragon2.mtl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\dragon\dragon2.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\assets\dragon\From MrBluesummers.com.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="sharpdx_direct3d11_1_effects_arm.dll">

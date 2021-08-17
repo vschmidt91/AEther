@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 using SharpDX;
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D11;
@@ -43,7 +38,7 @@ namespace AEther.WindowsForms
 
             public void Dispose()
             {
-                if(!IsDisposed)
+                if (!IsDisposed)
                 {
                     Technique.Dispose();
                     foreach (var pass in Passes)
@@ -71,7 +66,7 @@ namespace AEther.WindowsForms
                 {
                     InputLayout = new InputLayout(device, Pass.Description.Signature, InputElements);
                 }
-                catch(IndexOutOfRangeException)
+                catch (IndexOutOfRangeException)
                 { }
             }
 
@@ -151,7 +146,7 @@ namespace AEther.WindowsForms
         public void Dispose()
         {
 
-            if(!IsDisposed)
+            if (!IsDisposed)
             {
 
                 foreach (var technique in Techniques)

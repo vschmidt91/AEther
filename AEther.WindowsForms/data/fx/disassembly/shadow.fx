@@ -29,7 +29,7 @@ cbuffer LightConstants : register(b2)
     float3  LightPosition;              // Offset:  144, size:   12
     float   LightDistance;              // Offset:  156, size:    4
     float3  Emission;                   // Offset:  160, size:   12
-    float   ShadowFarPlane;             // Offset:  172, size:    4
+    float   LightFarPlane;              // Offset:  172, size:    4
     float3  Scattering;                 // Offset:  176, size:   12
     float3  Absorption;                 // Offset:  192, size:   12
 }
@@ -336,7 +336,7 @@ fxgroup
                 //   float3 LightPosition;              // Offset:  144 Size:    12
                 //   float LightDistance;               // Offset:  156 Size:     4 [unused]
                 //   float3 Emission;                   // Offset:  160 Size:    12 [unused]
-                //   float ShadowFarPlane;              // Offset:  172 Size:     4
+                //   float LightFarPlane;               // Offset:  172 Size:     4
                 //   float3 Scattering;                 // Offset:  176 Size:    12 [unused]
                 //   float3 Absorption;                 // Offset:  192 Size:    12 [unused]
                 //

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AEther
+﻿namespace AEther
 {
     public record QuickSelect<T>
     (
@@ -36,7 +30,7 @@ namespace AEther
             values.Swap(p, r);
 
             int m = l;
-            for(int i = l; i < r; ++i)
+            for (int i = l; i < r; ++i)
             {
                 if (Comparison(values[i], pivot) < 0)
                     values.Swap(i, m++);

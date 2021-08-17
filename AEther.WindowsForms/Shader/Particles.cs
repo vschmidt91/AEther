@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX;
-using SharpDX.Direct3D11;
+﻿using SharpDX.Direct3D11;
 
 namespace AEther.WindowsForms
 {

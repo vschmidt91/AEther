@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using System.Windows.Forms;
 
 namespace AEther.WindowsForms
@@ -45,7 +40,7 @@ namespace AEther.WindowsForms
         public void Process(SampleEvent<double> evt)
         {
             var latency = DateTime.Now - evt.Time;
-            if(Latency < latency)
+            if (Latency < latency)
             {
                 Latency = latency;
             }

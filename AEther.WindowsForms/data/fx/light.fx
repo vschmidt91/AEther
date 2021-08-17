@@ -5,9 +5,9 @@
 #include "light.fxi"
 #include "brdf.fxi"
 
-#define NumSamples 32
+#define NumSamples 16
 #define Dithering 1
-#define ShadowBias 1e-3
+#define ShadowBias 1e-1
 
 Texture2D<float> Depth : register(t0);
 Texture2D<float4> Normal : register(t1);
@@ -48,31 +48,34 @@ float3 PS(const PSin IN) : SV_TARGET
 	float4 normal = Normal.Load(index);
 	float4 color = Color.Load(index);
 	float3 V = normalize(IN.ViewDirection);
-	float3 N = normalize(normal.xyz);
+	float3 N = normal.xyz;
 	float3 pos = ViewPosition + depth * V;
 	float3 lightVector = LightPosition - pos;
 	float lightDistance = length(lightVector);
 	float lightDistanceInv = 1 / lightDistance;
 	float3 L = lightDistanceInv * lightVector;
-	float shadow = ShadowFarPlane * Shadow.Sample(Linear, -lightVector);
+	float shadow = LightFarPlane * Shadow.Sample(Linear, -lightVector);
+	float roughness = pow(normal.a, 1);
+	
 	bool isMetal = color.a == 1;
-	float3 diffuse = lerp(color.rgb, 0, isMetal);
-	float3 specular = lerp(1, color.rgb, isMetal);
-	float roughness = pow(normal.a, 4);
-	float3 brdfDiffuse = diffuse / PI;
-	//float3 brdfSpecular = BRDFref(L, -V, N, specular, roughness);
-	float3 brdfSpecular = specular / PI;
+	float3 colorDiffuse = lerp(color.rgb, 0, isMetal);
+	float3 colorSpecular = lerp(color.a, color.rgb, isMetal);
+	float3 brdfDiffuse = colorDiffuse / PI;
+	float3 brdfSpecular = BRDFref(L, -V, N, colorSpecular, roughness);
+	float3 brdf = lerp(brdfDiffuse, brdfSpecular, color.a);
+	//float3 brdfSpecular = specular / PI;
 
 	float3 Ls = 1;
 	Ls *= lightDistanceInv * lightDistanceInv;
 	Ls *= step(lightDistance, shadow + ShadowBias);
 	Ls *= saturate(dot(N, L));
-	Ls *= lerp(brdfDiffuse, brdfSpecular, color.a);
+	Ls *= brdf;
+	//Ls *= lerp(brdfDiffuse, brdfSpecular, color.a);
 	Ls *= exp(-depth * Extinction);
 
 	float tm = dot(LightPosition - ViewPosition, V);
 	float D = sqrt(LightDistance * LightDistance - tm * tm);
-	float2 theta = ParameterToAngle(D, float2(0, depth) - tm);
+	float2 theta = ParameterToAngle2(D, float2(0, depth) - tm, float2(LightDistance, lightDistance));
 
 	float3 Lv = 0;
 
@@ -97,7 +100,7 @@ float3 PS(const PSin IN) : SV_TARGET
 		float3 li = LightPosition - pi;
 		float ri2 = dot(li, li);
 		float ri = sqrt(ri2);
-		float si = ShadowFarPlane * Shadow.Sample(Linear, -li);
+		float si = LightFarPlane * Shadow.Sample(Linear, -li);
 
 		float3 Lvi = 1;
 		Lvi *= PhaseHG(sin(thetai), Anisotropy);

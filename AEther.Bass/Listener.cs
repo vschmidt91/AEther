@@ -1,10 +1,5 @@
 ﻿using ManagedBass;
-using System;
-using System.Linq;
-using System.Threading;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using System.IO.Pipelines;
 
 namespace AEther.Bass
 {

@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Markup;
-
-namespace AEther
+﻿namespace AEther
 {
     public class FixedHeap<T> : Heap<(T, int)>
     {

@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using SharpDX.DXGI;
+﻿
 using SharpDX.Direct3D11;
-
-using Feature = SharpDX.Direct3D11.Feature;
+using SharpDX.DXGI;
 
 namespace AEther.WindowsForms
 {
@@ -54,7 +47,7 @@ namespace AEther.WindowsForms
             ShaderMinimumPrecision = device.CheckShaderMinimumPrecisionSupport();
             Threading = device.CheckThreadingSupport(out ConcurrentResources, out CommandLists).Success;
             TileBasedDeferredRenderer = device.CheckTileBasedDeferredRendererSupport();
-            
+
         }
 
     }

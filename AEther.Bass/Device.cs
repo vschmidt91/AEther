@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AEther.Bass
+﻿namespace AEther.Bass
 {
     public readonly struct Device
     {

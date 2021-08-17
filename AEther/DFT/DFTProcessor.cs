@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 
 namespace AEther
 {
@@ -32,7 +26,7 @@ namespace AEther
 
         public DFTProcessor(Domain domain, double sampleRate, bool useSIMD, int maxParallelism)
         {
-            
+
             //Console.WriteLine(Vector<float>.Count);
 
             var cosines = useSIMD

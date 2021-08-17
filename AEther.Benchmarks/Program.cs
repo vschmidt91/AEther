@@ -1,10 +1,5 @@
-﻿using System;
-using System.Data;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Configs;
+﻿using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Engines;
 using BenchmarkDotNet.Running;
 
 namespace AEther.Benchmarks
@@ -19,7 +14,7 @@ namespace AEther.Benchmarks
 #if DEBUG
             new MatrixBenchmark().SystemNumericsBenchmark();
 #else
-            BenchmarkRunner.Run<MedianBenchmark>(config);
+            BenchmarkRunner.Run<FloatBenchmark>(config);
             //BenchmarkRunner.Run<WAVBenchmark>(config);
             //BenchmarkRunner.Run<MatrixBenchmark>(config);
             //BenchmarkRunner.Run<TimerBenchmark>(config);

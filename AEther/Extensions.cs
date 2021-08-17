@@ -1,14 +1,4 @@
-﻿using System;
-using System.Buffers;
-using System.ComponentModel;
-using System.Collections.Generic;
-using System.IO.Pipelines;
-using System.Linq;
-using System.Numerics;
-using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
 
 namespace AEther
@@ -19,10 +9,10 @@ namespace AEther
 
         public static IEnumerable<IEnumerable<T>> Subsets<T>(this IEnumerable<T> values)
         {
-            if(values.Any())
+            if (values.Any())
             {
                 var head = values.Take(1);
-                foreach(var tail in values.Skip(1).Subsets())
+                foreach (var tail in values.Skip(1).Subsets())
                 {
                     yield return tail;
                     yield return head.Concat(tail);
@@ -34,7 +24,7 @@ namespace AEther
             }
         }
 
-        public static async IAsyncEnumerable<ReadResult> ReadAllAsync(this PipeReader reader, [EnumeratorCancellation]CancellationToken cancel = default)
+        public static async IAsyncEnumerable<ReadResult> ReadAllAsync(this PipeReader reader, [EnumeratorCancellation] CancellationToken cancel = default)
         {
             while (true)
             {

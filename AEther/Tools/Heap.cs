@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows.Markup;
-
-namespace AEther
+﻿namespace AEther
 {
     public class Heap<T>
     {
@@ -38,7 +31,7 @@ namespace AEther
 
         public void DeleteAt(int i)
         {
-            while(0 < i)
+            while (0 < i)
             {
                 var p = Parent(i);
                 Swap(i, p);
@@ -83,7 +76,7 @@ namespace AEther
         protected void BubbleDown(int i)
         {
 
-            while(true)
+            while (true)
             {
 
                 var smallest = i;

@@ -1,16 +1,7 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Buffers;
-using System.Diagnostics;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Linq;
-
-using AEther.DMX;
+﻿using AEther.DMX;
 using AEther.NAudio;
+using System.Buffers;
+using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {
@@ -63,7 +54,7 @@ namespace AEther.WindowsForms
 
         public async Task StopAsync()
         {
-            if(Session is Session session)
+            if (Session is Session session)
             {
                 await session.StopAsync();
             }

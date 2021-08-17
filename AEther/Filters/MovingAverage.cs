@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AEther
+﻿namespace AEther
 {
     public class MovingAverage : MovingFilter<double>
     {
@@ -33,7 +29,7 @@ namespace AEther
             Buffer[Position] = newValue;
             State += (newValue - oldValue) / Buffer.Length;
             Position++;
-            if(Position == Buffer.Length)
+            if (Position == Buffer.Length)
             {
                 Position = 0;
             }

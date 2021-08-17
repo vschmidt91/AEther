@@ -1,19 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Pipelines;
-using System.Net;
-using System.Net.Sockets;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Text;
-using System.Text.Json;
-
-using System.CommandLine;
-using System.Buffers;
-using System.Threading;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 namespace AEther.CLI
 {
