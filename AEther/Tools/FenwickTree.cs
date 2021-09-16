@@ -1,4 +1,6 @@
-﻿namespace AEther
+﻿using System;
+
+namespace AEther
 {
     public class FenwickTree<T>
         where T : struct, IAdditionOperators<T, T, T>, ISubtractionOperators<T, T, T>

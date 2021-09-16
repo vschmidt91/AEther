@@ -1,4 +1,6 @@
-﻿namespace AEther
+﻿using System;
+
+namespace AEther
 {
     public record QuickSelect<T>
     (

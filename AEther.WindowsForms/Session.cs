@@ -1,4 +1,6 @@
 ﻿using AEther.DMX;
+using System;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AEther.WindowsForms

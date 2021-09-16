@@ -1,5 +1,8 @@
-﻿using System.IO.Ports;
+﻿using System;
+using System.IO.Ports;
+using System.Linq;
 using System.Numerics;
+using System.Threading;
 
 namespace AEther.DMX
 {

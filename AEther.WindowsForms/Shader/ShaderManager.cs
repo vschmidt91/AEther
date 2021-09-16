@@ -1,7 +1,11 @@
 ﻿using SharpDX;
 using SharpDX.D3DCompiler;
 using SharpDX.Direct3D;
+using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace AEther.WindowsForms
 {

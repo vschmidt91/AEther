@@ -1,4 +1,6 @@
 ﻿using NAudio.Wave;
+using System;
+using System.IO;
 
 namespace AEther.NAudio
 {

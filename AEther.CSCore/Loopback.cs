@@ -1,5 +1,6 @@
 ﻿using CSCore;
 using CSCore.SoundIn;
+using System.Threading;
 
 namespace AEther.CSCore
 {

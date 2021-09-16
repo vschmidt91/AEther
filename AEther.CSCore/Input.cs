@@ -4,6 +4,7 @@ using CSCore;
 using CSCore.SoundIn;
 using CSCore.SoundOut;
 using CSCore.Streams;
+using System;
 
 namespace AEther.CSCore
 {

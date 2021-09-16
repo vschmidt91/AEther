@@ -1,4 +1,7 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Linq;
+using System.Threading;
+using System.Windows.Forms;
 
 namespace AEther.WindowsForms
 {

@@ -1,4 +1,6 @@
-﻿namespace AEther.DMX
+﻿using System;
+
+namespace AEther.DMX
 {
     public class DMXChannelDiscreteThresholds : DMXChannelContinuous
     {

@@ -1,6 +1,8 @@
 ﻿
 using SharpDX;
 using SharpDX.Direct3D11;
+using System;
+using System.IO;
 
 namespace AEther.WindowsForms
 {

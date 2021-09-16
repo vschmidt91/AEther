@@ -1,5 +1,7 @@
 ﻿
 using NAudio.Wave;
+using System;
+using System.Linq;
 
 namespace AEther.NAudio
 {

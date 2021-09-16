@@ -1,4 +1,8 @@
-﻿namespace AEther
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace AEther
 {
     public class MovingMedianRef<T> : WindowedFilter<T>
     {

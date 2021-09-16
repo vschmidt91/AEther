@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using System;
 using System.Buffers;
 
 namespace AEther.Benchmarks

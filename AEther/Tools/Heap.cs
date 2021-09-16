@@ -1,4 +1,7 @@
-﻿namespace AEther
+﻿using System;
+using System.Collections.Generic;
+
+namespace AEther
 {
     public class Heap<T>
     {

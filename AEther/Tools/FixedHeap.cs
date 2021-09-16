@@ -1,4 +1,6 @@
-﻿namespace AEther
+﻿using System.Collections.Generic;
+
+namespace AEther
 {
     public class FixedHeap<T> : Heap<(T, int)>
     {

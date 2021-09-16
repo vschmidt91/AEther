@@ -1,4 +1,6 @@
-﻿namespace AEther
+﻿using System.Linq;
+
+namespace AEther
 {
     public class MovingDistributionEstimator : MovingFilter<double>
     {

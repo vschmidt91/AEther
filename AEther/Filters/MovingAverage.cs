@@ -1,4 +1,6 @@
-﻿namespace AEther
+﻿using System;
+
+namespace AEther
 {
     public class MovingAverage : MovingFilter<double>
     {

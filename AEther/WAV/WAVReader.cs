@@ -1,4 +1,8 @@
-﻿namespace AEther
+﻿using System;
+using System.IO;
+using System.Threading;
+
+namespace AEther
 {
     public class WAVReader : SampleSource
     {

@@ -1,4 +1,7 @@
-﻿namespace AEther
+﻿using System;
+using System.IO;
+
+namespace AEther
 {
     public record WAVHeader
     (

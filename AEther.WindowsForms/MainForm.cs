@@ -1,6 +1,9 @@
 ﻿using AEther.DMX;
 using AEther.NAudio;
+using System;
 using System.Buffers;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace AEther.WindowsForms

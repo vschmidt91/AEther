@@ -1,4 +1,6 @@
 ﻿using SharpDX.D3DCompiler;
+using System;
+using System.IO;
 using System.Text;
 
 namespace AEther.WindowsForms

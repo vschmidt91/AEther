@@ -1,4 +1,6 @@
 ﻿using ManagedBass;
+using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 
 namespace AEther.Bass

@@ -1,4 +1,6 @@
-﻿namespace AEther.WindowsForms
+﻿using System;
+
+namespace AEther.WindowsForms
 {
     public class HistogramState : ShaderState
     {

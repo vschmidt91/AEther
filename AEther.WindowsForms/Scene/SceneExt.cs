@@ -1,4 +1,6 @@
-﻿namespace AEther.WindowsForms
+﻿using System.Linq;
+
+namespace AEther.WindowsForms
 {
     public static class SceneExt
     {
