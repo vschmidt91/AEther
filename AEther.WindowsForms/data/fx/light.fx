@@ -5,7 +5,7 @@
 #include "light.fxi"
 #include "brdf.fxi"
 
-#define NumSamples 16
+#define NumSamples 32
 #define Dithering 1
 #define ShadowBias 1e-1
 

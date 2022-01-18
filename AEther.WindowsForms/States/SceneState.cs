@@ -102,6 +102,7 @@ namespace AEther.WindowsForms
         readonly Model Sphere;
         readonly Model Dragon;
         readonly Model Sponza;
+        readonly Light Light;
 
         GeometryBuffer GeometryBuffer;
         Texture2D LightBuffer;
@@ -196,12 +197,17 @@ namespace AEther.WindowsForms
             //    obj.Transform = obj.Transform with { ScaleLog = -1 };
             //    Scene.Add(obj);
             //}
-            Scene.Add(new Light()
+            Light = new Light()
             {
-                Intensity = 1000 * Vector3.One,
+                Intensity = 10000 * Vector3.One,
                 IsVolumetric = true,
                 CastsShadows = true,
-            });
+                Transform = new()
+                {
+                    Translation = 10 * Vector3.Right,
+                },
+            };
+            Scene.Add(Light);
 
             //for (var c = 0; c < 2; c++)
             //{
@@ -221,13 +227,13 @@ namespace AEther.WindowsForms
                     ScaleLog = -4
                 },
                 Color = new Vector4(1, 1, 1, 1f),
-                Roughness = .02f,
+                Roughness = .2f,
             });
 
             LightConstants.Value.Projection = TextureCube.Projection;
             LightConstants.Value.Anisotropy = 0f;
             LightConstants.Value.Emission = 0f * Vector3.One;
-            LightConstants.Value.Scattering = 0.1f * new Vector3(1, 1, 1);
+            LightConstants.Value.Scattering = 0.2f * new Vector3(1, 1.1f, 1.2f);
             LightConstants.Value.Absorption = 0f * Vector3.One;
             LightConstants.Value.FarPlane = TextureCube.FarPlane;
             LightConstants.Update();
@@ -333,6 +339,8 @@ namespace AEther.WindowsForms
             }
 
             //Particles.Simulate();
+
+            Light.Acceleration = -.1f * Light.Transform;
 
         }
 
