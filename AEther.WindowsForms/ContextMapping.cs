@@ -3,6 +3,7 @@ using SharpDX;
 using SharpDX.Direct3D11;
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace AEther.WindowsForms
 {

@@ -22,7 +22,7 @@ namespace AEther.WindowsForms
             Source = source;
             Analyzer = new(source.Format, options);
 
-            GraphicsModule = new GraphicsModule(form.Graphics, states, Source.Format.ChannelCount, options.Domain.Length, options.TimeResolution);
+            GraphicsModule = new GraphicsModule(form.Graphics, states, Source.Format.ChannelCount, options.Domain.Length, options.TimeResolution / 2);
             DMX = new DMXController(options.Domain, dmxOptions);
             Analyzer.SamplesAnalyzed += Analyzer_SamplesAnalyzed;
             Source.DataAvailable += Source_DataAvailable;

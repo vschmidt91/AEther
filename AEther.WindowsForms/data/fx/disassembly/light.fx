@@ -373,7 +373,7 @@ fxgroup
                 //   o1.x <- <VS return value>.UV.x; o1.y <- <VS return value>.UV.y; 
                 //   o0.x <- <VS return value>.Position.x; o0.y <- <VS return value>.Position.y; o0.z <- <VS return value>.Position.z; o0.w <- <VS return value>.Position.w
                 //
-                #line 37 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 37 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\light.fx"
                 mov o0.xy, v0.xyxx
                 mov o0.zw, l(0,0,0,1.000000)
                 mad o1.xy, v0.xyxx, l(0.500000, -0.500000, 0.000000, 0.000000), l(0.500000, 0.500000, 0.000000, 0.000000)
@@ -476,7 +476,7 @@ fxgroup
                 //   v2.x <- IN.ViewDirection.x; v2.y <- IN.ViewDirection.y; v2.z <- IN.ViewDirection.z; 
                 //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z
                 //
-                #line 50 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 50 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\light.fx"
                 dp3 r0.x, v2.xyzx, v2.xyzx
                 rsq r0.x, r0.x
                 mul r0.xyz, r0.xxxx, v2.xyzx  // r0.x <- V.x; r0.y <- V.y; r0.z <- V.z
@@ -508,7 +508,7 @@ fxgroup
                 rsq r2.z, r2.z
                 mul r5.xyz, r2.zzzz, r5.xyzx  // r5.x <- h.x; r5.y <- h.y; r5.z <- h.z
                 
-                #line 56 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 56 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\light.fx"
                 mul r6.xyz, r3.xyzx, r0.wwww  // r6.x <- L.x; r6.y <- L.y; r6.z <- L.z
                 
                 #line 69
@@ -538,7 +538,7 @@ fxgroup
                 mul r3.x, r3.x, r3.x
                 mul r2.w, r2.w, r3.x
                 
-                #line 49 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 49 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\light.fx"
                 ld r3.xyzw, r1.xyzw, t2.xyzw  // r3.x <- color.x; r3.y <- color.y; r3.z <- color.z; r3.w <- color.w
                 
                 #line 48
@@ -574,7 +574,7 @@ fxgroup
                 mul r2.w, r2.w, l(3.141500)
                 div r1.w, r1.w, r2.w  // r1.w <- <BRDF_D return value>
                 
-                #line 71 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 71 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\light.fx"
                 dp3_sat r1.x, r1.xyzx, r6.xyzx
                 mul r0.w, r0.w, r1.x
                 
@@ -587,7 +587,7 @@ fxgroup
                 #line 53
                 div r1.xyz, r1.xyzx, r2.zzzz
                 
-                #line 65 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\light.fx"
+                #line 65 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\light.fx"
                 mad r1.xyz, -r3.xyzx, l(0.318319, 0.318319, 0.318319, 0.000000), r1.xyzx
                 
                 #line 63

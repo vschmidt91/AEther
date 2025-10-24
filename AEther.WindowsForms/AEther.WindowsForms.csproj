@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net6.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <FileUpgradeFlags>40</FileUpgradeFlags>
@@ -12,15 +12,14 @@
     <AutoGenerateBindingRedirects>false</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="data\assets\**" />
     <Compile Remove="lib\**" />
+    <EmbeddedResource Remove="data\assets\**" />
     <EmbeddedResource Remove="lib\**" />
+    <None Remove="data\assets\**" />
     <None Remove="lib\**" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="data\assets\sponza\sponza.mtl" />
-    <None Remove="data\assets\sponza\sponza.obj" />
-    <None Remove="data\assets\sponza\sponza2.mtl" />
-    <None Remove="data\assets\sponza\sponza2.obj" />
     <None Remove="data\fx\add.fx" />
     <None Remove="data\fx\airlight.fx" />
     <None Remove="data\fx\copy.fx" />
@@ -46,31 +45,21 @@
     <None Remove="data\fx\poisson-sor.fx" />
     <None Remove="data\fx\present.fx" />
     <None Remove="data\fx\shadow.fx" />
-    <None Remove="data\assets\dragon\dragon.ASE" />
-    <None Remove="data\assets\dragon\dragon.DWF" />
-    <None Remove="data\assets\dragon\dragon.max" />
-    <None Remove="data\assets\dragon\dragon.mtl" />
-    <None Remove="data\assets\dragon\dragon.obj" />
-    <None Remove="data\assets\dragon\dragon2.mtl" />
-    <None Remove="data\assets\dragon\dragon2.obj" />
-    <None Remove="data\assets\dragon\From MrBluesummers.com.txt" />
+    <None Remove="data\models\trees9.mtl" />
+    <None Remove="data\models\trees9.obj" />
+    <None Remove="data\textures\Bark___0.jpg" />
+    <None Remove="data\textures\Bark___1.jpg" />
+    <None Remove="data\textures\Bark___S.jpg" />
+    <None Remove="data\textures\Bottom_T.jpg" />
+    <None Remove="data\textures\Mossy_Tr.jpg" />
+    <None Remove="data\textures\Oak_Leav.jpg" />
+    <None Remove="data\textures\Sonnerat.jpg" />
+    <None Remove="data\textures\Walnut_L.jpg" />
     <None Remove="sharpdx_direct3d11_1_effects_arm.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x64.dll" />
     <None Remove="sharpdx_direct3d11_1_effects_x86.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="data\assets\sponza\sponza.mtl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="data\assets\sponza\sponza.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="data\assets\sponza\sponza2.mtl">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="data\assets\sponza\sponza2.obj">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="data\fx\add.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -81,6 +70,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\fluid-project.fx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\fx\mandelbrot.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="data\fx\shadow.fx">
@@ -185,28 +177,34 @@
     <Content Include="data\fx\mandelbox.fx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\assets\dragon\dragon.ASE">
+    <Content Include="data\models\trees9.mtl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\assets\dragon\dragon.DWF">
+    <Content Include="data\models\trees9.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\assets\dragon\dragon.max">
+    <Content Include="data\textures\Bark___0.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\assets\dragon\dragon.mtl">
+    <Content Include="data\textures\Bark___1.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\assets\dragon\dragon.obj">
+    <Content Include="data\textures\Bark___S.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\assets\dragon\dragon2.mtl">
+    <Content Include="data\textures\Bottom_T.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\assets\dragon\dragon2.obj">
+    <Content Include="data\textures\Mossy_Tr.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="data\assets\dragon\From MrBluesummers.com.txt">
+    <Content Include="data\textures\Oak_Leav.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\textures\Sonnerat.jpg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\textures\Walnut_L.jpg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="sharpdx_direct3d11_1_effects_arm.dll">

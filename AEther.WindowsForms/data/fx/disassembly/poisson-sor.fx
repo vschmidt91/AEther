@@ -397,7 +397,7 @@ fxgroup
                 //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
                 //   o0.x <- <PS return value>
                 //
-                #line 20 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\poisson-sor.fx"
+                #line 20 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\poisson-sor.fx"
                 dp2 r0.x, v0.xyxx, l(1.000000, 1.000000, 0.000000, 0.000000)
                 ftoi r0.x, r0.x
                 and r0.x, r0.x, l(1)  // r0.x <- parity

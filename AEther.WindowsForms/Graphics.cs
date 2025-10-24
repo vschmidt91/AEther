@@ -47,7 +47,7 @@ namespace AEther.WindowsForms
 
             var desc = new SwapChainDescription()
             {
-                BufferCount = 2,
+                BufferCount = 3,
                 ModeDescription = NativeMode,
                 IsWindowed = true,
                 OutputHandle = handle,
@@ -272,7 +272,7 @@ namespace AEther.WindowsForms
 
         public void Present()
         {
-            Chain.TryPresent(1, PresentFlags.DoNotWait);
+            Chain.Present(0, PresentFlags.None);
         }
 
         RenderTargetView[] RTViews = Array.Empty<RenderTargetView>();

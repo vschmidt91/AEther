@@ -44,7 +44,7 @@ namespace AEther
 
         }
 
-        static WindowedFilter<double> CreateFilter(int windowSize)
+        static MovingFilter<double> CreateFilter(int windowSize)
             => new MovingMedianHeap<double>(0.0, windowSize, Comparer<double>.Default);
 
 
@@ -59,16 +59,18 @@ namespace AEther
             var src = input.Span;
             var dst = output.Span;
 
-            FrequencyTransients.FilterSpan(src, Buffer1, combine);
+            //src.CopyTo(Buffer1);
             for (int k = 0; k < Domain.Length; ++k)
             {
                 TimeSinuoids[k].Filter(src[k]);
-                Buffer2[k] = TimeSinuoids[k].State;
+                Buffer1[k] = TimeSinuoids[k].State;
 
-                TimeTransients[k].Filter(Buffer1[k]);
-                Buffer3[k] = TimeTransients[k].State;
+                TimeTransients[k].Filter(src[k]);
+                Buffer2[k] = src[k] - TimeTransients[k].State;
             }
+            FrequencyTransients.FilterSpan(Buffer1, Buffer3, combine);
             FrequencySinuoids.FilterSpan(Buffer2, Buffer4, combine);
+            //Buffer2.AsSpan().CopyTo(Buffer4);
 
             Array.Clear(KeyWeights, 0, KeyWeights.Length);
             var noiseFloor = 0.0;
@@ -83,8 +85,8 @@ namespace AEther
 
                 var y = dst.Slice(4 * k, 4);
 
-                var sinuoids = Math.Max(0, Buffer2[k] - Buffer4[k]);
                 var transients = Math.Max(0, Buffer1[k] - Buffer3[k]);
+                var sinuoids = Math.Max(0, Buffer4[k]);
                 var noise = Math.Max(0, src[k] - noiseFloor);
 
                 KeyWeights[k % KeyWeights.Length] += sinuoids * Domain.Resolution / Domain.Length;
@@ -92,9 +94,10 @@ namespace AEther
                 //sinuoids = Math.Max(0, 1 + 1.2 * (sinuoids - 1));
                 //transients = Math.Max(0, 1 + 1.2 * (transients - 1));
 
-                y[0] = sinuoids;
-                y[1] = transients;
+                y[0] = transients;
+                y[1] = sinuoids;
                 y[2] = 1 + .2 * src[k];
+                //y[2] = 1 + .2 * (src[k] - transients - sinuoids);
                 y[3] = 0;
 
             }

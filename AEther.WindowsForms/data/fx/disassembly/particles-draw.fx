@@ -378,7 +378,7 @@ fxgroup
                 //   o1.x <- <VS return value>.Normal.x; o1.y <- <VS return value>.Normal.y; o1.z <- <VS return value>.Normal.z; 
                 //   o0.x <- <VS return value>.Position.x; o0.y <- <VS return value>.Position.y; o0.z <- <VS return value>.Position.z; o0.w <- <VS return value>.Position.w
                 //
-                #line 34 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\particles-draw.fx"
+                #line 34 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\particles-draw.fx"
                 ld_structured r0.xyzw, v3.x, l(0), t0.xyzw  // r0.x <- p.Position.x; r0.y <- p.Position.y; r0.z <- p.Position.z; r0.w <- p.Position.w
                 
                 #line 39
@@ -480,7 +480,7 @@ fxgroup
                 //   v3.x <- IN.Color.x; v3.y <- IN.Color.y; v3.z <- IN.Color.z; v3.w <- IN.Color.w; 
                 //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z; o0.w <- <PS return value>.w
                 //
-                #line 59 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\particles-draw.fx"
+                #line 59 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\particles-draw.fx"
                 sample r0.xyzw, v2.xyxx, t1.xyzw, s0  // r0.x <- textureColor.x; r0.y <- textureColor.y; r0.z <- textureColor.z; r0.w <- textureColor.w
                 
                 #line 60

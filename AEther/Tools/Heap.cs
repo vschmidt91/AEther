@@ -16,7 +16,7 @@ namespace AEther
         protected T[] Items = Array.Empty<T>();
         protected readonly IComparer<T> Comparer;
 
-        public Heap(IComparer<T> comparer)
+        public Heap(IComparer<T> comparer, int capacity = 0)
         {
             Comparer = comparer;
         }

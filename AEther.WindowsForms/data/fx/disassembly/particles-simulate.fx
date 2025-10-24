@@ -352,7 +352,7 @@ fxgroup
                 // Initial variable locations:
                 //   vThreadID.x <- index.x; vThreadID.y <- index.y; vThreadID.z <- index.z
                 //
-                #line 11 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\particles-simulate.fx"
+                #line 11 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\particles-simulate.fx"
                 ld_structured r0.xyzw, vThreadID.x, l(0), u0.xyzw  // r0.x <- p.Position.x; r0.y <- p.Position.y; r0.z <- p.Position.z; r0.w <- p.Position.w
                 ld_structured r1.xyzw, vThreadID.x, l(16), u0.xyzw  // r1.x <- p.Momentum.x; r1.y <- p.Momentum.y; r1.z <- p.Momentum.z; r1.w <- p.Momentum.w
                 ld_structured r2.xyzw, vThreadID.x, l(32), u0.xyzw  // r2.x <- p.Acceleration.x; r2.y <- p.Acceleration.y; r2.z <- p.Acceleration.z; r2.w <- p.Acceleration.w

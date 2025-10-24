@@ -390,7 +390,7 @@ fxgroup
                 //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
                 //   o0.x <- <PS return value>
                 //
-                #line 19 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\mg-residual.fx"
+                #line 19 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\mg-residual.fx"
                 sample_aoffimmi(-1,0,0) r0.xyzw, v1.xyxx, t0.xyzw, s0
                 sample_aoffimmi(1,0,0) r1.xyzw, v1.xyxx, t0.xyzw, s0
                 add r0.x, r0.x, r1.x

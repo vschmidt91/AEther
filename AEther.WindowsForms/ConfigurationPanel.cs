@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace AEther.WindowsForms
@@ -9,6 +10,8 @@ namespace AEther.WindowsForms
         public event EventHandler<AnalyzerOptions>? ConfigurationChanged;
 
         readonly PropertyGrid ConfigurationGrid;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
         public AnalyzerOptions? Configuration
         {
             get => ConfigurationGrid.SelectedObject as AnalyzerOptions;

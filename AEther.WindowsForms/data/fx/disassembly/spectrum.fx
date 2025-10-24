@@ -373,7 +373,7 @@ fxgroup
                 //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
                 //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z; o0.w <- <PS return value>.w
                 //
-                #line 15 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\spectrum.fx"
+                #line 15 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\spectrum.fx"
                 lt r0.x, l(0.500000), v1.x
                 and r0.x, r0.x, l(0x3f800000)
                 

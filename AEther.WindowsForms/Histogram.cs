@@ -63,9 +63,10 @@ namespace AEther.WindowsForms
 
             if (useMapping)
             {
-                var map = Texture.Map();
-                Pitch = (int)map.Pitch;
-                map.Dispose();
+                using (var map = Texture.Map())
+                {
+                    Pitch = (int)map.Pitch;
+                }
             }
             else
             {

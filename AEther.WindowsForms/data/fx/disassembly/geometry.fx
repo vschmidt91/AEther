@@ -390,7 +390,7 @@ fxgroup
                 //   o1.x <- <VS return value>.Normal.x; o1.y <- <VS return value>.Normal.y; o1.z <- <VS return value>.Normal.z; o1.w <- <VS return value>.Normal.w; 
                 //   o0.x <- <VS return value>.Position.x; o0.y <- <VS return value>.Position.y; o0.z <- <VS return value>.Position.z; o0.w <- <VS return value>.Position.w
                 //
-                #line 42 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\geometry.fx"
+                #line 42 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\geometry.fx"
                 ld_structured r0.xyzw, v3.x, l(48), t0.xyzw  // r0.x <- instance.World._m03; r0.y <- instance.World._m13; r0.z <- instance.World._m23; r0.w <- instance.World._m33
                 
                 #line 48
@@ -546,7 +546,7 @@ fxgroup
                 //   o0.x <- <PS return value>.Normal.x; o0.y <- <PS return value>.Normal.y; o0.z <- <PS return value>.Normal.z; o0.w <- <PS return value>.Normal.w; 
                 //   oDepth <- <PS return value>.Depth
                 //
-                #line 74 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\geometry.fx"
+                #line 74 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\geometry.fx"
                 add r0.xyz, v4.xyzx, -cb1[8].xyzx
                 dp3 r0.x, r0.xyzx, r0.xyzx
                 sqrt r0.x, r0.x

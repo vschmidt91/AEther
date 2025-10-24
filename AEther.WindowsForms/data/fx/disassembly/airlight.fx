@@ -413,7 +413,7 @@ fxgroup
                 //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
                 //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z
                 //
-                #line 10 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\airlight.fx"
+                #line 10 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\airlight.fx"
                 mul r0.x, v1.y, v1.y
                 div r0.x, l(1.000000, 1.000000, 1.000000, 1.000000), r0.x
                 add r0.x, r0.x, l(-1.000000)  // r0.x <- D
@@ -489,7 +489,7 @@ fxgroup
                 #line 83
                 mul r0.xyz, r0.yyyy, r0.xzwx
                 
-                #line 16 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\airlight.fx"
+                #line 16 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\airlight.fx"
                 mul o0.xyz, r0.xyzx, l(0.390625, 0.390625, 0.390625, 0.000000)
                 
                 #line 17

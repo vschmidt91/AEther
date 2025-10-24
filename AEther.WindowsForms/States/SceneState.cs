@@ -66,13 +66,8 @@ namespace AEther.WindowsForms
 
         }
 
-        internal class MyGeometry : Geometry
+        internal class MyGeometry(Model model) : Geometry(model)
         {
-
-            public MyGeometry(Model model)
-                : base(model)
-            { }
-
             public override void Update(float dt)
             {
                 Acceleration = -.01f * Transform with { ScaleLog = 0 };
@@ -98,10 +93,12 @@ namespace AEther.WindowsForms
         readonly ConstantBuffer<CameraConstants> CameraConstants;
         readonly ConstantBuffer<LightConstants> LightConstants;
         readonly ComputeBuffer Instances;
+
+        public Particles Particles { get; }
+
         readonly Model Cube;
         readonly Model Sphere;
-        readonly Model Dragon;
-        readonly Model Sponza;
+        readonly Model[] Trees;
         readonly Light Light;
 
         GeometryBuffer GeometryBuffer;
@@ -131,7 +128,7 @@ namespace AEther.WindowsForms
             CameraConstants = Graphics.CreateConstantBuffer<CameraConstants>();
             LightConstants = Graphics.CreateConstantBuffer<LightConstants>();
             Instances = Graphics.CreateComputeBuffer(Marshal.SizeOf<Instance>(), 1 << 10, true);
-            //Particles = new Particles(Graphics, 1 << 10, CameraConstants);
+            Particles = new Particles(Graphics, 1 << 10, CameraConstants);
 
             var instancingMacro = UseInstancing
                 ? new[] { new ShaderMacro("ENABLE_INSTANCING", true) }
@@ -170,11 +167,8 @@ namespace AEther.WindowsForms
             var rng = new Random(0);
             Cube = Graphics.CreateModel(Mesh.CreateSphere(3, 3).SplitVertices(true));
             Sphere = Graphics.CreateModel(Mesh.CreateSphere(15, 15));
-            var dragon = Graphics.AssetImporter.Import<Mesh[]>(Path.Join("dragon", "dragon2.obj"));
-            Dragon = Graphics.CreateModel(Mesh.Join(dragon));
 
-            var sponza = Graphics.AssetImporter.Import<Mesh[]>(Path.Join("sponza", "sponza.obj"));
-            Sponza = Graphics.CreateModel(Mesh.Join(sponza));
+            Trees = AssimpAssetImporter.ImportMesh("data/models/trees9.obj").Select(Graphics.CreateModel).ToArray();
 
             var floor = Graphics.CreateModel(Mesh.CreateGrid(32, 32));
             Camera = new CameraPerspective
@@ -183,23 +177,23 @@ namespace AEther.WindowsForms
                 AspectRatio = Graphics.BackBuffer.Width / (float)Graphics.BackBuffer.Height,
             };
             Camera.Direction = Vector3.Normalize(Vector3.Zero - Camera.Position);
-            //for (var i = 0; i < 100; ++i)
-            //{
-            //    var model = rng.NextDouble() < .5 ? Cube : Sphere;
-            //    model = Dragon;
-            //    var obj = new MyGeometry(model)
-            //    {
-            //        Color = new Vector4(rng.NextVector3(Vector3.Zero, Vector3.One), rng.NextDouble() < .5 ? rng.NextFloat(0, 1) : 1),
-            //        Transform = rng.NextMomentum(15f, 1, 0),
-            //        Momentum = rng.NextMomentum(1f, .1f, 0),
-            //        Roughness = rng.NextFloat(0, 1),
-            //    };
-            //    obj.Transform = obj.Transform with { ScaleLog = -1 };
-            //    Scene.Add(obj);
-            //}
+            for (var i = 0; i < 1000; ++i)
+            {
+                var model = rng.NextDouble() < .5 ? Cube : Sphere;
+                //model = Trees[i % Trees.Length];
+                var obj = new MyGeometry(model)
+                {
+                    Color = new Vector4(rng.NextVector3(Vector3.Zero, Vector3.One), rng.NextDouble() < .5 ? rng.NextFloat(0, 1) : 1),
+                    Transform = rng.NextMomentum(15f, 1, 0),
+                    Momentum = rng.NextMomentum(1f, .1f, 0),
+                    Roughness = rng.NextFloat(0, 1),
+                };
+                obj.Transform = obj.Transform with { ScaleLog = -1 };
+                Scene.Add(obj);
+            }
             Light = new Light()
             {
-                Intensity = 10000 * Vector3.One,
+                Intensity = 1000 * Vector3.One,
                 IsVolumetric = true,
                 CastsShadows = true,
                 Transform = new()
@@ -208,6 +202,21 @@ namespace AEther.WindowsForms
                 },
             };
             Scene.Add(Light);
+
+            //for (var i = 0; i < 10; ++i)
+            //{
+            //    Scene.Add(new Light()
+            //    {
+            //        Intensity = 1000 * Vector3.One,
+            //        IsVolumetric = true,
+            //        CastsShadows = false,
+            //        Transform = new()
+            //        {
+            //            Translation = 10 * i * Vector3.Right,
+            //        },
+            //    });
+            //}
+
 
             //for (var c = 0; c < 2; c++)
             //{
@@ -219,21 +228,21 @@ namespace AEther.WindowsForms
             //    }
             //}
 
-            Scene.Add(new Geometry(Sponza)
-            {
-                Transform = new()
-                {
-                    Translation = 5 * Vector3.Down,
-                    ScaleLog = -4
-                },
-                Color = new Vector4(1, 1, 1, 1f),
-                Roughness = .2f,
-            });
+            //Scene.Add(new Geometry(Sponza)
+            //{
+            //    Transform = new()
+            //    {
+            //        Translation = 5 * Vector3.Down,
+            //        ScaleLog = -4
+            //    },
+            //    Color = new Vector4(1, 1, 1, 1f),
+            //    Roughness = .2f,
+            //});
 
             LightConstants.Value.Projection = TextureCube.Projection;
             LightConstants.Value.Anisotropy = 0f;
             LightConstants.Value.Emission = 0f * Vector3.One;
-            LightConstants.Value.Scattering = 0.2f * new Vector3(1, 1.1f, 1.2f);
+            LightConstants.Value.Scattering = 0.1f * new Vector3(1, 1f, 1f);
             LightConstants.Value.Absorption = 0f * Vector3.One;
             LightConstants.Value.FarPlane = TextureCube.FarPlane;
             LightConstants.Update();

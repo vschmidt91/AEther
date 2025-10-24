@@ -416,7 +416,7 @@ fxgroup
                 mul r0.x, r0.x, l(12345.678711)
                 frc r0.x, r0.x  // r0.x <- <Dither2 return value>
                 
-                #line 24 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\present.fx"
+                #line 24 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\present.fx"
                 sample r1.xyzw, v1.xyxx, t0.xyzw, s0  // r1.x <- light.x; r1.y <- light.y; r1.z <- light.z
                 
                 #line 17

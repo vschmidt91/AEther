@@ -40,11 +40,12 @@ namespace AEther.WindowsForms
             states.Items.Clear();
             states.Items.AddRange(new GraphicsState[]
             {
+                new SpectrumState(Graphics, Spectrum),
+                new HistogramState(Graphics, Histogram),
+                new MandelboxState(Graphics, Spectrum),
                 new SceneState(Graphics, Spectrum),
                 new FluidState(Graphics),
                 new IFSState(Graphics),
-                new SpectrumState(Graphics, Spectrum),
-                new HistogramState(Graphics, Histogram),
             });
             states.SelectedIndex = 0;
             States = states;

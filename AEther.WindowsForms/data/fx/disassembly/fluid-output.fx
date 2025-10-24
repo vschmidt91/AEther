@@ -370,7 +370,7 @@ fxgroup
                 //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
                 //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z; o0.w <- <PS return value>.w
                 //
-                #line 10 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\fluid-output.fx"
+                #line 10 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\fluid-output.fx"
                 sample r0.xyzw, v1.xyxx, t0.xyzw, s0  // r0.z <- v.z; r0.w <- v.w
                 
                 #line 12
@@ -379,7 +379,7 @@ fxgroup
                 #line 112 "globals.fxi"
                 mul r0.yz, r0.zzwz, l(0.000000, 0.200000, 0.500000, 0.000000)
                 
-                #line 12 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\fluid-output.fx"
+                #line 12 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\fluid-output.fx"
                 sqrt r0.x, r0.x  // r0.x <- lab.x
                 
                 #line 110 "globals.fxi"
@@ -418,7 +418,7 @@ fxgroup
                 dp3 o0.y, l(-0.379961, 0.735608, 0.016275, 0.000000), r1.xyzx
                 dp3 o0.z, l(0.021843, -0.080000, 0.414510, 0.000000), r1.xyzx
                 
-                #line 15 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\fluid-output.fx"
+                #line 15 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\fluid-output.fx"
                 mov o0.w, l(1.000000)
                 ret 
                 // Approximately 24 instruction slots used

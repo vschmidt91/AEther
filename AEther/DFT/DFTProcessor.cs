@@ -48,6 +48,10 @@ namespace AEther
                 };
             }
 
+            //Filters = domain
+            //    .Select(f => new DFTFilter(f, domain.Resolution, sampleRate))
+            //    .ToArray();
+
             if (cosines.Length == 1)
             {
                 Filters = domain

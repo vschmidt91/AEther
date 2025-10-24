@@ -388,7 +388,7 @@ fxgroup
                 //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
                 //   o0.x <- v.x; o0.y <- v.y; o0.z <- v.z; o0.w <- v.w
                 //
-                #line 11 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\histogram.fx"
+                #line 11 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\histogram.fx"
                 add r0.x, v1.x, l(-0.500000)
                 add r0.y, r0.x, r0.x  // r0.y <- d
                 

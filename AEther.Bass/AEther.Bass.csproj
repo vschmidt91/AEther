@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <FileUpgradeFlags>40</FileUpgradeFlags>
     <UpgradeBackupLocation>C:\Users\Ryzen\Google Drive\Projekte\C#\AEther\Backup\AEther.Bass\</UpgradeBackupLocation>
@@ -25,8 +25,8 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ManagedBass" Version="3.1.0" />
-    <PackageReference Include="System.IO.Pipelines" Version="6.0.1" />
+    <PackageReference Include="ManagedBass" Version="3.1.1" />
+    <PackageReference Include="System.IO.Pipelines" Version="9.0.6" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AEther\AEther.csproj" />

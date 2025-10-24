@@ -391,7 +391,7 @@ fxgroup
                 //   v1.x <- IN.UV.x; v1.y <- IN.UV.y; 
                 //   o0.x <- <PS return value>.x; o0.y <- <PS return value>.y; o0.z <- <PS return value>.z; o0.w <- <PS return value>.w
                 //
-                #line 17 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\ifs-affine.fx"
+                #line 17 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\ifs-affine.fx"
                 add r0.xy, -v1.xyxx, l(1.000000, 1.000000, 0.000000, 0.000000)
                 div r0.xy, v1.xyxx, r0.xyxx
                 log r0.xy, r0.xyxx
@@ -412,7 +412,7 @@ fxgroup
                 mul r1.x, cb1[1].z, cb1[1].y
                 mad r1.x, cb1[1].x, cb1[1].w, -r1.x  // r1.x <- <det return value>
                 
-                #line 23 "C:\Users\Ryzen\git\AEther\AEther.WindowsForms\bin\Debug\net6.0-windows\ifs-affine.fx"
+                #line 23 "C:\Users\volke\Source\Repos\AEther\AEther.WindowsForms\bin\Debug\net9.0-windows7.0\ifs-affine.fx"
                 mul o0.w, r0.w, |r1.x|
                 mul o0.xyz, r0.xyzx, cb1[0].xyzx
                 
